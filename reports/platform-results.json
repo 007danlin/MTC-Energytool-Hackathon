@@ -1,0 +1,61 @@
+{
+  "source": "User-provided platform table in chat; not independently fetched",
+  "date": "2026-11-10",
+  "score_scale": "personal dashboard display; not accuracy percent",
+  "duration_semantics": "UI displayed duration; individual pipeline components unknown",
+  "results": [
+    {
+      "version": "v1",
+      "filename_reported": "daniel-submission.zip",
+      "dashboard_score": null,
+      "upload_time_moscow_reported": "10:28",
+      "ui_duration_seconds": 2.0,
+      "status_reported": "Ошибка",
+      "local_artifact": null,
+      "local_artifact_sha256": null,
+      "uploaded_bytes_independently_verified": false
+    },
+    {
+      "version": "v2",
+      "filename_reported": "daniel-submission-v2.zip",
+      "dashboard_score": "5.836",
+      "upload_time_moscow_reported": "11:02",
+      "ui_duration_seconds": 466.3,
+      "status_reported": "Успешно",
+      "local_artifact": "artifacts/daniel-submission-v2.zip",
+      "local_artifact_sha256": "6474f5d607d757257a99c9e991ace4e4ad126a7440275598b9a8d8dc15960604",
+      "uploaded_bytes_independently_verified": false
+    },
+    {
+      "version": "v3",
+      "filename_reported": "daniel-submission-v3.zip",
+      "dashboard_score": "50.438",
+      "upload_time_moscow_reported": "16:31",
+      "ui_duration_seconds": 312.6,
+      "status_reported": "Лучшее решение",
+      "local_artifact": "artifacts/daniel-submission-v3.zip",
+      "local_artifact_sha256": "8080cc06980f8dde184cc1320ccafca2dffd7a58b5a7ba6772bef177dde4ab09",
+      "uploaded_bytes_independently_verified": false
+    },
+    {
+      "version": "a2",
+      "filename_reported": "a2.zip",
+      "dashboard_score": "55.969",
+      "upload_time_moscow_reported": "19:24",
+      "ui_duration_seconds": 363.8,
+      "status_reported": "Лучшее решение",
+      "local_artifact": "artifacts/daniel-submission-a2.zip",
+      "local_artifact_sha256": "fa81606a5e4b89cd4b36a13139d906e8940bbc462d43d127ddfaac129c50f013",
+      "uploaded_bytes_independently_verified": false,
+      "provided_archive_matches_frozen_a2": true
+    }
+  ],
+  "comparison": {
+    "v3_minus_v2_points": "44.602",
+    "v3_divided_by_v2": "8.642563399588759424263193968",
+    "best_reported_version": "a2",
+    "next_promotion_threshold_strictly_above": "55.969",
+    "remaining_attempts_today": "Unknown; verify team counter",
+    "a2_minus_v3_points": "5.531"
+  }
+}

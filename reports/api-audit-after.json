@@ -1,0 +1,112 @@
+{
+  "platform_root_cause_confirmed": false,
+  "fixed_configuration_cases": [
+    {
+      "scenario": "sample_BASE_URL",
+      "result": "accepted",
+      "max_tokens": 2048,
+      "workers": 3,
+      "top_k": 12,
+      "warnings": []
+    },
+    {
+      "scenario": "MAX_TOKENS_64",
+      "result": "accepted",
+      "max_tokens": 64,
+      "workers": 3,
+      "top_k": 12,
+      "warnings": []
+    },
+    {
+      "scenario": "MAX_TOKENS_32768",
+      "result": "accepted",
+      "max_tokens": 32768,
+      "workers": 3,
+      "top_k": 12,
+      "warnings": []
+    },
+    {
+      "scenario": "MAX_WORKERS_16",
+      "result": "accepted",
+      "max_tokens": 2048,
+      "workers": 8,
+      "top_k": 12,
+      "warnings": [
+        "MAX_WORKERS: limited to supported resource range"
+      ]
+    },
+    {
+      "scenario": "TOP_K_50",
+      "result": "accepted",
+      "max_tokens": 2048,
+      "workers": 3,
+      "top_k": 40,
+      "warnings": [
+        "TOP_K: limited to supported resource range"
+      ]
+    }
+  ],
+  "validation": {
+    "created_utc": "2026-11-10T07:42:02.740833+00:00",
+    "python": "3.12.14",
+    "unit_tests_passed": 47,
+    "offline": {
+      "created_utc": "2026-11-10T07:42:02.154796+00:00",
+      "mode": "offline",
+      "model": "MOCK",
+      "scenario_count": 30,
+      "protocol_pass": 30,
+      "retrieval_coverage_pass": 18,
+      "retrieval_coverage_total": 18,
+      "semantic_quality_verified": false,
+      "platform_score": null,
+      "notes": "Coverage checks presence of annotated evidence, not answer quality or ranking optimality."
+    },
+    "isolated_zip": {
+      "mode": "mock_http_isolated_zip",
+      "rows": 18,
+      "api_calls": 18,
+      "csv_valid": true,
+      "exit_code": 0,
+      "quality_verified": false
+    },
+    "zip_bytes": 19586,
+    "zip_sha256": "6474f5d607d757257a99c9e991ace4e4ad126a7440275598b9a8d8dc15960604",
+    "live_model_verified": false,
+    "platform_submission_verified": false,
+    "team_backend_integration_verified": false,
+    "docker": {
+      "created_utc": "2026-11-10T07:42:11.407642+00:00",
+      "mode": "docker_compose_mock_http",
+      "build_verified": true,
+      "image": "energytool-ml:validation",
+      "image_id": "sha256:1a34cb1f679a0c9babb0bad132e57db5d8fa8c37542fde7736a9088813f233fc",
+      "platform": "linux/arm64",
+      "unit_tests_passed": 47,
+      "runtime": {
+        "uid": 10001,
+        "data_read_only": true,
+        "python": "3.11.18"
+      },
+      "rows": 18,
+      "api_calls": 19,
+      "recovered_429": true,
+      "csv_valid": true,
+      "exit_code": 0,
+      "missing_config_exit_code": 2,
+      "image_matches_zip": true,
+      "zip_sha256": "6474f5d607d757257a99c9e991ace4e4ad126a7440275598b9a8d8dc15960604",
+      "live_model_verified": false
+    },
+    "python_compatibility": {
+      "created_utc": "2026-11-10T07:42:16.131268+00:00",
+      "image": "python:3.9-slim",
+      "python": "3.9.25",
+      "tests_passed": 47,
+      "zip_sha256": "6474f5d607d757257a99c9e991ace4e4ad126a7440275598b9a8d8dc15960604",
+      "exit_code": 0
+    }
+  },
+  "release": "daniel-submission-v2.zip",
+  "release_sha256": "6474f5d607d757257a99c9e991ace4e4ad126a7440275598b9a8d8dc15960604"
+}

@@ -29,3 +29,9 @@ indexes/
 .idea/
 .vscode/
 *.log
+
+# Private organizer materials and local evaluation artifacts
+reports/private/
+submission.csv
+artifacts/
+.coverage
