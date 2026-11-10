@@ -1,0 +1,67 @@
+{
+  "date": "2026-11-10",
+  "platform_submissions_used": 0,
+  "runtime_changed": false,
+  "new_zip_created": false,
+  "main_zip": "artifacts/daniel-submission.zip",
+  "execution": {
+    "mode": "real_model_immutable_zip",
+    "model_label": "Local Qwen3-VL-30B-A3B Instruct Q4_K_M, Ollama 0.32.14 isolated server, 16384 context; not platform Qwen3.8-27B",
+    "platform_model_verified": false,
+    "platform_score": null,
+    "zip_sha256": "8080cc06980f8dde184cc1320ccafca2dffd7a58b5a7ba6772bef177dde4ab09",
+    "questions_sha256": "36f0b771fc227189fdc7dcf6712c4b706ad76ec1dab56f39b413ce0eab2ce139",
+    "knowledge_base_sha256": "d5f1bbba0094d1eb7e4918bd7a1d37c621ae5cd498010ca2cba041ddddafd66a",
+    "rows": 23,
+    "exit_code": 0,
+    "elapsed_seconds": 605.73,
+    "csv_valid": true,
+    "runtime_statuses": {
+      "answered": 23
+    },
+    "api_calls": 23,
+    "http_failures": 0,
+    "length_cutoffs": 0,
+    "content_review_complete": true,
+    "note": "Nonempty CSV is not evidence of factual quality; inspect answers against the knowledge base.",
+    "review_method": "Codex review against organizer KB and predeclared rubric; not platform LLM judge",
+    "review_counts": {
+      "годен": 14,
+      "существенная ошибка": 2,
+      "неполон": 7
+    }
+  },
+  "demo_review_counts": {
+    "годен": 10,
+    "существенная ошибка": 2,
+    "неполон": 6
+  },
+  "extra_review_counts": {
+    "годен": 4,
+    "неполон": 1
+  },
+  "api_seconds": {
+    "median": 23.349,
+    "p95_nearest_rank": 43.293,
+    "maximum": 86.014
+  },
+  "prompt_tokens_max": 5634,
+  "completion_tokens_max": 207,
+  "earlier_failed_local_run": {
+    "completed_answers": 4,
+    "transport_failures": 19,
+    "cause": "Local server connection lost; concurrent Ollama app and brew server port conflict observed, exact disconnect trigger unproven."
+  },
+  "input_hash_seed_check": {
+    "seeds": [
+      1,
+      42,
+      98765
+    ],
+    "questions": 23,
+    "changed_inputs": 0,
+    "llm_calls": 0
+  },
+  "report_directory": "reports/private/qwen-local-v3-recheck-20261110-isolated",
+  "platform_score_prediction": null
+}

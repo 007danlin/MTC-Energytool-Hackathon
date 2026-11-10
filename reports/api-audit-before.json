@@ -1,0 +1,32 @@
+[
+  {
+    "scenario": "sample_BASE_URL",
+    "result": "ConfigurationError: Missing configuration: LLM_BASE_URL/OPENAI_BASE_URL"
+  },
+  {
+    "scenario": "MAX_TOKENS_64",
+    "result": "ConfigurationError: MAX_TOKENS: expected value in [128, 16384]"
+  },
+  {
+    "scenario": "MAX_TOKENS_32768",
+    "result": "ConfigurationError: MAX_TOKENS: expected value in [128, 16384]"
+  },
+  {
+    "scenario": "MAX_WORKERS_16",
+    "result": "ConfigurationError: MAX_WORKERS: expected value in [1, 8]"
+  },
+  {
+    "scenario": "TOP_K_50",
+    "result": "ConfigurationError: TOP_K: expected value in [1, 40]"
+  },
+  {
+    "scenario": "csv_column_order",
+    "result": "ValueError: questions.csv must have exactly id,question columns"
+  },
+  {
+    "scenario": "python_3_9_import",
+    "exit_code": 1,
+    "stdout": "",
+    "stderr": "Unable to find image 'python:3.9-slim' locally\n3.9-slim: Pulling from library/python\nebfe7d4fa0c5: Pulling fs layer\nc23f4b503473: Pulling fs layer\n479b8ad8bcc3: Pulling fs layer\na16e55119267: Pulling fs layer\n2c924589a7b3: Download complete\n94fc6135d9ca: Download complete\n479b8ad8bcc3: Download complete\nc23f4b503473: Download complete\nebfe7d4fa0c5: Download complete\na16e55119267: Download complete\n479b8ad8bcc3: Pull complete\na16e55119267: Pull complete\nc23f4b503473: Pull complete\nebfe7d4fa0c5: Pull complete\nDigest: sha256:2d97f6910b16bd338d3060f261f53f144965f755599aab1acda1e13cf1731b1b\nStatus: Downloaded newer image for python:3.9-slim\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/work/solution.py\", line 11, in <module>\n    from consultant import Consultant, TECHNICAL_ANSWER\n  File \"/work/consultant.py\", line 7, in <module>\n    from contracts import ConsultationRequest, ConsultationResult, LeadState\n  File \"/work/contracts.py\", line 44, in <module>\n    class ConsultationRequest:\n  File \"/work/contracts.py\", line 47, in ConsultationRequest\n    lead: LeadState | None = None\nTypeError: unsupported operand type(s) for |: 'type' and 'NoneType'\n"
+  }
+]

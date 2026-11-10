@@ -1,0 +1,13 @@
+.git
+.env
+.env.*
+data
+reports
+artifacts
+docs
+tests
+tools
+__pycache__
+*.pyc
+.venv
+submission.csv
