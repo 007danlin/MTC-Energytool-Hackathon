@@ -67,3 +67,28 @@ func TestChatHTTPFlowAndErrorShape(t *testing.T) {
 		t.Fatalf("error=%+v", apiError)
 	}
 }
+
+func TestOversizedMessageReturns413(t *testing.T) {
+	repository, err := store.NewFileStore(t.TempDir() + "/sessions.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	app := service.New(repository, testML{})
+	session, err := app.CreateSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	handler := New(app, nil, nil, time.Second).Handler()
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, httptest.NewRequest(http.MethodPost, "/api/v1/sessions/"+session.ID+"/messages", strings.NewReader(`{"content":"`+strings.Repeat("a", 10001)+`"}`)))
+	if response.Code != http.StatusRequestEntityTooLarge {
+		t.Fatalf("status=%d body=%s", response.Code, response.Body)
+	}
+	saved, err := app.GetSession(session.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(saved.Messages) != 0 {
+		t.Fatal("rejected message was persisted")
+	}
+}

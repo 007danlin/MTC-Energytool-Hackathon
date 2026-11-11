@@ -18,6 +18,7 @@ var (
 	ErrNotFound        = store.ErrNotFound
 	ErrClosed          = errors.New("session is closed")
 	ErrHistoryLimit    = errors.New("session history exceeds supported limit")
+	ErrMessageTooLong  = errors.New("message exceeds 10000 characters")
 	ErrEmptyMessage    = errors.New("message must not be empty")
 	ErrSessionConflict = errors.New("session changed while processing")
 )
@@ -73,7 +74,7 @@ func (s *Service) SendMessage(ctx context.Context, id, content string) (domain.C
 		return domain.ConsultationResult{}, ErrEmptyMessage
 	}
 	if len([]rune(content)) > 10000 {
-		return domain.ConsultationResult{}, errors.New("message exceeds 10000 characters")
+		return domain.ConsultationResult{}, ErrMessageTooLong
 	}
 	unlock := s.lock(id)
 	defer unlock()

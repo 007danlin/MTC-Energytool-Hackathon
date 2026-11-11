@@ -183,6 +183,8 @@ func (s *Server) mapError(w http.ResponseWriter, r *http.Request, err error) {
 		writeError(w, r, http.StatusConflict, "session_closed", "Session is closed")
 	case errors.Is(err, service.ErrHistoryLimit):
 		writeError(w, r, http.StatusRequestEntityTooLarge, "history_limit", "Session history limit reached")
+	case errors.Is(err, service.ErrMessageTooLong):
+		writeError(w, r, http.StatusRequestEntityTooLarge, "message_too_long", "Message exceeds 10000 characters")
 	case errors.Is(err, service.ErrEmptyMessage):
 		writeError(w, r, http.StatusBadRequest, "empty_message", "Message content is required")
 	default:

@@ -7,12 +7,16 @@ servers:
   - url: /api/v1
 paths:
   /health/live:
+    servers:
+      - url: /
     get:
       summary: Liveness probe
       responses:
         '200':
           description: Process is running
   /health/ready:
+    servers:
+      - url: /
     get:
       summary: Readiness probe
       responses:
@@ -66,14 +70,7 @@ paths:
     post:
       summary: Add a user message and run consultation
       operationId: appendMessage
-      parameters:
-        - in: header
-          name: Idempotency-Key
-          required: false
-          schema:
-            type: string
-            maxLength: 128
-          description: Recommended for safe client retries; duplicate keys must return the original result.
+      description: Automatic retries are not safe; idempotency keys are not implemented.
       requestBody:
         required: true
         content:
@@ -98,7 +95,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
         '409':
-          description: Conflicting concurrent turn or reused idempotency key
+          description: Session is closed
         '413':
           description: Request exceeds configured size limits
   /sessions/{session_id}/lead:
