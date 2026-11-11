@@ -38,3 +38,6 @@ artifacts/
 
 # Organizer knowledge base copy (do not publish)
 knowledge-base/
+
+# Local case materials; never commit organizer documents
+/temp_docs/
