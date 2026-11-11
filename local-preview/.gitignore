@@ -1,0 +1,7 @@
+/energytool-local.zip
+/energytool-site/*
+!/energytool-site/www/
+!/energytool-site/serve.py
+!/energytool-site/start.command
+!/energytool-site/README.md
+/energytool-site/www/_archive/
