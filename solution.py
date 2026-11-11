@@ -13,7 +13,7 @@ from consultant import Consultant, TECHNICAL_ANSWER
 from contracts import ConsultationRequest
 from dialogue import parse_question
 from llm_client import LLMClient
-from retrieval import LexicalRetriever
+from hybrid_retrieval import create_retriever
 from settings import ConfigurationError, Settings, env_first
 
 
@@ -130,13 +130,15 @@ def main():
         questions_path, knowledge_path = find_inputs(env_first("DATA_DIR", default="data"))
         rows = read_questions(questions_path)
         stage = "knowledge_base"
-        retriever = LexicalRetriever.from_zip(knowledge_path)
-        diagnostic("inputs_ready", rows=len(rows), fragments=len(retriever.fragments))
+        retriever = create_retriever(knowledge_path, settings)
+        diagnostic("inputs_ready", rows=len(rows), fragments=len(retriever.fragments),
+                   retrieval=retriever.stats["mode"], retrieval_startup_error=retriever.stats["startup_error"])
         service = Consultant(LLMClient(settings), retriever, settings)
         stage = "generation"
         statuses = run(rows, service, settings, deadline=started + settings.runtime_seconds)
         print(json.dumps({"rows": len(rows), "elapsed_seconds": round(time.monotonic() - started, 2),
-                          "statuses": {s: statuses.count(s) for s in sorted(set(statuses))}}, ensure_ascii=False))
+                          "statuses": {s: statuses.count(s) for s in sorted(set(statuses))},
+                          "retrieval": retriever.stats}, ensure_ascii=False))
         return 0
     except ConfigurationError as exc:
         print(str(exc), file=sys.stderr)
