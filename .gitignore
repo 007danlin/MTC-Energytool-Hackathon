@@ -35,3 +35,6 @@ reports/private/
 submission.csv
 artifacts/
 .coverage
+
+# Organizer knowledge base copy (do not publish)
+knowledge-base/
