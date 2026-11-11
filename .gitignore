@@ -41,3 +41,7 @@ knowledge-base/
 
 # Local case materials; never commit organizer documents
 /temp_docs/
+
+# Go backend local state and build output
+/backend/var/
+/backend/api
