@@ -1,0 +1,8 @@
+candidate sha256 91a29848e509c4ff2336e8aab7346774057d36ac13418eb77071b9bb7d58c1f4
+reference sha256 a22d786f895257e14fb89e747a674cd419be0d711ed43b834fb9442ef3b6ac9b
+rows 209 | modes {'kb': 209} | one request per row: True
+user messages identical to the reference: True
+system message = reference system message + one inserted block, other request fields identical: 209 of 209
+distinct inserted blocks: 1 | characters: [99269] | starts with: ['полные тексты документов об энергорынке и продуктах\n\n[Раздел: Как устроен рынок ']
+prompt characters min/median/max: candidate 162194 177349 191514 | reference 62925 78080 92245
+T4 PASS

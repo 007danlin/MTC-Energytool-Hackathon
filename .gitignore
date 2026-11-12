@@ -49,3 +49,10 @@ knowledge-base/
 
 # Local model caches
 .hf-cache/
+
+# Local transfer bundles duplicate the repository and include private inputs
+/exports/
+/handoffs/artem-energytool-5-versions-20261111.zip
+/handoffs/ТЗ-команде-N2-69.912.zip
+/handoffs/team-n2-69912-20261112/sources/
+/handoffs/team-n2-69912-20261112/prototype-source-snapshot.zip

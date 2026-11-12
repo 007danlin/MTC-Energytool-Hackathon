@@ -1,0 +1,24 @@
+{
+  "archive": "artifacts/daniel-submission-a3-experimental.zip",
+  "sha256": "c3f1f0daaabfce20bc055b97d211e9e0940476f1410a01d4f462d28c8fff77f8",
+  "bytes": 31162,
+  "files": {
+    "solution.py": "922b9a91a0463f95f5964bf74d833f6ffa706fadf3eb983823fde7e3e89ca17e",
+    "settings.py": "ba20b34608bf910eaf05bd4da782d8442c70b135a3d5091b896e787ea95514b6",
+    "llm_client.py": "488f90b124ea9977d54fdfae3d233a5abcca35457484d02eed9453f66d067dc6",
+    "contracts.py": "05a9b759fde35b7af18ffa41f0fcdc832819499d16f65f1fe248a9da4e3ce43e",
+    "dialogue.py": "dd7be5ae698e8037b9131f2a46144e3d58272004cdf1fe3b834b6fb4f4e5774b",
+    "retrieval.py": "781772487ffc76cd494e529b81c09742c02dee1b9cb05b9975d18a47206cde0d",
+    "prompts.py": "4c5b42d4232e549e3ebd4084d47d5a2d60ce5bd9b7b97b0482082484697b90db",
+    "consultant.py": "a3aaa63ee0346ab34fd68081b0517e082372871478dafd3ef2d9aecec05819b3",
+    "requirements.txt": "3c1bf09386a1e27b1c6a14918a0e63f2e4a18fb9e57219ad31e47edfb19767d5",
+    "contact_flow.py": "ab3b6db501bf28a9e82d441dee5e8a9860f1aa7174f0977b475e8b46d291604b",
+    "stable_consultant.py": "878ace93345992abee7809ae4f5d62ce99b5f432893fa22d2e5731a9c2210a0a",
+    "guarded_retrieval.py": "2fefdeb7565e7a27e1dae3a4d8567c6c1b25f124274a729e10e3d69a64ed7628"
+  },
+  "revision": "r8",
+  "scope": "A2preserved + appendonlyscopedguards + contact + APIrecovery; nocatalogplanner/rewriter; noR9",
+  "release_status": "experimental; improvement over A2 not confirmed",
+  "platform_score": null,
+  "replaces_a2": false
+}

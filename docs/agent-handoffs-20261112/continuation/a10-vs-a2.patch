@@ -1,0 +1,233 @@
+--- a2/solution.py
++++ a10/solution.py
+@@ -14,6 +14,8 @@
+ from dialogue import parse_question
+ from llm_client import LLMClient
+ from retrieval import LexicalRetriever
++from verified_conditions import VerifiedRetriever as LexicalRetriever
++from verified_conditions import ConditionConsultant as Consultant
+ from settings import ConfigurationError, Settings, env_first
+
+
+--- a2/verified_conditions.py
++++ a10/verified_conditions.py
+@@ -0,0 +1,219 @@
++"""Narrow, source-derived arithmetic supplied to unchanged A2 generation.
++
++Rules activate only with an unambiguous current value and a matching KB clause.
++They never use evaluation IDs, expected answers, or a shipped corpus.
++"""
++from decimal import Decimal, InvalidOperation
++import re
++
++from contracts import Fragment
++from retrieval import LexicalRetriever
++
++NUMBER = r"\d+(?:[.,]\d+)?"
++POWER = re.compile(r"(?<![\d.,])(" + NUMBER + r")\s*(мвт|квт)(?!\s*[·⋅*/]?\s*ч)", re.I)
++
++
++def flat(text):
++    return re.sub(r"\s+", " ", text.replace('**', '')).strip()
++
++
++def numeric(value):
++    return Decimal(value.replace(',', '.'))
++
++
++def display(value):
++    return format(value.normalize(), 'f').replace('.', ',')
++
++
++def latest_query(query):
++    latest, sep, history = query.partition('\nКонтекст разговора:\n')
++    half = len(latest) // 2
++    if sep and latest[half:half + 1] == '\n' and latest[:half] == latest[half + 1:]:
++        latest = latest[:half]
++    return latest.strip(), history.strip()
++
++
++def single_power(text):
++    # An explicit correction replaces the old scalar; other multi-value cases
++    # remain ambiguous and are deliberately left to the unchanged baseline.
++    text = re.sub(r"\bне\s*" + NUMBER + r"\s*(?:квт|мвт)\s*,?\s*а\s*", '', text, flags=re.I)
++    shared_unit = (NUMBER + r'(?:\s+и\s*|\s*[/;+–—-]\s*|\s*,\s+)'
++                   + NUMBER + r'\s*(?:квт|мвт)')
++    if re.search(shared_unit, text, re.I):
++        return None
++    values = [(numeric(m.group(1)) * (1000 if m.group(2).lower() == 'мвт' else 1), m.span())
++              for m in POWER.finditer(text)]
++    return values[0][0] if len(values) == 1 else None
++
++
++class VerifiedRetriever:
++    def __init__(self, lexical, user_messages=None):
++        self.lexical = lexical
++        self.fragments = lexical.fragments
++        self.by_id = {f.source_id: f for f in self.fragments}
++        self.user_messages = user_messages
++
++    @classmethod
++    def from_zip(cls, path):
++        return cls(LexicalRetriever.from_zip(path))
++
++    def _source(self, sid):
++        fragment = self.by_id.get(sid)
++        return flat(fragment.text) if fragment else ''
++
++    def condition_notes(self, query):
++        latest, history = latest_query(query)
++        if self.user_messages is not None:
++            latest = self.user_messages[-1].content
++            history = '\n'.join(m.content for m in self.user_messages[:-1] if m.role == 'user')
++        q = latest.lower().replace('ё', 'е')
++        history = history.lower().replace('ё', 'е')
++        power = single_power(q)
++        # Only typed user messages may supply earlier object data. Assistant
++        # suggestions in the retrieval-query wrapper are never numerical facts.
++        if (power is None and not POWER.search(q) and self.user_messages is not None
++                and re.search(r'категор|оптов|орэм|солнеч|станци|\bсэс\b', q)
++                and not re.search(r'друг(?:ой|ая|ое|ом)|нов(?:ый|ая|ое)\s+(?:объект|площад|компан)|забуд|перепут|исправ|\bне\s*\d', q)):
++            for message in reversed(self.user_messages[:-1]):
++                if message.role != 'user':
++                    continue
++                previous = message.content.lower().replace('ё', 'е')
++                if POWER.search(previous):
++                    previous_solar = bool(re.search(r'солнеч|генерац|станци|\bсэс\b', previous))
++                    current_solar = bool(re.search(r'солнеч|станци|\bсэс\b', q))
++                    reliable = not re.search(r'ошиб|неверн|неподтвержд|не уточн', previous)
++                    compatible = (previous_solar and current_solar) or (not previous_solar and not current_solar and 'мощност' in previous)
++                    if reliable and compatible:
++                        power = single_power(previous)
++                    break
++        notes = []
++
++        def add(key, sid, conclusion):
++            # Derived statements are explicitly labeled as calculations, never
++            # forged quotations. The original clause is attached for inspection.
++            source = self._source(sid)
++            if source:
++                notes.append(Fragment('derived/verified-conditions', key,
++                    'Проверка условия для текущей реплики клиента (вычислено кодом, не цитата).\n'
++                    + conclusion + '\nОснование из базы ' + sid + ':\n' + source, 1.0))
++
++        solar = bool(re.search(r'солнеч|\bсэс\b|панел|станци', q))
++        if re.search(r'газов|дизел|ветр|гидро|атом|теплов|подстанц|насосн|зарядн', q):
++            solar = False
++        scope = bool(re.search(r'типов|индивидуальн|диапазон|границ|порог|запре[тщ]|огранич|целесообраз|экономик|берете', q))
++        if solar and scope and power is not None and not re.search(r'присоедин|максимальн', q):
++            sid = '20-products/23-solar.md#s004'
++            source = self._source(sid)
++            m = re.search(r'От\s*(' + NUMBER + r')\s+до\s*(' + NUMBER + r')\s*кВт', source, re.I)
++            if m:
++                low, high = numeric(m.group(1)), numeric(m.group(2))
++                if low <= power <= high:
++                    conclusion = (f'Названная мощность солнечной генерации: {display(power)} кВт. '
++                                  f'{display(low)} <= {display(power)} <= {display(high)}: находится внутри типового диапазона. '
++                                  'Утверждение, что эта мощность выше типового диапазона, неверно. '
++                                  'Проверен только диапазон мощности; ограничения по клиенту и режиму нагрузки остаются отдельными условиями.')
++                elif power > high:
++                    conclusion = (f'Названная мощность солнечной генерации: {display(power)} кВт. '
++                                  f'{display(power)} > {display(high)}: за верхней границей типового диапазона, нужен индивидуальный проект. '
++                                  'Это не запрет на сам проект.')
++                else:
++                    conclusion = (f'Названная мощность солнечной генерации: {display(power)} кВт. '
++                                  f'{display(power)} < {display(low)}: ниже целесообразного диапазона продукта. '
++                                  'Это экономическая граница, не установленный технический запрет. '
++                                  'Мощность солнечной генерации не является присоединённой мощностью объекта; '
++                                  'по ней нельзя выбирать однофазный или трёхфазный учёт.')
++                add('solar-power', sid, conclusion)
++
++        orem = bool(re.search(r'оптов|орэм', q))
++        if not solar and not re.search(r'платформ|фото|потер|ценов.*категор', q):
++            orem = orem or (not re.search(r'друг(?:ой|ом) продукт', q) and bool(re.search(r'оптов|орэм', history[-1600:])))
++        if orem and power is not None and not solar:
++            sid = '20-products/21-orem.md#s003'
++            source = self._source(sid)
++            low = re.search(r'ниже\s+(' + NUMBER + r')\s*кВт', source, re.I)
++            direct = re.search(r'От\s+(' + NUMBER + r')\s*МВт\s*-\s*возможно прямое', source, re.I)
++            if low and direct:
++                minimum, direct_kw = numeric(low.group(1)), numeric(direct.group(1)) * 1000
++                if power < minimum:
++                    conclusion = (f'Текущая указанная мощность {display(power)} кВт < {display(minimum)} кВт. '
++                                  'Выход на оптовый рынок невозможен, в том числе через посредника. '
++                                  'Большое потребление и почасовые приборы не заменяют порог мощности.')
++                elif power < direct_kw:
++                    conclusion = (f'{display(minimum)} <= {display(power)} < {display(direct_kw)} кВт: '
++                                  'возможен путь через энергосбытовую компанию-посредника; прямое участие по этой мощности невозможно. '
++                                  'Это только проверка порога мощности, не гарантия экономической выгоды или выполнения остальных условий.')
++                else:
++                    conclusion = (f'{display(power)} >= {display(direct_kw)} кВт: выполнено условие мощности для прямого участия. '
++                                  'География, аудит и экономика остаются отдельными условиями; одной мощности недостаточно для обещания результата.')
++                add('orem-power', sid, conclusion)
++        if orem and re.search(r'потреблен|расход|объем', q) and re.search(r'миллион|млн|квт.?ч', q) and re.search(r'запрет|нельзя|порог|меньше|менее|обязател', q):
++            sid = '20-products/21-orem.md#s004'
++            source = self._source(sid)
++            if 'ориентир, а не фильтр' in source.lower():
++                add('orem-consumption', sid,
++                    'Вопрос об ограничении по объёму потребления: экономический ориентир не является запретом допуска. '
++                    'Ответ «да, это запрет» на предположение о запрете ниже ориентира противоречит базе. '
++                    'Допуск по мощности проверяется отдельно, экономическая целесообразность — расчётом.')
++
++        if power is not None and re.search(r'категор', q) and not solar:
++            sid = '10-energy/11-price-categories.md#s005'
++            source = self._source(sid)
++            m = re.search(r'от\s+(' + NUMBER + r')\s*кВт', source, re.I)
++            if m and power >= numeric(m.group(1)):
++                add('tariff-power', sid,
++                    f'Указанная максимальная мощность {display(power)} кВт не ниже порога {m.group(1)} кВт. '
++                    'Категории I и II не подходят: требуются III–VI и почасовой учёт. '
++                    'Отсутствие почасового прибора не отменяет требование.')
++
++        if re.search(r'шифер|кровл|крыш', q) and re.search(r'шифер', q + ' ' + history[-600:]):
++            ages = re.findall(r'(' + NUMBER + r')\s*(?:лет|года?|год)\b', q)
++            sid = '20-products/23-solar.md#s007'
++            source = self._source(sid)
++            m = re.search(r'срок службы шифера около\s+(' + NUMBER + r')\s*лет, срок службы панелей\s+(' + NUMBER + r')\s*лет', source, re.I)
++            if len(ages) == 1 and m and re.search(r'назад|возраст|исполнил|кровл.{0,30}\d|шифер.{0,30}\d', q):
++                age, roof, panels = numeric(ages[0]), numeric(m.group(1)), numeric(m.group(2))
++                if 0 < age < roof and roof - age < panels:
++                    add('roof-life', sid,
++                        f'Для уже используемой кровли сравнивается оставшийся срок: ориентировочно {display(roof)} - {display(age)} = {display(roof-age)} лет. '
++                        f'Он меньше срока новых панелей {display(panels)} лет; кровля может потребовать замены раньше панелей. '
++                        'Это объясняет риск демонтажа и повторного монтажа. Нормативный срок не гарантирует фактическое состояние крыши.')
++
++        losses = bool(re.search(r'потер|хищен', q + ' ' + history[-600:]))
++        if losses and re.search(r'архив|данн|истори', q):
++            durations = re.findall(r'(' + NUMBER + r')\s*(месяц\w*|мес\.?|лет|года?|год)\b', q)
++            sid = '20-products/24-losses.md#s009'
++            source = self._source(sid)
++            if len(durations) == 1 and 'не менее одного года' in source.lower():
++                value, unit = durations[0]
++                months = numeric(value) * (1 if unit.startswith('мес') else 12)
++                relation = 'достаточно' if months >= 12 else 'недостаточно'
++                add('archive-depth', sid,
++                    f'Глубина указанного архива: {display(months)} месяцев; по длительности этого {relation} относительно минимального одного года (12 месяцев). '
++                    'Число месяцев в описании клиента не становится новым обязательным минимумом продукта. '
++                    'Достаточность состава данных проверяется отдельно: для суточных данных требуется разделение на день и ночь; часовые интервалы желательны.')
++        return notes[:2]
++
++    def search(self, query, top_k=12):
++        base = self.lexical.search(query, top_k)
++        try:
++            notes = self.condition_notes(query)
++        except (InvalidOperation, ValueError, TypeError):
++            notes = []
++        # Existing A2 fragment text/order is untouched. No numeric decision is
++        # emitted when parsing the current facts or the source clause is ambiguous.
++        return base + notes
++
++
++# A per-request retriever prevents object facts leaking between concurrent CSV
++# rows. Main A2 generation and its original retrieval query stay unchanged.
++from consultant import Consultant
++
++
++class ConditionConsultant(Consultant):
++    def respond(self, request, *, deadline=None, answer_only=False):
++        if not answer_only:
++            return super().respond(request, deadline=deadline, answer_only=answer_only)
++        lexical = self.retriever.lexical if isinstance(self.retriever, VerifiedRetriever) else self.retriever
++        scoped = VerifiedRetriever(lexical, user_messages=request.messages)
++        delegate = Consultant(self.client, scoped, self.settings)
++        return delegate.respond(request, deadline=deadline, answer_only=True)

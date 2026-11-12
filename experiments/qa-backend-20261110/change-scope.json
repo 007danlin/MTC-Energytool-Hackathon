@@ -1,0 +1,7 @@
+{
+  "baseline_sha256": "fa81606a5e4b89cd4b36a13139d906e8940bbc462d43d127ddfaac129c50f013",
+  "scope": "isolated backend QA correction; not F/G/H score candidate",
+  "csv_prompt_unchanged": true,
+  "root_runtime_unchanged": true,
+  "platform_score": null
+}

@@ -1,0 +1,60 @@
+{
+  "created_utc": "2026-11-11T18:54:10.858319+00:00",
+  "python": "3.14.7",
+  "unit_tests_passed": 67,
+  "unit_test_suites": {
+    "runtime": 65,
+    "host_harness": 2
+  },
+  "offline": {
+    "created_utc": "2026-11-11T18:54:06.976571+00:00",
+    "mode": "offline",
+    "model": "MOCK",
+    "scenario_count": 30,
+    "protocol_pass": 30,
+    "retrieval_coverage_pass": 18,
+    "retrieval_coverage_total": 18,
+    "semantic_quality_verified": false,
+    "platform_score": null,
+    "notes": "Coverage checks presence of annotated evidence, not answer quality or ranking optimality."
+  },
+  "isolated_zip": {
+    "mode": "mock_http_isolated_zip",
+    "rows": 18,
+    "api_calls": 18,
+    "selector_calls": 0,
+    "answer_calls": 18,
+    "selector_failures": 0,
+    "answer_rate_limits": 0,
+    "stage_counts_exact": true,
+    "csv_valid": true,
+    "exit_code": 0,
+    "quality_verified": false,
+    "fault_injection": {
+      "mode": "mock_http_isolated_zip",
+      "rows": 18,
+      "api_calls": 19,
+      "selector_calls": 0,
+      "answer_calls": 19,
+      "selector_failures": 0,
+      "answer_rate_limits": 1,
+      "stage_counts_exact": true,
+      "csv_valid": true,
+      "exit_code": 0,
+      "quality_verified": false
+    }
+  },
+  "zip_bytes": 27779,
+  "zip_sha256": "aadb133292a9c9d1a6b730649f27055c87d3d8985d3257fc6496c547b85a6253",
+  "live_model_verified": false,
+  "platform_submission_verified": false,
+  "team_backend_integration_verified": false,
+  "python_compatibility": {
+    "created_utc": "2026-11-11T18:54:15.272527+00:00",
+    "image": "python:3.9-slim",
+    "python": "3.9.25",
+    "tests_passed": 65,
+    "zip_sha256": "aadb133292a9c9d1a6b730649f27055c87d3d8985d3257fc6496c547b85a6253",
+    "exit_code": 0
+  }
+}

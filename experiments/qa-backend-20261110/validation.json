@@ -1,0 +1,10 @@
+{
+  "runtime_tests_passed": 73,
+  "root_runtime_matches_a2": true,
+  "a2_sha256": "fa81606a5e4b89cd4b36a13139d906e8940bbc462d43d127ddfaac129c50f013",
+  "csv_answer_prompt_equal_a2": true,
+  "live_model_backend_verified": false,
+  "platform_score_verified": false,
+  "schema_version": "1.1",
+  "reviewable_patch": "backend-qa.patch"
+}

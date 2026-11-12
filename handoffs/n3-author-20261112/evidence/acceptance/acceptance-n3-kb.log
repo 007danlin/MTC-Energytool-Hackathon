@@ -1,0 +1,51 @@
+PASS zip: size <= 128 MB — 44880 bytes
+PASS zip: root files only, no folders — ['solution.py', 'settings.py', 'llm_client.py', 'consultant.py', 'prompts.py', 'prompts_a2.py', 'dialogue_n1.py', 'fewshot.py', 'retrieval.py', 'retrieval_a2.py', 'dialogue.py', 'contracts.py', 'requirements.txt']
+PASS zip: solution.py and requirements.txt present
+PASS zip: no data, secrets or indexes
+PASS requirements: only allowed pinned packages — standard library only
+PASS python: syntax valid for Python 3.9 grammar
+PASS python: imports are stdlib or root modules; no pip/subprocess/eval
+PASS zip: no key-like strings
+PASS code: no hardcoded model identifier or service address
+PASS S01 normal run: all ids, valid CSV, no stubs — {'rows': 209, 'problems': [], 'technical_stubs': 0, 'max_answer_chars': 97, 'multiline_answers': 0, 'sha256': 'a7c4379d28a94323947b5cb3f45f6c74d0377654d107a746094fa44b838a46c2'}
+PASS S01 key from environment in Authorization; model id from environment — ['mock-model']
+PASS S01 answers single-line plain text
+PASS S01 one API call per row — 209
+   prompt chars max: 191514 max_tokens: [4096] extras: [''] elapsed: 1.84
+PASS S02b long 429 burst (4 refusals per worker): patient retries keep the first request, no row degraded — ({'ok': 209}, {'injected': 12, 'ok': 209})
+PASS S02 429 burst: bounded retries recover every row — {'injected': 9, 'ok': 209}
+PASS S03 5xx burst: bounded retries recover every row — {'injected': 9, 'ok': 209}
+PASS S04 strict proxy rejects reasoning hints: hints dropped, run clean — {'ok': 209, 'strict': 16}
+PASS S05 proxy caps max_tokens at platform value: falls back, run clean — {'cap': 1, 'ok': 209}
+PASS S06 thinking exhausts tokens: recovery call answers, no stubs — ({'ok': 209, 'truncated': 418}, {'recovered': 209})
+PASS S07 every generation token-limited: grounded fallback text, valid CSV, no stubs, bounded calls — (627, {'fallback': 209})
+PASS S08 full base over a small context window: learns the window, compact context for every row, run clean — ({'context': 6, 'ok': 209}, {'wide': 209}, 59460)
+PASS S08b full base over a medium context window: documents for every row, run clean — ({'context': 3, 'ok': 209}, {'docs': 209}, 128050)
+PASS S08d documents slightly over the window: sized to the stated window, documents kept for every row — ({'context': 1, 'ok': 209}, 74636)
+PASS S08c large contexts time out: steps down to the compact context, complete CSV without stubs — (32.7, {'ok': 201, 'retried': 8})
+PASS S06b reasoning longer than the first budget: second try in the same context with 8192 tokens answers every row — ({'4096': 0, '8192': 209}, {'retried': 209}, {'kb': 209})
+PASS S06c same with a proxy that rejects reasoning hints: hints dropped, larger budget still answers — ({'ok': 209, 'strict': 10, 'truncated': 209}, {'retried': 209})
+PASS S06d proxy caps max_tokens at 4096: ladder stops at 4096, never falls to the platform value — ([4096, 8192], {'4096': 209, '8192': 0}, {'cap': 2, 'ok': 209, 'truncated': 209})
+PASS S06e repetition loop of the first prompt: the second try (other prompt) answers every row — {'retried': 209}
+PASS S06f a share of token-limited rows does not change the context of the other rows — ({'ok': 182, 'retried': 27}, {'kb': 209})
+PASS S09 full-base mode accepted: one call per row — 160617
+PASS S09b documents mode: one call per row — 92245
+PASS S09c compact mode: one call per row — 28392
+PASS S10 budget exhausted: complete valid CSV without stubs, stops near the budget — (12.47, {'deadline_fallback': 73, 'ok': 136})
+PASS S11 empty content with finish=stop: recovered — {'ok': 147, 'recovered': 27, 'retried': 35}
+PASS S12 inline <think> removed; Connection: close handled
+PASS S13 HTTP 401 for every call: no retry storm, complete CSV without stubs — 209
+PASS S14 malformed optional settings do not abort — [4096]
+PASS S15 OPENAI_BASE_URL accepted
+PASS S16 runs under Python 3.11
+PASS S17 tricky CSV (BOM, CRLF, reversed columns, quotes, newlines, JSON dialogue, 30k chars) — {'rows': 9, 'problems': [], 'technical_stubs': 0, 'max_answer_chars': 97, 'multiline_answers': 0, 'sha256': '492b5293c08c2f1281d236ebde04e07969262eae7c2cea680c400168df5041ab'}
+PASS S17 output ids equal input ids in order
+PASS S17 isolation: contact data of one id appears only in its own request — 1
+PASS S17 identical questions under different ids produce identical requests (no shared state) — (9, 8)
+PASS S17 multi-line question reaches the model whole
+PASS S18 legacy names train.csv/kb.zip, absolute DATA_DIR, BASE_URL/OPENAI_API_KEY/GEN_MODEL
+PASS S18 logs contain no key, address, question or answer text
+PASS S19 missing API configuration: clear non-zero exit, no traceback — {"event": "startup", "python": "3.13.18", "build": "n3"}
+Missing configuration: LLM_BASE_URL/OPENAI_BASE_URL/BASE_URL, L
+ACCEPTANCE 47/47  sha256=91a29848e509c4ff2336e8aab7346774057d36ac13418eb77071b9bb7d58c1f4
+exit=0

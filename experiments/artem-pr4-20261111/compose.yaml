@@ -1,0 +1,14 @@
+name: energytool
+services:
+  ml-submit:
+    build: .
+    env_file: .env
+    environment:
+      DATA_DIR: /data
+    volumes:
+      - ./data:/data:ro
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL

@@ -1,0 +1,598 @@
+{
+  "created_utc": "2026-11-10T16:13:19.606686+00:00",
+  "decision": "no_promotion_improvement_over_v3_not_confirmed",
+  "scope_completed": "All authorized strategies through D evaluated; no new strategies after user's stop condition.",
+  "best_confirmed_platform_version": "v3",
+  "platform_score_reported_by_user": "50.438",
+  "platform_score_independently_verified": false,
+  "platform_uploads_used": 0,
+  "v3_sha256": "8080cc06980f8dde184cc1320ccafca2dffd7a58b5a7ba6772bef177dde4ab09",
+  "root_runtime_matches_v3": true,
+  "v5_created": false,
+  "model": {
+    "parent_model": "qwen3-vl:30b-a3b-instruct",
+    "format": "gguf",
+    "family": "qwen3vlmoe",
+    "families": [
+      "qwen3vlmoe"
+    ],
+    "parameter_size": "31.1B",
+    "quantization_level": "Q4_K_M"
+  },
+  "model_alias": "energytool-qwen-local-eval:20261110",
+  "settings": {
+    "temperature": 0,
+    "seed": 42,
+    "context": 16384,
+    "max_tokens": 2048,
+    "workers": 1,
+    "timeout": 180,
+    "attempts": 1,
+    "run_budget_seconds": 1120
+  },
+  "platform_model_tested_locally": false,
+  "platform_score_prediction": null,
+  "candidates": [
+    {
+      "label": "A",
+      "zip": "reports/private/strategy-20261110/candidates/a/candidate.zip",
+      "zip_sha256": "ee8f410a660449fa88e5506721f9c2c52062c007146c9027f505022eec135ef4",
+      "zip_bytes": 23016,
+      "dev": {
+        "n": 12,
+        "wins": 3,
+        "ties": 6,
+        "losses": 3,
+        "net_wins": 0,
+        "control_grades": {
+          "major": 2,
+          "good": 4,
+          "partial": 6
+        },
+        "candidate_grades": {
+          "good": 6,
+          "partial": 3,
+          "major": 3
+        },
+        "new_major_ids": [
+          "dev06",
+          "dev09"
+        ]
+      },
+      "score_evidence": "reports/private/strategy-20261110/reviews/dev-pair-01.score-adjudicated.json",
+      "decision": "Новые существенные ошибки"
+    },
+    {
+      "label": "B",
+      "zip": "reports/private/strategy-20261110/candidates/b/candidate.zip",
+      "zip_sha256": "67209689834f1846d7cb5e596176581269f91bc7c777b5c443c5e9fc9677485b",
+      "zip_bytes": 22692,
+      "dev": {
+        "n": 12,
+        "wins": 4,
+        "ties": 6,
+        "losses": 2,
+        "net_wins": 2,
+        "control_grades": {
+          "major": 2,
+          "good": 4,
+          "partial": 6
+        },
+        "candidate_grades": {
+          "major": 3,
+          "good": 6,
+          "partial": 3
+        },
+        "new_major_ids": [
+          "dev08"
+        ]
+      },
+      "score_evidence": "reports/private/strategy-20261110/reviews/dev-pair-02.score-adjudicated.json",
+      "decision": "Новая существенная ошибка"
+    },
+    {
+      "label": "C10",
+      "zip": "reports/private/strategy-20261110/candidates/c10/candidate.zip",
+      "zip_sha256": "2b5a191beda7b088cc339728d1a7b9910af03b863f662aa5a27e703c0c87eff5",
+      "zip_bytes": 22733,
+      "dev": {
+        "n": 12,
+        "wins": 4,
+        "ties": 6,
+        "losses": 2,
+        "net_wins": 2,
+        "control_grades": {
+          "major": 2,
+          "good": 4,
+          "partial": 6
+        },
+        "candidate_grades": {
+          "major": 3,
+          "good": 4,
+          "partial": 5
+        },
+        "new_major_ids": [
+          "dev02"
+        ]
+      },
+      "score_evidence": "reports/private/strategy-20261110/reviews/dev-pair-03.score-initial.json",
+      "decision": "Новая существенная ошибка"
+    },
+    {
+      "label": "C6",
+      "zip": "reports/private/strategy-20261110/candidates/c/candidate.zip",
+      "zip_sha256": "771c5b57f8d92d1b62d4fdb4ea79064c2b594ea43876d6c3f43094e4a95edeb3",
+      "zip_bytes": 22733,
+      "dev": {
+        "n": 12,
+        "wins": 3,
+        "ties": 7,
+        "losses": 2,
+        "net_wins": 1,
+        "control_grades": {
+          "major": 2,
+          "good": 4,
+          "partial": 6
+        },
+        "candidate_grades": {
+          "major": 3,
+          "good": 4,
+          "partial": 5
+        },
+        "new_major_ids": [
+          "dev09"
+        ]
+      },
+      "score_evidence": "reports/private/strategy-20261110/reviews/dev-pair-04.score-adjudicated.json",
+      "decision": "Новая существенная ошибка"
+    },
+    {
+      "label": "A2",
+      "zip": "reports/private/strategy-20261110/candidates/a2/candidate.zip",
+      "zip_sha256": "fa81606a5e4b89cd4b36a13139d906e8940bbc462d43d127ddfaac129c50f013",
+      "zip_bytes": 22863,
+      "dev": {
+        "n": 12,
+        "wins": 4,
+        "ties": 6,
+        "losses": 2,
+        "net_wins": 2,
+        "control_grades": {
+          "major": 2,
+          "good": 4,
+          "partial": 6
+        },
+        "candidate_grades": {
+          "good": 5,
+          "partial": 6,
+          "major": 1
+        },
+        "new_major_ids": []
+      },
+      "score_evidence": "reports/private/strategy-20261110/reviews/dev-pair-05.score.json",
+      "decision": "Лучший баланс на dev; обязательные регрессии не исправлены"
+    },
+    {
+      "label": "E",
+      "zip": "reports/private/strategy-20261110/candidates/e/candidate.zip",
+      "zip_sha256": "38b8794704f1a44062e105481ca54d8411dd1008206523dc525d284e5f25a831",
+      "zip_bytes": 23037,
+      "dev": {
+        "n": 12,
+        "wins": 1,
+        "ties": 10,
+        "losses": 1,
+        "net_wins": 0,
+        "control_grades": {
+          "major": 2,
+          "good": 4,
+          "partial": 6
+        },
+        "candidate_grades": {
+          "major": 2,
+          "partial": 7,
+          "good": 3
+        },
+        "new_major_ids": []
+      },
+      "score_evidence": "reports/private/strategy-20261110/reviews/dev-pair-06.score.json",
+      "decision": "Нет чистого выигрыша"
+    },
+    {
+      "label": "A2+E",
+      "zip": "reports/private/strategy-20261110/candidates/a2e/candidate.zip",
+      "zip_sha256": "04535a8967f8e315038f65f4b191da5539c4c58fae59764d7c563ab287bbe0fa",
+      "zip_bytes": 23232,
+      "dev": {
+        "n": 12,
+        "wins": 5,
+        "ties": 6,
+        "losses": 1,
+        "net_wins": 4,
+        "control_grades": {
+          "major": 2,
+          "good": 4,
+          "partial": 6
+        },
+        "candidate_grades": {
+          "good": 7,
+          "major": 2,
+          "partial": 3
+        },
+        "new_major_ids": [
+          "dev09"
+        ]
+      },
+      "score_evidence": "reports/private/strategy-20261110/reviews/dev-pair-07.score.json",
+      "decision": "Новая существенная ошибка"
+    },
+    {
+      "label": "D",
+      "zip": "reports/private/strategy-20261110/candidates/d/candidate.zip",
+      "zip_sha256": "a0440ded79dfbc912b4becf8bd8e5b506ceb7c74b643169d3f4d3d5b382d884a",
+      "zip_bytes": 25037,
+      "dev": {
+        "n": 12,
+        "wins": 4,
+        "ties": 6,
+        "losses": 2,
+        "net_wins": 2,
+        "control_grades": {
+          "major": 2,
+          "good": 4,
+          "partial": 6
+        },
+        "candidate_grades": {
+          "good": 5,
+          "partial": 6,
+          "major": 1
+        },
+        "new_major_ids": []
+      },
+      "score_evidence": "reports/private/strategy-20261110/reviews/dev-pair-08.score.json",
+      "decision": "12/12 ответов равны A2; дополнительный этап не сработал"
+    }
+  ],
+  "runs": [
+    {
+      "name": "dev-a",
+      "rows": 12,
+      "api_calls": 12,
+      "http_failures": 0,
+      "length_cutoffs": 0,
+      "elapsed_seconds": 300.64,
+      "zip_sha256": "ee8f410a660449fa88e5506721f9c2c52062c007146c9027f505022eec135ef4",
+      "questions_sha256": "68c57e9e8c952cccbcfee51c1eafbca9cf7a53821ca6f8e4c365e2937617f615",
+      "knowledge_base_sha256": "d5f1bbba0094d1eb7e4918bd7a1d37c621ae5cd498010ca2cba041ddddafd66a",
+      "resource_usage": {
+        "event": "runtime_resource_usage",
+        "max_rss_raw": 31997952,
+        "max_rss_unit": "bytes"
+      },
+      "prompt_tokens": 52546,
+      "completion_tokens": 1495,
+      "request_seconds": {
+        "p50": 25.2715,
+        "p95_nearest_rank": 44.067,
+        "max": 44.067
+      }
+    },
+    {
+      "name": "dev-a2",
+      "rows": 12,
+      "api_calls": 12,
+      "http_failures": 0,
+      "length_cutoffs": 0,
+      "elapsed_seconds": 303.06,
+      "zip_sha256": "fa81606a5e4b89cd4b36a13139d906e8940bbc462d43d127ddfaac129c50f013",
+      "questions_sha256": "68c57e9e8c952cccbcfee51c1eafbca9cf7a53821ca6f8e4c365e2937617f615",
+      "knowledge_base_sha256": "d5f1bbba0094d1eb7e4918bd7a1d37c621ae5cd498010ca2cba041ddddafd66a",
+      "resource_usage": {
+        "event": "runtime_resource_usage",
+        "max_rss_raw": 31948800,
+        "max_rss_unit": "bytes"
+      },
+      "prompt_tokens": 51298,
+      "completion_tokens": 1538,
+      "request_seconds": {
+        "p50": 25.9225,
+        "p95_nearest_rank": 30.521,
+        "max": 30.521
+      }
+    },
+    {
+      "name": "dev-a2e",
+      "rows": 12,
+      "api_calls": 12,
+      "http_failures": 0,
+      "length_cutoffs": 0,
+      "elapsed_seconds": 370.1,
+      "zip_sha256": "04535a8967f8e315038f65f4b191da5539c4c58fae59764d7c563ab287bbe0fa",
+      "questions_sha256": "68c57e9e8c952cccbcfee51c1eafbca9cf7a53821ca6f8e4c365e2937617f615",
+      "knowledge_base_sha256": "d5f1bbba0094d1eb7e4918bd7a1d37c621ae5cd498010ca2cba041ddddafd66a",
+      "resource_usage": {
+        "event": "runtime_resource_usage",
+        "max_rss_raw": 35078144,
+        "max_rss_unit": "bytes"
+      },
+      "prompt_tokens": 51658,
+      "completion_tokens": 1525,
+      "request_seconds": {
+        "p50": 31.942500000000003,
+        "p95_nearest_rank": 41.378,
+        "max": 41.378
+      }
+    },
+    {
+      "name": "dev-b",
+      "rows": 12,
+      "api_calls": 12,
+      "http_failures": 0,
+      "length_cutoffs": 0,
+      "elapsed_seconds": 299.82,
+      "zip_sha256": "67209689834f1846d7cb5e596176581269f91bc7c777b5c443c5e9fc9677485b",
+      "questions_sha256": "68c57e9e8c952cccbcfee51c1eafbca9cf7a53821ca6f8e4c365e2937617f615",
+      "knowledge_base_sha256": "d5f1bbba0094d1eb7e4918bd7a1d37c621ae5cd498010ca2cba041ddddafd66a",
+      "resource_usage": {
+        "event": "runtime_resource_usage",
+        "max_rss_raw": 32145408,
+        "max_rss_unit": "bytes"
+      },
+      "prompt_tokens": 51937,
+      "completion_tokens": 1601,
+      "request_seconds": {
+        "p50": 25.3485,
+        "p95_nearest_rank": 34.325,
+        "max": 34.325
+      }
+    },
+    {
+      "name": "dev-c10",
+      "rows": 12,
+      "api_calls": 12,
+      "http_failures": 0,
+      "length_cutoffs": 0,
+      "elapsed_seconds": 103.95,
+      "zip_sha256": "2b5a191beda7b088cc339728d1a7b9910af03b863f662aa5a27e703c0c87eff5",
+      "questions_sha256": "68c57e9e8c952cccbcfee51c1eafbca9cf7a53821ca6f8e4c365e2937617f615",
+      "knowledge_base_sha256": "d5f1bbba0094d1eb7e4918bd7a1d37c621ae5cd498010ca2cba041ddddafd66a",
+      "resource_usage": {
+        "event": "runtime_resource_usage",
+        "max_rss_raw": 32030720,
+        "max_rss_unit": "bytes"
+      },
+      "prompt_tokens": 44195,
+      "completion_tokens": 1787,
+      "request_seconds": {
+        "p50": 8.382,
+        "p95_nearest_rank": 12.717,
+        "max": 12.717
+      }
+    },
+    {
+      "name": "dev-c6",
+      "rows": 12,
+      "api_calls": 12,
+      "http_failures": 0,
+      "length_cutoffs": 0,
+      "elapsed_seconds": 113.57,
+      "zip_sha256": "771c5b57f8d92d1b62d4fdb4ea79064c2b594ea43876d6c3f43094e4a95edeb3",
+      "questions_sha256": "68c57e9e8c952cccbcfee51c1eafbca9cf7a53821ca6f8e4c365e2937617f615",
+      "knowledge_base_sha256": "d5f1bbba0094d1eb7e4918bd7a1d37c621ae5cd498010ca2cba041ddddafd66a",
+      "resource_usage": {
+        "event": "runtime_resource_usage",
+        "max_rss_raw": 31981568,
+        "max_rss_unit": "bytes"
+      },
+      "prompt_tokens": 35048,
+      "completion_tokens": 1908,
+      "request_seconds": {
+        "p50": 10.161,
+        "p95_nearest_rank": 12.336,
+        "max": 12.336
+      }
+    },
+    {
+      "name": "dev-d",
+      "rows": 12,
+      "api_calls": 24,
+      "http_failures": 0,
+      "length_cutoffs": 5,
+      "elapsed_seconds": 688.04,
+      "zip_sha256": "a0440ded79dfbc912b4becf8bd8e5b506ceb7c74b643169d3f4d3d5b382d884a",
+      "questions_sha256": "68c57e9e8c952cccbcfee51c1eafbca9cf7a53821ca6f8e4c365e2937617f615",
+      "knowledge_base_sha256": "d5f1bbba0094d1eb7e4918bd7a1d37c621ae5cd498010ca2cba041ddddafd66a",
+      "resource_usage": {
+        "event": "runtime_resource_usage",
+        "max_rss_raw": 32194560,
+        "max_rss_unit": "bytes"
+      },
+      "prompt_tokens": 97787,
+      "completion_tokens": 5821,
+      "request_seconds": {
+        "p50": 28.346,
+        "p95_nearest_rank": 39.621,
+        "max": 41.489
+      }
+    },
+    {
+      "name": "dev-e",
+      "rows": 12,
+      "api_calls": 12,
+      "http_failures": 0,
+      "length_cutoffs": 0,
+      "elapsed_seconds": 378.33,
+      "zip_sha256": "38b8794704f1a44062e105481ca54d8411dd1008206523dc525d284e5f25a831",
+      "questions_sha256": "68c57e9e8c952cccbcfee51c1eafbca9cf7a53821ca6f8e4c365e2937617f615",
+      "knowledge_base_sha256": "d5f1bbba0094d1eb7e4918bd7a1d37c621ae5cd498010ca2cba041ddddafd66a",
+      "resource_usage": {
+        "event": "runtime_resource_usage",
+        "max_rss_raw": 35094528,
+        "max_rss_unit": "bytes"
+      },
+      "prompt_tokens": 51562,
+      "completion_tokens": 1950,
+      "request_seconds": {
+        "p50": 31.174,
+        "p95_nearest_rank": 43.944,
+        "max": 43.944
+      }
+    },
+    {
+      "name": "dev-v3",
+      "rows": 12,
+      "api_calls": 12,
+      "http_failures": 0,
+      "length_cutoffs": 0,
+      "elapsed_seconds": 274.63,
+      "zip_sha256": "8080cc06980f8dde184cc1320ccafca2dffd7a58b5a7ba6772bef177dde4ab09",
+      "questions_sha256": "68c57e9e8c952cccbcfee51c1eafbca9cf7a53821ca6f8e4c365e2937617f615",
+      "knowledge_base_sha256": "d5f1bbba0094d1eb7e4918bd7a1d37c621ae5cd498010ca2cba041ddddafd66a",
+      "resource_usage": {
+        "event": "runtime_resource_usage",
+        "max_rss_raw": 32129024,
+        "max_rss_unit": "bytes"
+      },
+      "prompt_tokens": 51202,
+      "completion_tokens": 1894,
+      "request_seconds": {
+        "p50": 22.2625,
+        "p95_nearest_rank": 43.444,
+        "max": 43.444
+      }
+    },
+    {
+      "name": "holdout-v3-sealed",
+      "rows": 24,
+      "api_calls": 24,
+      "http_failures": 0,
+      "length_cutoffs": 0,
+      "elapsed_seconds": 588.55,
+      "zip_sha256": "8080cc06980f8dde184cc1320ccafca2dffd7a58b5a7ba6772bef177dde4ab09",
+      "questions_sha256": "8ac5e11f5edffe4afc1bc9d65c4a0aae3af354f7dc4df6e293de16834309e798",
+      "knowledge_base_sha256": "d5f1bbba0094d1eb7e4918bd7a1d37c621ae5cd498010ca2cba041ddddafd66a",
+      "resource_usage": {
+        "event": "runtime_resource_usage",
+        "max_rss_raw": 31932416,
+        "max_rss_unit": "bytes"
+      },
+      "prompt_tokens": 106811,
+      "completion_tokens": 3324,
+      "request_seconds": {
+        "p50": 24.7275,
+        "p95_nearest_rank": 31.581,
+        "max": 46.131
+      }
+    },
+    {
+      "name": "regression-a2",
+      "rows": 23,
+      "api_calls": 23,
+      "http_failures": 0,
+      "length_cutoffs": 0,
+      "elapsed_seconds": 765.94,
+      "zip_sha256": "fa81606a5e4b89cd4b36a13139d906e8940bbc462d43d127ddfaac129c50f013",
+      "questions_sha256": "36f0b771fc227189fdc7dcf6712c4b706ad76ec1dab56f39b413ce0eab2ce139",
+      "knowledge_base_sha256": "d5f1bbba0094d1eb7e4918bd7a1d37c621ae5cd498010ca2cba041ddddafd66a",
+      "resource_usage": {
+        "event": "runtime_resource_usage",
+        "max_rss_raw": 32063488,
+        "max_rss_unit": "bytes"
+      },
+      "prompt_tokens": 96759,
+      "completion_tokens": 2775,
+      "request_seconds": {
+        "p50": 32.072,
+        "p95_nearest_rank": 46.217,
+        "max": 46.76
+      }
+    },
+    {
+      "name": "regression-v3",
+      "rows": 23,
+      "api_calls": 23,
+      "http_failures": 0,
+      "length_cutoffs": 0,
+      "elapsed_seconds": 570.91,
+      "zip_sha256": "8080cc06980f8dde184cc1320ccafca2dffd7a58b5a7ba6772bef177dde4ab09",
+      "questions_sha256": "36f0b771fc227189fdc7dcf6712c4b706ad76ec1dab56f39b413ce0eab2ce139",
+      "knowledge_base_sha256": "d5f1bbba0094d1eb7e4918bd7a1d37c621ae5cd498010ca2cba041ddddafd66a",
+      "resource_usage": {
+        "event": "runtime_resource_usage",
+        "max_rss_raw": 32063488,
+        "max_rss_unit": "bytes"
+      },
+      "prompt_tokens": 96575,
+      "completion_tokens": 3099,
+      "request_seconds": {
+        "p50": 22.873,
+        "p95_nearest_rank": 36.311,
+        "max": 39.635
+      }
+    }
+  ],
+  "totals": {
+    "runs": 12,
+    "answer_rows": 178,
+    "api_calls": 190,
+    "runtime_seconds": 4757.54
+  },
+  "A2_regression": {
+    "n": 23,
+    "wins": 3,
+    "ties": 19,
+    "losses": 1,
+    "net_wins": 2,
+    "control_grades": {
+      "good": 13,
+      "major": 2,
+      "partial": 8
+    },
+    "candidate_grades": {
+      "good": 14,
+      "major": 2,
+      "partial": 7
+    },
+    "new_major_ids": [],
+    "known_case_2_fixed": false,
+    "known_case_17_fixed": false,
+    "previously_good14_no_longer_good_ids": [],
+    "gate_passed": false,
+    "adjudication": "Case17 primary reviewer partial, second major. Preregistered complete-task-substitution major retained equally for both versions. Both reviewers agree problem remains."
+  },
+  "D": {
+    "all12_answers_byte_identical_to_A2": true,
+    "equivalence_evidence": "reports/private/strategy-20261110/reviews/dev-d-a2-equivalence.json",
+    "selector_statuses": {
+      "fallback": 12
+    },
+    "selector_errors": {
+      "selection_error": 7,
+      "truncated_response": 5
+    },
+    "regression_run": false,
+    "holdout_run": false,
+    "reason_not_advanced": "No measured dev benefit over simpler A2, 12 extra calls, all selector attempts fall back. Equality outside dev is not claimed.",
+    "technical_passed": true,
+    "native_tests": 81,
+    "docker_tests": 79,
+    "python39_tests": 79,
+    "docker_platform": "linux/arm64",
+    "budget_scenarios": 5,
+    "technical_evidence": "reports/private/strategy-20261110/readiness/d-technical-summary.json"
+  },
+  "holdout": {
+    "questions": 24,
+    "control_generated": true,
+    "answers_remain_sealed": true,
+    "candidate_selected": false,
+    "paired_review_performed": false,
+    "reason": "No candidate passed the preceding selection gates; user requested no further strategies after D."
+  },
+  "limitations": [
+    "Local Qwen3-VL-30B-A3B Q4_K_M differs from platform Qwen3.8-27B.",
+    "Dev/regression samples are small and used during development; local grades are not platform Score.",
+    "Times are descriptive: run order, cache and system load differ. Runtime RSS excludes the Ollama server.",
+    "Technical mock checks validate execution and failure handling, not consultation quality."
+  ]
+}

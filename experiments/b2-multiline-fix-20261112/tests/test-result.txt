@@ -1,0 +1,4 @@
+10 focused unittest tests passed.
+Executed: python3 -m unittest discover -s tests -p test_multiline_query.py -v
+123 existing cases with single-line latest messages have unchanged rankings and query embedding texts.
+No network/model calls. Python 3.9 syntax parse passed.
