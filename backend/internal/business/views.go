@@ -62,6 +62,7 @@ func NewListItem(rec ApplicationRecord) ListItem {
 func PublicView(rec ApplicationRecord) ApplicationRecord {
 	out := clone(rec)
 	out.RequestIDs = nil
+	out.RequestHashes = nil
 	return out
 }
 

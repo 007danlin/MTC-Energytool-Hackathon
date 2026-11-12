@@ -92,6 +92,12 @@ func ApplyEdits(card NeedCard, expectedVersion int, actor Actor, edits []Edit, n
 		switch {
 		case e.Path == "task":
 			err = set(&next.Task)
+			if err == nil {
+				for _, p := range extractPower(value) {
+					p.Origin, p.ConfirmationVersion = origin, card.Version+1
+					next.Power = appendPower(next.Power, p)
+				}
+			}
 		case e.Path == "next_step":
 			err = set(&next.NextStep)
 			nextStepSet = true
@@ -124,6 +130,7 @@ func ApplyEdits(card NeedCard, expectedVersion int, actor Actor, edits []Edit, n
 			} else {
 				p := found[0]
 				p.Origin = origin
+				p.ConfirmationVersion = card.Version + 1
 				if p.Kind.Status == Confirmed {
 					p.Kind.Origin = origin
 				}
@@ -139,6 +146,7 @@ func ApplyEdits(card NeedCard, expectedVersion int, actor Actor, edits []Edit, n
 			removals["power"] = append(removals["power"], idx)
 		case len(parts) == 2 && parts[0] == "power" && idx >= 0 && idx < len(next.Power) && e.Action == "confirm":
 			next.Power[idx].Origin = origin
+			next.Power[idx].ConfirmationVersion = card.Version + 1
 		case len(parts) == 2 && parts[0] == "products" && idx >= 0 && idx < len(next.Products):
 			switch e.Action {
 			case "confirm":

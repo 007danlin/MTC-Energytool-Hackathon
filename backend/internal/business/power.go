@@ -19,7 +19,24 @@ var (
 func extractPower(text string) []Power {
 	out := []Power{}
 	lower := strings.ToLower(strings.ReplaceAll(text, "ё", "е"))
-	for _, m := range powerPattern.FindAllStringSubmatch(lower, -1) {
+	matches := powerPattern.FindAllStringSubmatchIndex(lower, -1)
+	for n, indexes := range matches {
+		m := []string{lower[indexes[0]:indexes[1]], lower[indexes[2]:indexes[3]], lower[indexes[4]:indexes[5]]}
+		// Limit kind words to this measurement's clause, not the entire summary.
+		left, right := 0, len(lower)
+		if n > 0 {
+			left = matches[n-1][5]
+		}
+		if n+1 < len(matches) {
+			right = matches[n+1][0]
+		}
+		if cut := strings.LastIndexAny(lower[left:indexes[0]], ".!?;,\n"); cut >= 0 {
+			left += cut + 1
+		}
+		if cut := strings.IndexAny(lower[indexes[5]:right], ".!?;,\n"); cut >= 0 {
+			right = indexes[5] + cut
+		}
+		local := lower[left:right]
 		amount := strings.NewReplacer(",", ".", " ", "", " ", "").Replace(m[1])
 		unit := strings.ReplaceAll(m[2], " ", "")
 		p := Power{Amount: amount}
@@ -34,9 +51,9 @@ func extractPower(text string) []Power {
 		switch {
 		case p.Unit == "кВт·ч":
 			p.Kind = Field{Value: "потребление", Status: Confirmed, Origin: OriginRule}
-		case connectedWords.MatchString(lower):
+		case connectedWords.MatchString(local) && !consumptionWords.MatchString(local):
 			p.Kind = Field{Value: "присоединённая", Status: Confirmed, Origin: OriginRule}
-		case consumptionWords.MatchString(lower):
+		case consumptionWords.MatchString(local) && !connectedWords.MatchString(local):
 			p.Kind = Field{Value: "потребление", Status: Confirmed, Origin: OriginRule}
 		default:
 			p.Kind = Field{Status: Unknown, Origin: OriginRule}
@@ -57,32 +74,38 @@ func powerClass(unit string) string {
 	return "power"
 }
 
-// resolvePower sets the state of every value within its class (power vs energy):
-// confirmed (form/edit) values are actual and the rest become history; with no
-// confirmed value a single value is actual and several are unconfirmed.
-// Two different values are never actual at the same time unless the client confirmed both.
+// Explicit newer confirmations win over older form/chat values. Different known
+// kinds (connected vs consumed power) remain separate measurements. Ambiguous
+// values of equal priority require clarification instead of guessing a correction.
 func resolvePower(list []Power) {
-	for _, class := range []string{"power", "energy"} {
-		idx, confirmed := []int{}, 0
-		for i, p := range list {
-			if powerClass(p.Unit) == class {
-				idx = append(idx, i)
-				if authoritative(p.Origin) {
-					confirmed++
-				}
+	priority := func(p Power) int {
+		if authoritative(p.Origin) {
+			return p.ConfirmationVersion + 1
+		}
+		return 0
+	}
+	for i, p := range list {
+		best, peers := priority(p), 1
+		for j, other := range list {
+			if i == j || powerClass(p.Unit) != powerClass(other.Unit) {
+				continue
+			}
+			if p.Kind.Status != Unknown && other.Kind.Status != Unknown && p.Kind.Value != other.Kind.Value {
+				continue
+			}
+			if priority(other) > best {
+				best, peers = priority(other), 1
+			} else if priority(other) == best {
+				peers++
 			}
 		}
-		for _, i := range idx {
-			switch {
-			case confirmed > 0 && authoritative(list[i].Origin):
-				list[i].State = PowerActual
-			case confirmed > 0:
-				list[i].State = PowerHistory
-			case len(idx) == 1:
-				list[i].State = PowerActual
-			default:
-				list[i].State = PowerUnconfirmed
-			}
+		switch {
+		case priority(p) < best:
+			list[i].State = PowerHistory
+		case peers > 1:
+			list[i].State = PowerUnconfirmed
+		default:
+			list[i].State = PowerActual
 		}
 	}
 }
@@ -91,12 +114,14 @@ func resolvePower(list []Power) {
 // a stated kind over an unknown one and the most authoritative origin.
 func appendPower(list []Power, p Power) []Power {
 	for i := range list {
-		if list[i].Amount == p.Amount && list[i].Unit == p.Unit {
+		if list[i].Amount == p.Amount && list[i].Unit == p.Unit &&
+			(list[i].Kind.Status == Unknown || p.Kind.Status == Unknown || list[i].Kind.Value == p.Kind.Value) {
 			if list[i].Kind.Status == Unknown && p.Kind.Status != Unknown {
 				list[i].Kind = p.Kind
 			}
-			if authoritative(p.Origin) && !authoritative(list[i].Origin) {
+			if authoritative(p.Origin) && (!authoritative(list[i].Origin) || p.ConfirmationVersion > list[i].ConfirmationVersion) {
 				list[i].Origin = p.Origin
+				list[i].ConfirmationVersion = p.ConfirmationVersion
 			}
 			for _, e := range p.Evidence {
 				dup := false

@@ -72,12 +72,13 @@ const (
 // Power is recorded only when the client wrote a number with a unit.
 // A value from the confirmed form or an explicit edit outranks values from chat messages.
 type Power struct {
-	Amount   string     `json:"amount"`
-	Unit     string     `json:"unit"` // кВт, МВт or кВт·ч
-	Kind     Field      `json:"kind"` // присоединённая / потребление, unknown if not stated
-	State    PowerState `json:"state"`
-	Origin   Origin     `json:"origin"` // application_form | client_message | client_edit | manager_edit
-	Evidence []Evidence `json:"evidence"`
+	Amount              string     `json:"amount"`
+	Unit                string     `json:"unit"` // кВт, МВт or кВт·ч
+	Kind                Field      `json:"kind"` // присоединённая / потребление, unknown if not stated
+	State               PowerState `json:"state"`
+	Origin              Origin     `json:"origin"`                         // application_form | client_message | client_edit | manager_edit
+	ConfirmationVersion int        `json:"confirmation_version,omitempty"` // explicit edit supersedes older confirmation
+	Evidence            []Evidence `json:"evidence"`
 }
 
 type Product struct {
@@ -218,7 +219,7 @@ func verifiedFields(items []quoted, messages []domain.Message) []Field {
 		if i < 0 || i >= len(messages) || messages[i].Role != "user" {
 			continue
 		}
-		if !strings.Contains(normalize(messages[i].Content), normalize(quote)) {
+		if !strings.Contains(messages[i].Content, quote) {
 			continue
 		}
 		key := normalize(quote)
