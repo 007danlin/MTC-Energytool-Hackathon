@@ -109,11 +109,12 @@ func TestActivationReplacementFailureAndRevocation(t *testing.T) {
 	if len(docs) != 1 || docs[0].SourceID != "90-expert/kb-1-r1.md#s001" {
 		t.Fatalf("approved entry offered once: %+v", docs)
 	}
-	e = okE(t)(ApplyActivation(e, sys, ecmd(e, "act1"), ActivationResult{KBVersion: "kb-7", OK: true, Included: map[string]int{"kb-1": 1}}, t0))
+	activationCommand := ecmd(e, "act1")
+	e = okE(t)(ApplyActivation(e, sys, activationCommand, ActivationResult{KBVersion: "kb-7", OK: true, Included: map[string]int{"kb-1": 1}}, t0))
 	if r, ok := AvailableToBot(e); !ok || r.KBVersion != "kb-7" || r.Revision != 1 {
 		t.Fatalf("active with the real kb_version: %+v", e.Revisions)
 	}
-	same, err := ApplyActivation(e, sys, ecmd(e, "act1b"), ActivationResult{KBVersion: "kb-7", OK: true, Included: map[string]int{"kb-1": 1}}, t0)
+	same, err := ApplyActivation(e, sys, activationCommand, ActivationResult{KBVersion: "kb-7", OK: true, Included: map[string]int{"kb-1": 1}}, t0)
 	if err != nil || same.Version != e.Version {
 		t.Fatal("re-applying the same kb_version is a no-op")
 	}

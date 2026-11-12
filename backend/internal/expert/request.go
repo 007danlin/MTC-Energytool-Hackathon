@@ -1,6 +1,7 @@
 package expert
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 )
@@ -113,7 +114,10 @@ type Request struct {
 }
 
 // RequestKey is the uniqueness key the store must enforce (lock + lookup) before RegisterGap.
-func RequestKey(sessionID, originMessageID string) string { return sessionID + "|" + originMessageID }
+func RequestKey(sessionID, originMessageID string) string {
+	key, _ := json.Marshal([2]string{sessionID, originMessageID})
+	return string(key)
+}
 
 const (
 	maxQuestion     = 4000
@@ -179,6 +183,10 @@ func cloneRequest(r Request) Request {
 	out.Commands = r.Commands.clone()
 	if r.Reply != nil {
 		reply := *r.Reply
+		if r.Reply.DeliveredAt != nil {
+			at := *r.Reply.DeliveredAt
+			reply.DeliveredAt = &at
+		}
 		out.Reply = &reply
 	}
 	return out
@@ -187,14 +195,8 @@ func cloneRequest(r Request) Request {
 // apply runs the shared command protocol: replay check, version check, mutation, history.
 func apply(r Request, actor Actor, cmd Command, hash string, now time.Time,
 	mutate func(next *Request) (HistoryEntry, error)) (Request, error) {
-	if !actor.valid() {
-		return r, fmt.Errorf("%w: actor id and role are required", ErrForbidden)
-	}
-	if replay, err := r.Commands.replay(cmd.ID, hash); replay || err != nil {
+	if replay, err := checkCommand(r.Commands, r.Version, actor, cmd, hash); replay || err != nil {
 		return r, err
-	}
-	if cmd.ExpectedVersion != r.Version {
-		return r, ErrVersionConflict
 	}
 	next := cloneRequest(r)
 	entry, err := mutate(&next)
@@ -292,12 +294,25 @@ func Cancel(r Request, actor Actor, cmd Command, reason CancelReason, comment st
 
 // MarkDelivered: the core API added the reply to the session's stored history (system actor).
 // toClosedSession records that the session was closed: the reply is linked in its history
-// and the session is not reopened. Repeating it for a delivered reply is a no-op.
+// and the session is not reopened. Exact command retries are no-ops. A new command
+// confirming the same delivery is recorded without another delivery attempt.
 func MarkDelivered(r Request, actor Actor, cmd Command, replyID string, toClosedSession bool, now time.Time) (Request, error) {
-	if r.Reply != nil && r.Reply.ID == replyID && r.Reply.Delivery == DeliveryDelivered {
-		return r, nil
+	if actor.Role != RoleSystem {
+		return r, ErrForbidden
 	}
-	return apply(r, actor, cmd, fingerprint("delivered", cmd.ExpectedVersion, actor, replyID, toClosedSession), now,
+	hash := fingerprint("delivered", cmd.ExpectedVersion, actor, replyID, toClosedSession)
+	if replay, err := checkCommand(r.Commands, r.Version, actor, cmd, hash); replay || err != nil {
+		return r, err
+	}
+	if r.Reply != nil && r.Reply.ID == replyID && r.Reply.Delivery == DeliveryDelivered {
+		if r.Reply.ToClosedSession != toClosedSession {
+			return r, ErrInvalidTransition
+		}
+		return apply(r, actor, cmd, hash, now, func(n *Request) (HistoryEntry, error) {
+			return HistoryEntry{Action: "delivery_confirmed"}, nil
+		})
+	}
+	return apply(r, actor, cmd, hash, now,
 		func(n *Request) (HistoryEntry, error) {
 			if actor.Role != RoleSystem {
 				return HistoryEntry{}, ErrForbidden

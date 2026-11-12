@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"unicode/utf8"
 )
 
 type PublicationStatus string
@@ -89,14 +90,16 @@ type KnowledgeEntry struct {
 }
 
 var (
-	phonePattern = regexp.MustCompile(`\+?\d[\d\s()\-]{8,}\d`)
-	emailPattern = regexp.MustCompile(`[\w.+-]+@[\w-]+\.[\w.-]+`)
-	uuidPattern  = regexp.MustCompile(`(?i)[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}`)
+	phonePattern   = regexp.MustCompile(`\+?\d[\d\s()\-]{8,}\d`)
+	emailPattern   = regexp.MustCompile(`[\w.+-]+@[\w-]+\.[\w.-]+`)
+	uuidPattern    = regexp.MustCompile(`(?i)[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}`)
+	entryIDPattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$`)
 )
 
 const (
-	maxTitle = 200
-	maxField = 4000
+	maxTitle      = 200
+	maxField      = 4000
+	maxKBMarkdown = 4800 // one fragment in retrieval.load_fragments; includes labels and review date
 )
 
 // validateDraft checks required fields and rejects contacts, identifiers and an ungeneralized question.
@@ -142,12 +145,28 @@ func validateDraft(in DraftInput, source *Request) (DraftInput, error) {
 			return in, fmt.Errorf("%w: the client reply must be generalized, not copied", ErrPrivateData)
 		}
 	}
+	preview := Revision{Title: in.Title, GeneralizedQuestion: in.GeneralizedQuestion, Answer: in.Answer,
+		Applicability: in.Applicability, Basis: in.Basis}
+	// Reserve room for the review date added after approval.
+	if utf8.RuneCountInString(renderMarkdown(preview))+80 > maxKBMarkdown {
+		return in, fmt.Errorf("%w: knowledge document must fit one %d-character search fragment", ErrInvalidInput, maxKBMarkdown)
+	}
 	return in, nil
 }
 
 func cloneEntry(e KnowledgeEntry) KnowledgeEntry {
 	out := e
 	out.Revisions = append([]Revision{}, e.Revisions...)
+	for i := range out.Revisions {
+		if e.Revisions[i].ReviewedAt != nil {
+			at := *e.Revisions[i].ReviewedAt
+			out.Revisions[i].ReviewedAt = &at
+		}
+		if e.Revisions[i].Checklist != nil {
+			checklist := *e.Revisions[i].Checklist
+			out.Revisions[i].Checklist = &checklist
+		}
+	}
 	out.History = append([]KnowledgeHistory{}, e.History...)
 	out.Commands = e.Commands.clone()
 	return out
@@ -169,8 +188,8 @@ func NewDraft(source *Request, in DraftInput, author Actor, newID string, test b
 	if !author.valid() || !authorRole(author) {
 		return KnowledgeEntry{}, ErrForbidden
 	}
-	if newID == "" {
-		return KnowledgeEntry{}, fmt.Errorf("%w: id is required", ErrInvalidInput)
+	if !entryIDPattern.MatchString(newID) {
+		return KnowledgeEntry{}, fmt.Errorf("%w: entry id must contain 1..128 ASCII letters, digits, hyphens or underscores and start with a letter or digit", ErrInvalidInput)
 	}
 	in, err := validateDraft(in, source)
 	if err != nil {
@@ -183,20 +202,15 @@ func NewDraft(source *Request, in DraftInput, author Actor, newID string, test b
 		History: []KnowledgeHistory{{Version: 1, Action: "draft", Revision: 1, ActorID: author.ID, Role: author.Role, At: at}}}
 	if source != nil {
 		e.SourceRequestID = source.ID
+		e.Test = test || source.Demo
 	}
 	return e, nil
 }
 
 func applyKnowledge(e KnowledgeEntry, actor Actor, cmd Command, hash string, now time.Time,
 	mutate func(next *KnowledgeEntry) (string, int, error)) (KnowledgeEntry, error) {
-	if !actor.valid() {
-		return e, ErrForbidden
-	}
-	if replay, err := e.Commands.replay(cmd.ID, hash); replay || err != nil {
+	if replay, err := checkCommand(e.Commands, e.Version, actor, cmd, hash); replay || err != nil {
 		return e, err
-	}
-	if cmd.ExpectedVersion != e.Version {
-		return e, ErrVersionConflict
 	}
 	next := cloneEntry(e)
 	action, revision, err := mutate(&next)
@@ -218,6 +232,10 @@ func EditDraft(e KnowledgeEntry, source *Request, actor Actor, cmd Command, in D
 		func(n *KnowledgeEntry) (string, int, error) {
 			if !authorRole(actor) {
 				return "", 0, ErrForbidden
+			}
+			if (n.SourceRequestID != "" && (source == nil || source.ID != n.SourceRequestID)) ||
+				(n.SourceRequestID == "" && source != nil) {
+				return "", 0, fmt.Errorf("%w: edit requires the original source request", ErrInvalidInput)
 			}
 			valid, err := validateDraft(in, source)
 			if err != nil {
