@@ -149,7 +149,7 @@ def main():
             for name in args.scenarios.split(","):
                 STATE.update(mode={"forced_a2": "ok", "rerank": "ok"}.get(name, name),
                              emb_calls=0, chat_calls=0, rerank_calls=0)
-                extra = {"RETRIEVAL_MODE": "a2"} if name == "forced_a2" else {}
+                extra = {"RETRIEVAL_MODE": "a2" if name == "forced_a2" else "hybrid"}
                 if name == "rerank":
                     extra.update(RERANKER_MODEL="qwen/qwen3-reranker-8b", HYBRID_RERANK="1", RERANKER_TOP_N="8")
                 r = run_case(tmp, port, extra)
@@ -164,6 +164,7 @@ def main():
             server.shutdown()
     report = {"zip_sha256": manifest["sha256"], "zip_bytes": manifest["bytes"], "files": [f["file"] for f in manifest["files"]],
               "real_embeddings": args.real_embeddings, "questions": len(cases), "results": results}
+    Path(args.output).parent.mkdir(parents=True, exist_ok=True)
     Path(args.output).write_text(json.dumps(report, ensure_ascii=False, indent=1), encoding="utf8")
     print("zip", manifest["bytes"], "bytes", manifest["sha256"][:16])
     sys.exit(0 if all(r["passed"] for r in results.values()) else 1)
