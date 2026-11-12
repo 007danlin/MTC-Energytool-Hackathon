@@ -1,0 +1,29 @@
+{
+  "date": "2026-11-11",
+  "python_unit_tests": {"passed": 67},
+  "http_integration": {
+    "passed": true,
+    "chain": "web proxy -> Go API -> Python adapter -> test OpenAI HTTP server",
+    "checks": ["two isolated sessions", "complete history", "sources", "sent=false", "persistence after Go restart", "closed session rejects messages", "ML outage retains history"]
+  },
+  "go": {"race_tests": "passed", "vet": "passed"},
+  "browser": {
+    "engine": "Chromium via Playwright",
+    "desktop": "1360x900",
+    "mobile": "390x844",
+    "checks": ["chat opens", "no page errors", "mobile panel within viewport", "new session isolation", "reload restores history", "close disables input", "real model answer displayed and restored"]
+  },
+  "docker": {"services": ["web", "backend", "consultation"], "public_url": "http://127.0.0.1:8768"},
+  "real_model": {
+    "name": "energytool-qwen-local-eval:20261110",
+    "family": "Qwen3-VL-30B-A3B Instruct Q4_K_M",
+    "provider": "local Ollama",
+    "context": 16384,
+    "platform_model": false,
+    "attempts": [
+      {"status": "technical_error", "error_code": "ungrounded_citation", "elapsed_seconds": 77.3},
+      {"status": "clarification", "http_status": 200, "validated_sources": 2, "elapsed_ms": 53803, "browser_reload_restored": true}
+    ],
+    "limitation": "Integration smoke checks only, not an evaluation of answer quality or platform Score. Strict citation validation remains enabled."
+  }
+}

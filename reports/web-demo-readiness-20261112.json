@@ -1,0 +1,27 @@
+{
+  "date": "2026-11-12",
+  "url": "http://127.0.0.1:8768",
+  "fixes": [
+    "Aligned web timeout budgets for local model cold start",
+    "Web-only evidence ID selection with exact server-resolved citations"
+  ],
+  "validation": {
+    "python_tests": 69,
+    "python_result": "passed",
+    "go_tests": "passed",
+    "web_integration": "passed",
+    "browser_application_workflow": "passed: edit, save, download, reload, new session, archive",
+    "live_browser_chat": {
+      "status": "answered",
+      "seconds": 59,
+      "sources": 3,
+      "history_reload": "passed",
+      "browser_errors": []
+    }
+  },
+  "limits": [
+    "Local Ollama model, not platform model",
+    "Applications saved locally and downloadable; no CRM delivery",
+    "Source provenance checked; semantic factual accuracy is not guaranteed"
+  ]
+}

@@ -1,0 +1,137 @@
+{
+  "created_moscow": "2026-11-12T01:18:26.607039+03:00",
+  "status": "platform_regression_recommendation_withdrawn",
+  "sha256": "523b4f2c7f7fe60048101ceaa22f53fbfcf6bf77192f33adeb04f161bc24af94",
+  "bytes": 28311,
+  "files": 10,
+  "exact_researched_archive": "reports/private/artem-pr4-qwen-cached-20261111/candidate-b-pr4-exact.zip",
+  "exact_researched_sha256": "aadb133292a9c9d1a6b730649f27055c87d3d8985d3257fc6496c547b85a6253",
+  "B1_sha256": "cf1f5420ee0e294d628b0a2c27b70d12fa94ae114f2f1b7e5c0a4e6936e2210a",
+  "B2_changed_vs_researched_B": [
+    "solution.py",
+    "settings.py",
+    "hybrid_retrieval.py"
+  ],
+  "B1_changes": "Embedding validation, global/startup deadlines, initial full-ID CSV. Healthy ranking/prompt unchanged.",
+  "B2_changes": "B1 plus minimum TOP_K=12 and retrieval/context diagnostics. TOP_K above 12 remains configurable.",
+  "comparison": {
+    "wins_B": 23,
+    "losses_B": 7,
+    "ties": 63,
+    "metrics": {
+      "A": {
+        "rows": 93,
+        "errors": 0,
+        "seconds_sum": 3072.31,
+        "seconds_median": 30.76,
+        "context_chars_median": 9420,
+        "context_chars_max": 18388,
+        "major_error_cases": 14,
+        "major_case_ids": [
+          "e006",
+          "e019",
+          "e026",
+          "e029",
+          "e033",
+          "e051",
+          "e055",
+          "e061",
+          "e066",
+          "e082",
+          "e098",
+          "e103",
+          "e119",
+          "e121"
+        ]
+      },
+      "B": {
+        "rows": 93,
+        "errors": 0,
+        "seconds_sum": 3969.87,
+        "seconds_median": 39.36,
+        "context_chars_median": 10856,
+        "context_chars_max": 21197,
+        "major_error_cases": 6,
+        "major_case_ids": [
+          "e033",
+          "e054",
+          "e089",
+          "e098",
+          "e103",
+          "e121"
+        ]
+      }
+    },
+    "review_sha256": "ceee7b17793092183208a297b833c8d060917b251c8cee407f6d9433c94f3207",
+    "review_method": "Single Codex source/rubric review with randomized left/right hidden until all 93 verdicts were frozen. Not an independent human or platform judge.",
+    "dataset_limit": "Previously used dev set, not independent holdout",
+    "timing_limit": "Sequential local runs, cached retrieval excluded; not platform deadline/performance test",
+    "noninferiority_gate_passed": true,
+    "audit_phase": "Post-unblinding audit supplements frozen blind review",
+    "audit_file": "post-unblinding-audit.json",
+    "original_blind_counts": {
+      "wins_B": 23,
+      "losses_B": 6,
+      "ties": 64
+    },
+    "sensitivity_e005_legacy_expected": {
+      "wins_B": 23,
+      "losses_B": 6,
+      "ties": 64
+    }
+  },
+  "new_B_major_regressions": [
+    "e054",
+    "e089"
+  ],
+  "unresolved_shared_major_cases": [
+    "e033",
+    "e098",
+    "e103",
+    "e121"
+  ],
+  "all_B_losses": [
+    "e005",
+    "e022",
+    "e054",
+    "e089",
+    "e094",
+    "e106",
+    "e109"
+  ],
+  "a2_preserved_sha256": "fa81606a5e4b89cd4b36a13139d906e8940bbc462d43d127ddfaac129c50f013",
+  "B2_healthy_request_equivalence": {
+    "cases": 93,
+    "mode": "offline reconstruction with exactcachedBcontext; notcapturedliveHTTP",
+    "new_LLM_calls": 0,
+    "artifact": "reports/private/b2-fixed-depth-20261112/request-equivalence-93.json"
+  },
+  "technical_checks": {
+    "python39_tests": 76,
+    "hybrid_integration_scenarios": 7,
+    "rows_per_scenario": 123,
+    "all_passed": true,
+    "real_platform_embeddings_tested": false
+  },
+  "run_directory": "reports/private/artem-pr4-qwen-cached-20261111",
+  "review_pair_mapping_verified": 93,
+  "human_report": "docs/b-vs-a2-qwen-20261112.txt",
+  "runtime_dependencies": "standard library only; local sentence-transformers and bge-m3 remain outside ZIP",
+  "release_limit": "Improvement on known dev in one local-model run, not proof of platform score gain. Two new major regressions remain; B2 runtime error handling differs from researched B.",
+  "post_unblinding_audit": "reports/private/artem-pr4-qwen-cached-20261111/post-unblinding-audit.json",
+  "human_report_sha256": "fb45d7712099e2588efbb9bcb288c7dbe14234032a842a07b6087a438fd6efd0",
+  "historical_status_before_platform_result": "ready_for_platform_experiment_not_uploaded",
+  "updated_at": "2026-11-12T09:03:56.246424+03:00",
+  "platform_result_report": "reports/platform-result-b2-20261112.json",
+  "platform_score": 45.877,
+  "recommended_for_submission": false,
+  "current_recommendation": {
+    "version": "A2",
+    "archive": "artifacts/daniel-submission-a2.zip",
+    "sha256": "fa81606a5e4b89cd4b36a13139d906e8940bbc462d43d127ddfaac129c50f013",
+    "platform_score": 55.969
+  },
+  "historical_recommended_archive_before_platform_result": "artifacts/daniel-submission-b2-hybrid.zip",
+  "historical_human_report_sha256_before_platform_result": "7e2a56fec48adc48e69cffcc1ca829dd8bae83e7f4a852ccb00ba5090f0e2595",
+  "post_platform_audit": "docs/b2-platform-postmortem-20261112.txt"
+}

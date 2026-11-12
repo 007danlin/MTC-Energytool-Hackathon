@@ -2,23 +2,39 @@ package domain
 
 import "time"
 
+type Application struct {
+	FullName string    `json:"full_name"`
+	Phone    string    `json:"phone"`
+	Company  string    `json:"company"`
+	Summary  string    `json:"summary"`
+	SavedAt  time.Time `json:"saved_at"`
+}
+
 type Session struct {
-	ID         string              `json:"id"`
-	Status     string              `json:"status"`
-	CreatedAt  time.Time           `json:"created_at"`
-	UpdatedAt  time.Time           `json:"updated_at"`
-	ClosedAt   *time.Time          `json:"closed_at,omitempty"`
-	Messages   []Message           `json:"messages"`
-	Lead       LeadState           `json:"lead"`
-	LastResult *ConsultationResult `json:"last_result,omitempty"`
+	Application *Application        `json:"application,omitempty"`
+	ID          string              `json:"id"`
+	Status      string              `json:"status"`
+	CreatedAt   time.Time           `json:"created_at"`
+	UpdatedAt   time.Time           `json:"updated_at"`
+	ClosedAt    *time.Time          `json:"closed_at,omitempty"`
+	Messages    []Message           `json:"messages"`
+	Lead        LeadState           `json:"lead"`
+	LastResult  *ConsultationResult `json:"last_result,omitempty"`
+}
+
+type ResponseMeta struct {
+	Status    string                   `json:"status"`
+	Sources   []map[string]interface{} `json:"sources"`
+	ElapsedMS int64                    `json:"elapsed_ms"`
 }
 
 type Message struct {
-	ID        string    `json:"id"`
-	Role      string    `json:"role"`
-	Content   string    `json:"content"`
-	Sequence  int       `json:"sequence"`
-	CreatedAt time.Time `json:"created_at"`
+	Response  *ResponseMeta `json:"response,omitempty"`
+	ID        string        `json:"id"`
+	Role      string        `json:"role"`
+	Content   string        `json:"content"`
+	Sequence  int           `json:"sequence"`
+	CreatedAt time.Time     `json:"created_at"`
 }
 
 type LeadState struct {

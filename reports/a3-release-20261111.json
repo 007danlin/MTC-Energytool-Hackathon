@@ -1,0 +1,302 @@
+{
+  "schema_version": 1,
+  "closed_at_utc": "2026-11-11T15:33:12.224586+00:00",
+  "status": "not_promoted_lower_observed_platform_score",
+  "improvement_over_a2_confirmed": false,
+  "score_above_60_confirmed": false,
+  "platform_score": 54.232,
+  "working_version": {
+    "name": "A2",
+    "platform_score": 55.969,
+    "archive": "artifacts/daniel-submission-a2.zip",
+    "sha256": "fa81606a5e4b89cd4b36a13139d906e8940bbc462d43d127ddfaac129c50f013"
+  },
+  "candidate": {
+    "name": "A3 experimental",
+    "internal_revision": "r8",
+    "archive": "artifacts/daniel-submission-a3-experimental.zip",
+    "sha256": "c3f1f0daaabfce20bc055b97d211e9e0940476f1410a01d4f462d28c8fff77f8",
+    "bytes": 31162,
+    "root_files": 12,
+    "runtime_frozen_after_checks": true
+  },
+  "preserved_archives": {
+    "artifacts/daniel-submission-a2.zip": "fa81606a5e4b89cd4b36a13139d906e8940bbc462d43d127ddfaac129c50f013",
+    "artifacts/daniel-submission-v3.zip": "8080cc06980f8dde184cc1320ccafca2dffd7a58b5a7ba6772bef177dde4ab09"
+  },
+  "technical": {
+    "unit_tests_passed": 47,
+    "unit_environments": [
+      "host",
+      "Docker Python3.9"
+    ],
+    "synthetic_docker_scenarios_passed": 5,
+    "actual_a2_source_prefix_checks_passed": 246,
+    "source_prefix_cases": 123,
+    "source_prefix_budgets": [
+      4000,
+      32000
+    ]
+  },
+  "live": {
+    "model": "Qwen3-VL-30B-A3B-Instruct Q4_K_M context16384 seed42 temp0 local; not platform",
+    "sample_classification": "ALL32aredevelopment/regression. Formerfresh12revealedR7regressionsandmotivatedR8;notindependentvalidation.",
+    "rows": 32,
+    "api_calls": 26,
+    "http_failures": 0,
+    "length_cutoffs": 0,
+    "runtime_statuses": {
+      "answered": 32
+    },
+    "elapsed_seconds_sum_of_separate_jobs": 1872.55,
+    "elapsed_note": "Local serial worker runs in 8 independent four-question jobs. Not one platform batch, not proof of 20min actual model throughput. Model server memory not included in script RSS.",
+    "max_python_rss_bytes": 34127872,
+    "runs": [
+      {
+        "name": "r8-screen-00",
+        "rows": 4,
+        "elapsed_seconds": 296.78,
+        "api_calls": 4,
+        "http_failures": 0,
+        "length_cutoffs": 0,
+        "runtime_statuses": {
+          "answered": 4
+        },
+        "resource_usage": {
+          "event": "runtime_resource_usage",
+          "max_rss_raw": 33783808,
+          "max_rss_unit": "bytes"
+        }
+      },
+      {
+        "name": "r8-screen-04",
+        "rows": 4,
+        "elapsed_seconds": 239.81,
+        "api_calls": 4,
+        "http_failures": 0,
+        "length_cutoffs": 0,
+        "runtime_statuses": {
+          "answered": 4
+        },
+        "resource_usage": {
+          "event": "runtime_resource_usage",
+          "max_rss_raw": 34127872,
+          "max_rss_unit": "bytes"
+        }
+      },
+      {
+        "name": "r8-screen-08",
+        "rows": 4,
+        "elapsed_seconds": 0.22,
+        "api_calls": 0,
+        "http_failures": 0,
+        "length_cutoffs": 0,
+        "runtime_statuses": {
+          "answered": 4
+        },
+        "resource_usage": {
+          "event": "runtime_resource_usage",
+          "max_rss_raw": 33521664,
+          "max_rss_unit": "bytes"
+        }
+      },
+      {
+        "name": "r8-fresh-00",
+        "rows": 4,
+        "elapsed_seconds": 238.56,
+        "api_calls": 4,
+        "http_failures": 0,
+        "length_cutoffs": 0,
+        "runtime_statuses": {
+          "answered": 4
+        },
+        "resource_usage": {
+          "event": "runtime_resource_usage",
+          "max_rss_raw": 33947648,
+          "max_rss_unit": "bytes"
+        }
+      },
+      {
+        "name": "r8-fresh-04",
+        "rows": 4,
+        "elapsed_seconds": 336.53,
+        "api_calls": 4,
+        "http_failures": 0,
+        "length_cutoffs": 0,
+        "runtime_statuses": {
+          "answered": 4
+        },
+        "resource_usage": {
+          "event": "runtime_resource_usage",
+          "max_rss_raw": 33882112,
+          "max_rss_unit": "bytes"
+        }
+      },
+      {
+        "name": "r8-fresh-08",
+        "rows": 4,
+        "elapsed_seconds": 149.12,
+        "api_calls": 2,
+        "http_failures": 0,
+        "length_cutoffs": 0,
+        "runtime_statuses": {
+          "answered": 4
+        },
+        "resource_usage": {
+          "event": "runtime_resource_usage",
+          "max_rss_raw": 33964032,
+          "max_rss_unit": "bytes"
+        }
+      },
+      {
+        "name": "r8-artem-00",
+        "rows": 4,
+        "elapsed_seconds": 307.65,
+        "api_calls": 4,
+        "http_failures": 0,
+        "length_cutoffs": 0,
+        "runtime_statuses": {
+          "answered": 4
+        },
+        "resource_usage": {
+          "event": "runtime_resource_usage",
+          "max_rss_raw": 34127872,
+          "max_rss_unit": "bytes"
+        }
+      },
+      {
+        "name": "r8-artem-04",
+        "rows": 4,
+        "elapsed_seconds": 303.88,
+        "api_calls": 4,
+        "http_failures": 0,
+        "length_cutoffs": 0,
+        "runtime_statuses": {
+          "answered": 4
+        },
+        "resource_usage": {
+          "event": "runtime_resource_usage",
+          "max_rss_raw": 34078720,
+          "max_rss_unit": "bytes"
+        }
+      }
+    ]
+  },
+  "quality": {
+    "sample_classification": "ALL32 regression/development; no independent holdout",
+    "known12": {
+      "wins": 7,
+      "losses": 0,
+      "ties": 5,
+      "shared_major_errors": [
+        "hold01",
+        "hold17"
+      ]
+    },
+    "second12": {
+      "wins": 3,
+      "losses": 2,
+      "ties": 7,
+      "new_major_errors_vs_a2": [
+        "fresh02",
+        "fresh07"
+      ]
+    },
+    "artem8": {
+      "cases": 8,
+      "verdict_counts": {
+        "pass": 5,
+        "partial": 2,
+        "fail": 1
+      },
+      "major_error_cases": [
+        "e006"
+      ],
+      "minor_omission_cases": [
+        "e003",
+        "af03"
+      ],
+      "no_material_issue_cases": [
+        "e001",
+        "e002",
+        "e004",
+        "e005",
+        "af01"
+      ],
+      "major_errors": 1,
+      "minor_omissions": 2,
+      "conclusion": "5 pass, 2 partial, 1 fail. R8 retains a major private-home applicability contradiction. Technical completion does not establish factual quality. Experimental release only; A2 remains the proven working version.",
+      "platform_score_prediction": null,
+      "improvement_above_A2_confirmed": false,
+      "score_above60_confirmed": false
+    },
+    "reviewers": "AI agents using KB with per-case evidence; partial prior familiarity disclosed; not official platform judge or independent human review"
+  },
+  "diagnosis": {
+    "cases": 4,
+    "actual_payload_sha_matches": 8,
+    "result": "Required facts already present in actual contexts; retrieval omission ruled out for these cases. Prompt/context/variance effects not isolated."
+  },
+  "limitations": [
+    "All semantic problems are NOT fixed. Candidate not recommended as a proven upgrade over A2.",
+    "Local Qwen3-VL-30B-A3B-Instruct is not platform Qwen3.8-27B.",
+    "Synthetic deadlines do not prove real-model platform throughput within20min.",
+    "Preserved A2 context does not prevent added-context noise or generation contradictions.",
+    "No platform score prediction; private artifacts are not in submission ZIP."
+  ],
+  "human_report": "docs/a3-release-results-20261111.txt",
+  "artem_task": {
+    "file": "docs/artem-next-task-20261111.txt",
+    "bundle": "handoffs/artem-next-task-20261111-v2.zip",
+    "bundle_sha256": "600fe803dff05a8d6690b790b488504e5787d885b4d68e8990f0e343e32bd66a",
+    "previous_bundle": "handoffs/artem-next-task-20261111.zip"
+  },
+  "evidence": {
+    "reports/private/a3-evidence-20261111/unit-r8-python39-success.log": "2fcc889d1641dc96fca2600cb092a3ffbf06c1a221dedf81e4e72cb558e6657e",
+    "reports/private/a3-evidence-20261111/budget-docker-r8.json": "fb8b13a302e888e219a83a3e096475e4b5f8956290fb07da0ec017f1165a21e2",
+    "reports/private/a3-evidence-20261111/release-structure-r8.json": "7a8f24dc8cc232228e9a0d54d6d54aae2fabedb8575266c69c95d98836225ba8",
+    "reports/private/a3-evidence-20261111/r8-a2-source-preservation-123.json": "cd55bc0b05e940d72a4704a8ad4b48fa8af1d2bafd566b627b36a73798d9e47b",
+    "reports/private/a3-evidence-20261111/r8-live-aggregate.json": "baa29be01d45946c4e6b9b4a20a03133f6c59f3de56c060ebd55b988037122ba",
+    "reports/private/a3-evidence-20261111/screen-blind-review-r8.json": "f8a6e270d75ef6388f603e319b8d0654e6c9b288f4f0bae98328175b5407003b",
+    "reports/private/a3-evidence-20261111/screen-comparison-unblinded-r8.json": "589637a7e9a73c5b4546f0dee20c6b7cd4313b8b6a12e0f453d98c90154beae7",
+    "reports/private/a3-evidence-20261111/fresh-blind-review-r8.json": "2b3363c5e6430d12ed453d8067bed9d020f0cc2958db2a174e853fd3561bf01e",
+    "reports/private/a3-evidence-20261111/fresh-comparison-unblinded-r8.json": "cf91a74d57f8448128693d680232a0f3605ebce66e9bc753063f96006e05b174",
+    "reports/private/a3-evidence-20261111/artem-qualification-r8.json": "e7f6200bd03f9133112c8c9ccbcd41ca124d51fd06f247b84c249eb88fd28d8c",
+    "reports/private/a3-evidence-20261111/r8-regression-cause.json": "ff306405919fd61c365ebd3365f4854563075ac64e863d85a3d9ef5bf340ef04",
+    "reports/private/a3-evidence-20261111/artem-pr-audit.json": "21e71a6e8c0caac183c5bb15407afaba5fa2829846d8880b9cf2050a62feada3",
+    "reports/private/a3-evidence-20261111/r8-runtime-cleanup.json": "1e835ce466556529591f713ffc77f1847a8c2965af0b9732235bb06ef95dee27"
+  },
+  "no_new_strategies_after": "r8",
+  "no_platform_upload": false,
+  "no_git_push": true,
+  "platform_result_file": "reports/platform-result-a3-20261111.json",
+  "platform_result": {
+    "source": "User-provided platform result table",
+    "recorded_at": "2026-11-11T18:58:10.715118+03:00",
+    "timezone": "Europe/Moscow",
+    "archive": "daniel-submission-a3-experimental.zip",
+    "local_archive_sha256": "c3f1f0daaabfce20bc055b97d211e9e0940476f1410a01d4f462d28c8fff77f8",
+    "uploaded_archive_hash_independently_verified": false,
+    "score": 54.232,
+    "uploaded_time": "18:38",
+    "uploaded_date": "2026-11-11",
+    "reported_duration_seconds": 396.2,
+    "status": "Успешно",
+    "a2_score": 55.969,
+    "a2_reported_duration_seconds": 363.8,
+    "score_delta_vs_a2": -1.737,
+    "reported_duration_delta_seconds": 32.4,
+    "working_version": "A2",
+    "decision": "A3 not promoted: observed platform score below best known A2",
+    "attempts_in_this_observation": 1,
+    "limits": [
+      "No platform logs, answers or per-component scores supplied.",
+      "No claim of statistical significance or isolated cause of score difference.",
+      "Reported duration is the dashboard field, not an independently measured per-request or CPU runtime.",
+      "Local semantic failures cannot be assigned a causal share of the hidden platform score."
+    ]
+  },
+  "updated_at": "2026-11-11T18:58:10.715118+03:00",
+  "uploaded_by_user": true,
+  "agent_uploaded_to_platform": false
+}

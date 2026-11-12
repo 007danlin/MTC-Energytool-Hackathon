@@ -20,11 +20,11 @@ cd backend
 BACKEND_ADDR=:8080 \
 BACKEND_STORE_PATH=./var/sessions.json \
 ML_SERVICE_URL=http://127.0.0.1:8090 \
-ML_TIMEOUT=95s \
+ML_TIMEOUT=250s \
 go run ./cmd/api
 ```
 
-`ML_SERVICE_URL` must point to a separately running Python HTTP adapter exposing `POST /respond` and `GET /health/ready`, and accepting the request/response schema in the root `docs/ml-integration.md`. That HTTP adapter is not yet present in the repository. If the URL is omitted, the API remains usable for session management and returns a clearly typed technical fallback for chat requests; readiness returns HTTP 503.
+`ML_SERVICE_URL` must point to a separately running Python HTTP adapter exposing `POST /respond` and `GET /health/ready`, and accepting the request/response schema in the root `docs/ml-integration.md`. The adapter is implemented in root-level `consultation_http.py`. See `docs/web-stack.md` for the integrated launch. If the URL is omitted, the API remains usable for session management and returns a clearly typed technical fallback for chat requests; readiness returns HTTP 503.
 
 The JSON file store is intended for local/demo use only. It is not multi-process safe and is not a substitute for PostgreSQL in a shared deployment. The prototype currently has no authentication; do not expose it to the public internet until an agreed identity and authorization mechanism is implemented.
 
@@ -46,6 +46,7 @@ Routes:
 - `POST /api/v1/sessions`, `GET /api/v1/sessions`, `GET /api/v1/sessions/{sessionID}`
 - `POST /api/v1/sessions/{sessionID}/messages`, `GET /api/v1/sessions/{sessionID}/messages`
 - `POST /api/v1/sessions/{sessionID}/close`, `GET /api/v1/sessions/{sessionID}/lead`
+- `POST /api/v1/sessions/{sessionID}/application` — persist the reviewed contact form and summary independently of ML state; see `../docs/consultation-ui.md`.
 
 All user and assistant messages are saved. Close marks a session read-only without deleting it. The debug UI can use `elapsed_ms`, `sources`, and `debug` fields in the consultation result; sources may be empty when the knowledge base returns no relevant passage.
 

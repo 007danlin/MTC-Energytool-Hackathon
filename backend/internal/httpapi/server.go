@@ -17,6 +17,7 @@ import (
 
 type SessionService interface {
 	CreateSession() (domain.Session, error)
+	SaveApplication(string, domain.Application) (domain.Session, error)
 	GetSession(string) (domain.Session, error)
 	ListSessions() ([]domain.Session, error)
 	CloseSession(string) (domain.Session, error)
@@ -54,6 +55,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/v1/sessions/{sessionID}/messages", s.getMessages)
 	mux.HandleFunc("POST /api/v1/sessions/{sessionID}/messages", s.postMessage)
 	mux.HandleFunc("GET /api/v1/sessions/{sessionID}/lead", s.getLead)
+	mux.HandleFunc("POST /api/v1/sessions/{sessionID}/application", s.saveApplication)
 	return requestID(recoverer(s.logger, mux))
 }
 
@@ -177,6 +179,8 @@ func (s *Server) getLead(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) mapError(w http.ResponseWriter, r *http.Request, err error) {
 	switch {
+	case errors.Is(err, service.ErrInvalidApplication):
+		writeError(w, r, http.StatusBadRequest, "invalid_application", "Укажите корректный телефон и краткое описание задачи.")
 	case errors.Is(err, store.ErrNotFound):
 		writeError(w, r, http.StatusNotFound, "not_found", "Session was not found")
 	case errors.Is(err, service.ErrClosed):
@@ -226,4 +230,30 @@ func writeJSON(w http.ResponseWriter, status int, value interface{}) {
 
 func writeError(w http.ResponseWriter, r *http.Request, status int, code, message string) {
 	writeJSON(w, status, domain.APIError{Code: code, Message: message, RequestID: requestIDFrom(r.Context())})
+}
+
+func (s *Server) saveApplication(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, 16<<10)
+	var payload struct {
+		FullName string `json:"full_name"`
+		Phone    string `json:"phone"`
+		Company  string `json:"company"`
+		Summary  string `json:"summary"`
+	}
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&payload); err != nil {
+		writeError(w, r, http.StatusBadRequest, "invalid_json", "Некорректные данные заявки.")
+		return
+	}
+	if err := ensureEOF(decoder); err != nil {
+		writeError(w, r, http.StatusBadRequest, "invalid_json", "Некорректные данные заявки.")
+		return
+	}
+	session, err := s.service.SaveApplication(r.PathValue("sessionID"), domain.Application{FullName: payload.FullName, Phone: payload.Phone, Company: payload.Company, Summary: payload.Summary})
+	if err != nil {
+		s.mapError(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, session)
 }

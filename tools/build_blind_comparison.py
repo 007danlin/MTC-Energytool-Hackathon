@@ -34,7 +34,8 @@ def main():
     criteria = {case['id']: case for case in rubric['cases']}
     if set(criteria) != set(ids):
         parser.error('Rubric cases must match questions')
-    safe_fields = ('topic', 'task_family', 'required_criteria', 'critical_failures',
+    safe_fields = ('topic', 'task_family', 'family', 'required_criteria',
+                   'conditional_criteria', 'critical_failures', 'unknown_handling',
                    'insufficient_information_behavior', 'acceptable_variations',
                    'history_requirements', 'source_ids', 'source_evidence')
     rng = random.Random(args.seed)

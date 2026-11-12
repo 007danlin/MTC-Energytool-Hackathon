@@ -1,0 +1,28 @@
+{
+  "source": "User-provided platform table in chat; not independently fetched",
+  "recorded_at": "2026-11-12T09:03:56.246424+03:00",
+  "archive": "daniel-submission-b2-hybrid.zip",
+  "local_archive": "artifacts/daniel-submission-b2-hybrid.zip",
+  "local_archive_sha256": "523b4f2c7f7fe60048101ceaa22f53fbfcf6bf77192f33adeb04f161bc24af94",
+  "uploaded_bytes_independently_verified": false,
+  "score": 45.877,
+  "uploaded_time": "08:51",
+  "upload_date_inferred_from_chat": "2026-11-12",
+  "reported_duration_seconds": 337.9,
+  "duration_semantics": "UI displayed duration; individual pipeline components unknown",
+  "status": "Успешно",
+  "a2_score": 55.969,
+  "score_delta_vs_a2": -10.092,
+  "a6_score": 53.992,
+  "score_delta_vs_a6": -8.115,
+  "working_version": "A2",
+  "working_archive": "artifacts/daniel-submission-a2.zip",
+  "working_archive_sha256": "fa81606a5e4b89cd4b36a13139d906e8940bbc462d43d127ddfaac129c50f013",
+  "decision": "B2 recommendation withdrawn; not promoted. A2 remains the best reported platform result.",
+  "limits": [
+    "One aggregated result; no per-question platform answers, scores or runtime logs available in this chat",
+    "Local model, known development set and review rubric differ from platform evaluation",
+    "Neither successful status nor total duration proves healthy hybrid retrieval or identifies the cause of score regression"
+  ],
+  "post_platform_audit": "docs/b2-platform-postmortem-20261112.txt"
+}

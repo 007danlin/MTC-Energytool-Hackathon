@@ -1,0 +1,158 @@
+{
+  "completed_at": "2026-11-12T13:16:47.015101+03:00",
+  "decision": "Local targeted improvement confirmed; ZIP ready for one platform experiment. A2 remains the best verified platform version.",
+  "archive": "artifacts/daniel-submission-a10-verified.zip",
+  "zip_sha256": "086ecc5b60c67cb5487b194a0a15bf9f8e41e47d2aef5f81f378aa94c14597d4",
+  "bytes": 28089,
+  "baseline": {
+    "version": "A2",
+    "score_user_reported": "55.969",
+    "sha256": "fa81606a5e4b89cd4b36a13139d906e8940bbc462d43d127ddfaac129c50f013",
+    "root_runtime_unchanged": true
+  },
+  "model": {
+    "model": "energytool-qwen-local-eval:20261110",
+    "digest": "0cfe481aa32a651f1ab473d9bc0a66a3aedcf2244def7f0ca989e9ecd458e57e",
+    "size": 19595409816,
+    "details": {
+      "parent_model": "qwen3-vl:30b-a3b-instruct",
+      "format": "gguf",
+      "family": "qwen3vlmoe",
+      "families": [
+        "qwen3vlmoe"
+      ],
+      "parameter_size": "31.1B",
+      "quantization_level": "Q4_K_M",
+      "context_length": 262144,
+      "embedding_length": 2048
+    },
+    "parameters": "num_ctx                        16384\nseed                           42\ntemperature                    0\ntop_k                          20\ntop_p                          0.95"
+  },
+  "score_above60_confirmed": false,
+  "platform_improvement_confirmed": false,
+  "screen": {
+    "revision": "r5",
+    "cases": 23,
+    "wins": 6,
+    "losses": 0,
+    "ties": 17,
+    "new_major_errors": 0,
+    "source_review": "screen-r2-review.json",
+    "all_23_final_requests_equal_completed_requests": true,
+    "accuracy_note_absent": true,
+    "limitations": [
+      "m04 opens with yes followed by the correct possibility predicate; explicitly says consumption restriction is absent, unlike A2 yes-this-is-prohibited. The offer to provide a questionnaire is an ambiguous capability claim; no actual transfer occurs.",
+      "n03 still phrases below15 economic scope softly and suggests calculation; numerical confusion with metering phase removed but wording not perfect.",
+      "m07 expands list of fields; no win awarded for length.",
+      "Exact25 in roof explanation follows solar#s007; do not confuse with invented upper bound up-to25."
+    ]
+  },
+  "broad": {
+    "cases": 93,
+    "wins": 1,
+    "losses": 0,
+    "ties": 92,
+    "unchanged_requests": 88
+  },
+  "fresh": {
+    "cases": 24,
+    "families": 12,
+    "wins": 2,
+    "losses": 0,
+    "ties": 22,
+    "winning_families": 1,
+    "unchanged_requests": 16
+  },
+  "evaluation": "Author source review, not official Score; do not pool panels or treat forms as independent.",
+  "new_generation_calls": {
+    "A10_all_revisions": 52,
+    "rejected_A9_editor": 23,
+    "repeated_identical_completed_requests": 0
+  },
+  "baseline_reuse_proof": "23 screen original request hashes exact. 93 broad code/KB/settings + observed source order/length reconstructed, original HTTP hash unavailable. Fresh duplicate requests share exact SHA.",
+  "technical": {
+    "zip_sha256": "086ecc5b60c67cb5487b194a0a15bf9f8e41e47d2aef5f81f378aa94c14597d4",
+    "python": "3.9.25 (main, Oct 31 2025, 23:16:58) \n[GCC 14.2.0]",
+    "unit_tests": 80,
+    "image_matches_zip": true,
+    "network": "none",
+    "real_platform_api": false,
+    "scenarios": {
+      "ok": {
+        "rows": 123,
+        "valid_csv": true,
+        "calls": 123,
+        "http_statuses": {
+          "200": 123
+        },
+        "statuses": {
+          "answered": 123
+        },
+        "elapsed_seconds": 0.37,
+        "checkpoint_seen": true,
+        "passed": true
+      },
+      "retry": {
+        "rows": 123,
+        "valid_csv": true,
+        "calls": 125,
+        "http_statuses": {
+          "429": 1,
+          "503": 1,
+          "200": 123
+        },
+        "statuses": {
+          "answered": 123
+        },
+        "elapsed_seconds": 0.899,
+        "checkpoint_seen": true,
+        "passed": true
+      },
+      "auth_error": {
+        "rows": 123,
+        "valid_csv": true,
+        "calls": 123,
+        "http_statuses": {
+          "401": 123
+        },
+        "statuses": {
+          "api_error": 123
+        },
+        "elapsed_seconds": 0.431,
+        "checkpoint_seen": true,
+        "passed": true
+      },
+      "truncated": {
+        "rows": 123,
+        "valid_csv": true,
+        "calls": 123,
+        "http_statuses": {
+          "200": 123
+        },
+        "statuses": {
+          "truncated_response": 123
+        },
+        "elapsed_seconds": 0.355,
+        "checkpoint_seen": true,
+        "passed": true
+      },
+      "deadline": {
+        "rows": 123,
+        "valid_csv": true,
+        "calls": 12,
+        "http_statuses": {
+          "200": 12
+        },
+        "statuses": {
+          "answered": 9,
+          "deadline_exceeded": 114
+        },
+        "elapsed_seconds": 1.245,
+        "checkpoint_seen": true,
+        "passed": true
+      }
+    }
+  },
+  "evidence_directory": "reports/private/a10-verified-conditions-20261112",
+  "report": "docs/a10-verified-results-20261112.txt"
+}

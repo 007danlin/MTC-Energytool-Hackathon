@@ -1,0 +1,26 @@
+{
+  "source": "User-provided platform result table",
+  "recorded_at": "2026-11-11T18:58:10.715118+03:00",
+  "timezone": "Europe/Moscow",
+  "archive": "daniel-submission-a3-experimental.zip",
+  "local_archive_sha256": "c3f1f0daaabfce20bc055b97d211e9e0940476f1410a01d4f462d28c8fff77f8",
+  "uploaded_archive_hash_independently_verified": false,
+  "score": 54.232,
+  "uploaded_time": "18:38",
+  "uploaded_date": "2026-11-11",
+  "reported_duration_seconds": 396.2,
+  "status": "Успешно",
+  "a2_score": 55.969,
+  "a2_reported_duration_seconds": 363.8,
+  "score_delta_vs_a2": -1.737,
+  "reported_duration_delta_seconds": 32.4,
+  "working_version": "A2",
+  "decision": "A3 not promoted: observed platform score below best known A2",
+  "attempts_in_this_observation": 1,
+  "limits": [
+    "No platform logs, answers or per-component scores supplied.",
+    "No claim of statistical significance or isolated cause of score difference.",
+    "Reported duration is the dashboard field, not an independently measured per-request or CPU runtime.",
+    "Local semantic failures cannot be assigned a causal share of the hidden platform score."
+  ]
+}

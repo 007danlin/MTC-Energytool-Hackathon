@@ -128,7 +128,7 @@ Use a bounded connection pool and concurrency limit for model calls. Do not blin
 ## Delivery Plan
 
 1. Validate the regulation and knowledge-base files; confirm authentication, manager workflow, and deployment expectations with the team.
-2. Agree on the internal Python HTTP contract and add an adapter around the existing `integration.respond_json` function. The current repository does not yet provide this HTTP service.
+2. Agree on the internal Python HTTP contract and add an adapter around the existing `integration.respond_json` function. The HTTP adapter now exists in `consultation_http.py`; integrated startup is documented in `docs/web-stack.md`.
 3. Create Go module, config, router, health endpoints, typed DTOs, and contract tests.
 4. Add PostgreSQL migrations and repository implementations.
 5. Implement session creation/history and per-session message serialization.

@@ -1,0 +1,45 @@
+{
+  "date": "2026-11-12",
+  "base_commit": "6eee8eaec8e70b8a40df5a18c5515ed5a4ff4b6c",
+  "scope": "Publish the current web prototype and team dependencies after N2 winner and task commits.",
+  "validation": {
+    "python_unit_tests": {
+      "count": 69,
+      "result": "passed"
+    },
+    "host_and_full_stack_tests": {
+      "count": 4,
+      "result": "passed",
+      "model": "local fake HTTP API"
+    },
+    "clean_staged_git_tree": {
+      "result": "passed",
+      "checks": "All 73 Python and host tests without local data, model weights or caches."
+    },
+    "go": "go test -race ./... and go vet ./... passed",
+    "browser": {
+      "result": "passed",
+      "suites": [
+        "test_consultation_ui.cjs",
+        "test_consultation_states.cjs",
+        "test_consultation_design.cjs",
+        "test_consultation_entry.cjs"
+      ],
+      "isolation": "Temporary Go session storage and separate web server; model states controlled by fixtures."
+    },
+    "docker": "Compose config validation and build of consultation, backend and web passed. Existing demo containers were not restarted.",
+    "javascript": "node --check local-preview/energytool-site/www/chat.js passed",
+    "git_diff_check": "passed"
+  },
+  "winner": {
+    "path": "artifacts/mts-energytool-n2-docs.zip",
+    "sha256": "a22d786f895257e14fb89e747a674cd419be0d711ed43b834fb9442ef3b6ac9b",
+    "unchanged": true
+  },
+  "limits": [
+    "This publication does not integrate N2 into the web runtime.",
+    "No fresh live model quality or latency evaluation was performed.",
+    "Knowledge ZIP, model endpoint and local environment must be configured separately.",
+    "Historical experiment directories, exports and handoff ZIPs remain local; they are not current runtime dependencies."
+  ]
+}

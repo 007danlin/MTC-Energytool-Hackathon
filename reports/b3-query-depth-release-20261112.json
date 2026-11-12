@@ -1,0 +1,287 @@
+{
+  "completed_at": "2026-11-12T10:41:01.224237+03:00",
+  "status": "experimental_ready_not_uploaded",
+  "archive": "artifacts/daniel-submission-b3-query-depth.zip",
+  "sha256": "7c6627789e2ea7537b7e0d5da83378f90aa4e11e3f54bacaabac2818873dca5d",
+  "bytes": 28417,
+  "runtime_changes_vs_B2": [
+    "hybrid_retrieval.py:_split_query preserves full latest multiline message",
+    "settings.py restores A2 TOP_K bounds: default12, minimum1, maximum40"
+  ],
+  "prompt_and_generation_unchanged": true,
+  "technical_validation": {
+    "archive_sha256": "7c6627789e2ea7537b7e0d5da83378f90aa4e11e3f54bacaabac2818873dca5d",
+    "changed_vs_B2": [
+      "settings.py",
+      "hybrid_retrieval.py"
+    ],
+    "source_generation_unchanged": true,
+    "tests_python39": 81,
+    "docker_scenarios": 7,
+    "rows_per_scenario": 123,
+    "effective_depth_each": 4,
+    "root_A2_files_unchanged": {
+      "solution.py": true,
+      "settings.py": true,
+      "llm_client.py": true,
+      "contracts.py": true,
+      "dialogue.py": true,
+      "retrieval.py": true,
+      "prompts.py": true,
+      "consultant.py": true,
+      "requirements.txt": true
+    },
+    "schema_compatibility_verified": true,
+    "live_platform_API_verified": false
+  },
+  "generation_counts": {
+    "completed_at": "2026-11-12T10:01:29.558104+03:00",
+    "logical_cells": 72,
+    "new_unique_calls": 24,
+    "reused_unique_calls": 48,
+    "technical_errors": 0,
+    "truncations": 0,
+    "old_generations_repeated": 0,
+    "source_changed_during_run": false,
+    "timing_excludes_retrieval": true
+  },
+  "depth4_comparison": {
+    "matched_depth": 4,
+    "cases": 12,
+    "labels_opened_after_verdict_freeze": true,
+    "verdict_sha256": "b5ab670bb8f66ed2c452e911267f4a57f2225ef9303aebbd691080f633b16266",
+    "results": {
+      "A2-K4": {
+        "wins": 1,
+        "losses": 1,
+        "ties": 10,
+        "major_error_cases": [
+          "m02_m",
+          "m04_m"
+        ],
+        "fully_correct_cases": [
+          "m01_m",
+          "m03_m",
+          "m05_m",
+          "m07_m",
+          "m08_m",
+          "m09_m",
+          "m10_m",
+          "m11_m"
+        ],
+        "required_fact_points": 22.5,
+        "required_fact_max": 25
+      },
+      "B3-K4": {
+        "wins": 1,
+        "losses": 1,
+        "ties": 10,
+        "major_error_cases": [
+          "m04_m"
+        ],
+        "fully_correct_cases": [
+          "m01_m",
+          "m02_m",
+          "m03_m",
+          "m05_m",
+          "m07_m",
+          "m08_m",
+          "m09_m",
+          "m10_m",
+          "m11_m"
+        ],
+        "required_fact_points": 23.0,
+        "required_fact_max": 25
+      }
+    },
+    "decision": "No convincing overall quality improvement confirmed; package requested fixes as experimental, keep A2 working.",
+    "limitations": [
+      "12 author-generated multiline scenarios, not hidden platform tests",
+      "One masked root review, not independent",
+      "Partial completeness scoring is diagnostic, not platform score",
+      "Local Qwen3-VL-30B-A3B-Instruct Q4_K_M is not platform Qwen3.8-27B"
+    ]
+  },
+  "depth12_reused_comparison": {
+    "multiline": {
+      "B3_vs_A2": {
+        "wins": 0,
+        "losses": 3,
+        "ties": 9,
+        "bad_ties": 2,
+        "new_major_regressions": 2,
+        "case_ids": {
+          "wins": [],
+          "losses": [
+            "m02_m",
+            "m06_m",
+            "m07_m"
+          ],
+          "ties": [
+            "m01_m",
+            "m03_m",
+            "m04_m",
+            "m05_m",
+            "m08_m",
+            "m09_m",
+            "m10_m",
+            "m11_m",
+            "m12_m"
+          ],
+          "bad_ties": [
+            "m04_m",
+            "m09_m"
+          ],
+          "new_major_regressions": [
+            "m02_m",
+            "m07_m"
+          ]
+        }
+      },
+      "metrics": {
+        "A2": {
+          "cases": 12,
+          "core_met": 9,
+          "rubric_all_met": 10,
+          "major_error_cases": 2,
+          "major_case_ids": [
+            "m04_m",
+            "m09_m"
+          ]
+        },
+        "B3": {
+          "cases": 12,
+          "core_met": 7,
+          "rubric_all_met": 8,
+          "major_error_cases": 4,
+          "major_case_ids": [
+            "m02_m",
+            "m04_m",
+            "m07_m",
+            "m09_m"
+          ]
+        }
+      }
+    },
+    "singleline": {
+      "B3_vs_A2": {
+        "wins": 4,
+        "losses": 1,
+        "ties": 7,
+        "bad_ties": 1,
+        "new_major_regressions": 0,
+        "case_ids": {
+          "wins": [
+            "m02_s",
+            "m09_s",
+            "m11_s",
+            "m12_s"
+          ],
+          "losses": [
+            "m06_s"
+          ],
+          "ties": [
+            "m01_s",
+            "m03_s",
+            "m04_s",
+            "m05_s",
+            "m07_s",
+            "m08_s",
+            "m10_s"
+          ],
+          "bad_ties": [
+            "m04_s"
+          ],
+          "new_major_regressions": []
+        }
+      },
+      "metrics": {
+        "A2": {
+          "cases": 12,
+          "core_met": 9,
+          "rubric_all_met": 10,
+          "major_error_cases": 3,
+          "major_case_ids": [
+            "m04_s",
+            "m09_s",
+            "m12_s"
+          ]
+        },
+        "B3": {
+          "cases": 12,
+          "core_met": 9,
+          "rubric_all_met": 9,
+          "major_error_cases": 1,
+          "major_case_ids": [
+            "m04_s"
+          ]
+        }
+      }
+    }
+  },
+  "depth12_provenance": {
+    "report": "reports/b2-multiline-ablation-20261112.json",
+    "sha256": "f86bdbeeb35896c7345b93cf2386ab7fac9e975b9f99b417034994fe485c5b1b",
+    "snapshot": "reports/private/b3-query-depth-20261112/depth12-source-report.snapshot.json",
+    "rubric_clarifications": "reports/private/b2-multiline-ablation-20261112/rubric-clarifications-before-review.json",
+    "equivalence": "48 exact full HTTP payload matches: A2-K12=A2; B3-K12=B2fix",
+    "review": {
+      "label_masked_reviews": 2,
+      "signature_agreement_cases": 18,
+      "adjudicated_case_ids": [
+        "m02_m",
+        "m06_m",
+        "m06_s",
+        "m07_m",
+        "m09_m",
+        "m09_s"
+      ],
+      "freeze": "reports/private/b2-multiline-ablation-20261112/review-freeze-before-unblinding.json"
+    },
+    "frozen_equivalence_file": "reports/private/b3-query-depth-20261112/depth12-equivalence.json"
+  },
+  "timing": {
+    "A2-K4": {
+      "cases": 12,
+      "mean_generation_seconds": 12.115,
+      "median_generation_seconds": 12.41,
+      "total_generation_seconds": 145.38
+    },
+    "B3-K4": {
+      "cases": 12,
+      "mean_generation_seconds": 15.48,
+      "median_generation_seconds": 16.305,
+      "total_generation_seconds": 185.76
+    },
+    "A2-K12": {
+      "cases": 12,
+      "mean_generation_seconds": 26.95,
+      "median_generation_seconds": 25.24,
+      "total_generation_seconds": 323.4
+    },
+    "B3-K12": {
+      "cases": 12,
+      "mean_generation_seconds": 25.692,
+      "median_generation_seconds": 26.16,
+      "total_generation_seconds": 308.3
+    },
+    "caveat": "Local sequential generation only; no embedding/index startup time; not platform runtime or throughput estimate."
+  },
+  "working_version": {
+    "name": "A2",
+    "platform_score_user_reported": 55.969,
+    "archive": "artifacts/daniel-submission-a2.zip",
+    "sha256": "fa81606a5e4b89cd4b36a13139d906e8940bbc462d43d127ddfaac129c50f013",
+    "archive_and_root_runtime_unchanged": true
+  },
+  "decision": "Requested defects corrected; no convincing overall quality or platform-score improvement confirmed. Keep A2 working. B3 is an experimental submission, not a validated replacement.",
+  "limitations": [
+    "12 author-generated multiline scenarios and 12 same-content singleline controls; not hidden-test or an independent broad holdout.",
+    "Depth4 and depth12 are separate comparisons. Their reviews use different completeness conventions; do not subtract their aggregate scores as a causal depth effect.",
+    "Local Qwen3-VL-30B-A3B-Instruct Q4_K_M differs from platform Qwen3.8-27B.",
+    "Local BGE vectors replayed through frozen embedding client. Live platform API was not available; Docker integration uses mocks.",
+    "Generation latency excludes retrieval/index initialization and is not a platform execution-time prediction.",
+    "No prediction of a score above60; no platform upload performed."
+  ],
+  "human_report": "docs/b3-query-depth-results-20261112.txt"
+}
