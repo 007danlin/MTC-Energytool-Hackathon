@@ -241,7 +241,7 @@ func TestExportsRenderTheSameCard(t *testing.T) {
 	}
 	txt := ExportTXT(card)
 	for _, want := range []string{"+7 900 000-00-00", "ДЕМО-ДАННЫЕ", "Компания: — [неизвестно]", "сообщение №1",
-		"600 кВт (тип не указан)", "Выход на оптовый рынок [предположение", "в CRM не отправлялось", "12:00 МСК"} {
+		"600 кВт (тип не указан; не подтверждено, уточнить)", "Выход на оптовый рынок [предположение", "в CRM не отправлялось", "12:00 МСК"} {
 		if !strings.Contains(txt, want) {
 			t.Errorf("TXT export misses %q:\n%s", want, txt)
 		}
@@ -255,4 +255,53 @@ func hasUnknown(card NeedCard, part string) bool {
 		}
 	}
 	return false
+}
+
+// Team-lead rule: a value the client confirmed in the form is the one in force;
+// the earlier chat value stays as history; two values are never actual together.
+func TestFormConfirmedPowerWinsAndKeepsHistory(t *testing.T) {
+	s := fixtureSession()
+	s.Application.Summary = "Снизить расходы завода, присоединённая мощность 600 кВт"
+	card := build(t, s)
+	states := map[string]PowerState{}
+	for _, p := range card.Power {
+		states[p.Amount] = p.State
+	}
+	if states["600"] != PowerActual || states["900"] != PowerHistory || len(card.Power) != 2 {
+		t.Fatalf("600 from the form must be actual, 900 history: %+v", card.Power)
+	}
+	if hasUnknown(card, "несколько значений") {
+		t.Fatal("a confirmed value resolves the conflict")
+	}
+	for _, p := range card.Power {
+		if p.Amount == "600" && (p.Origin != OriginForm || len(p.Evidence) == 0 || p.Kind.Value != "присоединённая") {
+			t.Fatalf("form value keeps the chat evidence and its stated kind: %+v", p)
+		}
+	}
+	if !strings.Contains(ExportTXT(card), "900 кВт (присоединённая; прежнее значение, заменено подтверждённым)") {
+		t.Fatalf("history must be visible in the export:\n%s", ExportTXT(card))
+	}
+}
+
+func TestConfirmEditResolvesConflict(t *testing.T) {
+	card := build(t, fixtureSession())
+	if card.Power[0].State != PowerUnconfirmed || card.Power[1].State != PowerUnconfirmed {
+		t.Fatalf("without confirmation both values are unconfirmed: %+v", card.Power)
+	}
+	next, _, err := ApplyEdits(card, 1, ActorClient, []Edit{{Path: "power.1", Action: "confirm"}}, t0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if next.Power[1].State != PowerActual || next.Power[0].State != PowerHistory || hasUnknown(next, "несколько значений") {
+		t.Fatalf("confirmed 600 actual, 900 history: %+v", next.Power)
+	}
+	actual := 0
+	for _, p := range next.Power {
+		if p.State == PowerActual {
+			actual++
+		}
+	}
+	if actual != 1 {
+		t.Fatal("only one power value may be actual")
+	}
 }

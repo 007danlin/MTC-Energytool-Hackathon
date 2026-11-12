@@ -46,13 +46,57 @@ func extractPower(text string) []Power {
 	return out
 }
 
-// appendPower merges repeated mentions of the same value and unit, keeping all evidence
-// and a stated kind over an unknown one.
+func authoritative(o Origin) bool {
+	return o == OriginForm || o == OriginClientEdit || o == OriginManager
+}
+
+func powerClass(unit string) string {
+	if unit == "кВт·ч" {
+		return "energy"
+	}
+	return "power"
+}
+
+// resolvePower sets the state of every value within its class (power vs energy):
+// confirmed (form/edit) values are actual and the rest become history; with no
+// confirmed value a single value is actual and several are unconfirmed.
+// Two different values are never actual at the same time unless the client confirmed both.
+func resolvePower(list []Power) {
+	for _, class := range []string{"power", "energy"} {
+		idx, confirmed := []int{}, 0
+		for i, p := range list {
+			if powerClass(p.Unit) == class {
+				idx = append(idx, i)
+				if authoritative(p.Origin) {
+					confirmed++
+				}
+			}
+		}
+		for _, i := range idx {
+			switch {
+			case confirmed > 0 && authoritative(list[i].Origin):
+				list[i].State = PowerActual
+			case confirmed > 0:
+				list[i].State = PowerHistory
+			case len(idx) == 1:
+				list[i].State = PowerActual
+			default:
+				list[i].State = PowerUnconfirmed
+			}
+		}
+	}
+}
+
+// appendPower merges repeated mentions of the same value and unit, keeping all evidence,
+// a stated kind over an unknown one and the most authoritative origin.
 func appendPower(list []Power, p Power) []Power {
 	for i := range list {
 		if list[i].Amount == p.Amount && list[i].Unit == p.Unit {
 			if list[i].Kind.Status == Unknown && p.Kind.Status != Unknown {
 				list[i].Kind = p.Kind
+			}
+			if authoritative(p.Origin) && !authoritative(list[i].Origin) {
+				list[i].Origin = p.Origin
 			}
 			for _, e := range p.Evidence {
 				dup := false
