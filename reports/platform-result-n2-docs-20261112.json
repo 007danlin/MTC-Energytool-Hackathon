@@ -1,0 +1,25 @@
+{
+  "date_moscow": "2026-11-12",
+  "version": "n2-docs",
+  "filename_reported": "mts-energytool-n2-docs.zip",
+  "dashboard_score": "69.912",
+  "upload_time_moscow_reported": "19:35",
+  "ui_duration_seconds": 345.6,
+  "status_reported": "Лучшее решение",
+  "source": "User-provided platform table in this chat; not independently fetched",
+  "local_artifact": "artifacts/mts-energytool-n2-docs.zip",
+  "local_artifact_sha256": "a22d786f895257e14fb89e747a674cd419be0d711ed43b834fb9442ef3b6ac9b",
+  "uploaded_bytes_independently_verified": false,
+  "delta_vs_n1_points": "11.154",
+  "delta_vs_a2_points": "13.943",
+  "score_is_accuracy_percent": false,
+  "duration_semantics": "UI displayed duration; pipeline components unknown",
+  "repeatability": "One reported attempt; variance and private performance unknown",
+  "local_checks_this_turn": {
+    "zip_crc": "passed",
+    "root_entries": 13,
+    "python39_grammar": "passed",
+    "model_generation": "not run",
+    "author_acceptance": "47/47 on mock API according to REPORT-N2.md; not rerun this turn"
+  }
+}
