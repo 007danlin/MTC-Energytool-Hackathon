@@ -194,12 +194,13 @@ func TestDeliveryIsSeparateAndRetriesTheSameReply(t *testing.T) {
 		t.Fatal("failed must be retried before delivery")
 	}
 	r = ok(t)(RetryDelivery(r, system, cmd(r, "d3"), "reply-1", t0))
-	r = ok(t)(MarkDelivered(r, system, cmd(r, "d4"), "reply-1", true, t0.Add(time.Minute)))
+	deliveryCommand := cmd(r, "d4")
+	r = ok(t)(MarkDelivered(r, system, deliveryCommand, "reply-1", true, t0.Add(time.Minute)))
 	if r.Reply.Delivery != DeliveryDelivered || r.Reply.DeliveryAttempts != 2 || !r.Reply.ToClosedSession ||
 		r.Reply.ID != "reply-1" || StatusForClient(r).Code != "answered" {
 		t.Fatalf("delivered same reply to a closed session's history: %+v", r.Reply)
 	}
-	again, err := MarkDelivered(r, system, cmd(r, "d5"), "reply-1", true, t0)
+	again, err := MarkDelivered(r, system, deliveryCommand, "reply-1", true, t0)
 	if err != nil || again.Version != r.Version {
 		t.Fatal("repeated delivery mark is a no-op")
 	}

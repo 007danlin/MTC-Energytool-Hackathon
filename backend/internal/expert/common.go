@@ -74,6 +74,9 @@ func (r *replayLog) replay(id, hash string) (bool, error) {
 	}
 	stored, ok := r.Hashes[id]
 	if !ok {
+		if _, known := r.IDs[id]; known {
+			return false, ErrRequestConflict
+		}
 		return false, nil
 	}
 	if stored != hash {
@@ -87,7 +90,10 @@ func (r *replayLog) remember(id, hash string, version int) {
 		return
 	}
 	if r.IDs == nil {
-		r.IDs, r.Hashes = map[string]int{}, map[string]string{}
+		r.IDs = map[string]int{}
+	}
+	if r.Hashes == nil {
+		r.Hashes = map[string]string{}
 	}
 	if len(r.IDs) >= maxRemembered {
 		oldest, min := "", int(^uint(0)>>1)
@@ -100,6 +106,24 @@ func (r *replayLog) remember(id, hash string, version int) {
 		delete(r.Hashes, oldest)
 	}
 	r.IDs[id], r.Hashes[id] = version, hash
+}
+
+// checkCommand also guards callbacks whose target state has already been reached.
+// Such callbacks must not bypass role, replay or optimistic-lock validation.
+func checkCommand(log replayLog, version int, actor Actor, cmd Command, hash string) (bool, error) {
+	if !actor.valid() {
+		return false, ErrForbidden
+	}
+	if strings.TrimSpace(cmd.ID) == "" {
+		return false, fmt.Errorf("%w: command id is required", ErrInvalidInput)
+	}
+	if replay, err := log.replay(cmd.ID, hash); replay || err != nil {
+		return replay, err
+	}
+	if cmd.ExpectedVersion != version {
+		return false, ErrVersionConflict
+	}
+	return false, nil
 }
 
 func (r replayLog) clone() replayLog {
