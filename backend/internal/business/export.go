@@ -76,7 +76,9 @@ func ExportTXT(card NeedCard) string {
 		if p.Kind.Status != Unknown {
 			kind = p.Kind.Value
 		}
-		w("- Мощность/объём: %s %s (%s)", p.Amount, p.Unit, kind)
+		state := map[PowerState]string{PowerActual: "актуальное", PowerHistory: "прежнее значение, заменено подтверждённым",
+			PowerUnconfirmed: "не подтверждено, уточнить"}[p.State]
+		w("- Мощность/объём: %s %s (%s; %s)", p.Amount, p.Unit, kind, state)
 		found = true
 	}
 	if !found {

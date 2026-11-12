@@ -27,7 +27,7 @@ const (
 //	task, next_step                         set
 //	contact.phone|full_name|company         set, remove (full_name/company only)
 //	power                                   add (value like "600 кВт")
-//	power.N                                 remove
+//	power.N                                 confirm (becomes actual), remove
 //	power.N.kind                            set ("присоединённая" | "потребление")
 //	products.N                              confirm, remove
 //	unknowns                                add
@@ -123,6 +123,7 @@ func ApplyEdits(card NeedCard, expectedVersion int, actor Actor, edits []Edit, n
 				err = fmt.Errorf("%w: power must be one number with unit (кВт, МВт, кВт·ч)", ErrInvalidEdit)
 			} else {
 				p := found[0]
+				p.Origin = origin
 				if p.Kind.Status == Confirmed {
 					p.Kind.Origin = origin
 				}
@@ -136,6 +137,8 @@ func ApplyEdits(card NeedCard, expectedVersion int, actor Actor, edits []Edit, n
 			}
 		case len(parts) == 2 && parts[0] == "power" && idx >= 0 && idx < len(next.Power) && e.Action == "remove":
 			removals["power"] = append(removals["power"], idx)
+		case len(parts) == 2 && parts[0] == "power" && idx >= 0 && idx < len(next.Power) && e.Action == "confirm":
+			next.Power[idx].Origin = origin
 		case len(parts) == 2 && parts[0] == "products" && idx >= 0 && idx < len(next.Products):
 			switch e.Action {
 			case "confirm":
@@ -158,6 +161,7 @@ func ApplyEdits(card NeedCard, expectedVersion int, actor Actor, edits []Edit, n
 		paths = append(paths, e.Path)
 	}
 	next.Power = removeIndexes(next.Power, removals["power"])
+	resolvePower(next.Power)
 	next.Products = removeIndexes(next.Products, removals["products"])
 	next.Unknowns = removeIndexes(next.Unknowns, removals["unknowns"])
 

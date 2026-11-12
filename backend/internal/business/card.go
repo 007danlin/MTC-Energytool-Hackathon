@@ -60,11 +60,23 @@ type Contact struct {
 	PreferredChannel Field `json:"preferred_channel"`
 }
 
+// PowerState says which value is in force when the client named several.
+type PowerState string
+
+const (
+	PowerActual      PowerState = "actual"      // the value in force
+	PowerHistory     PowerState = "history"     // replaced by a value the client confirmed
+	PowerUnconfirmed PowerState = "unconfirmed" // several values, none confirmed yet: ask the client
+)
+
 // Power is recorded only when the client wrote a number with a unit.
+// A value from the confirmed form or an explicit edit outranks values from chat messages.
 type Power struct {
 	Amount   string     `json:"amount"`
 	Unit     string     `json:"unit"` // кВт, МВт or кВт·ч
 	Kind     Field      `json:"kind"` // присоединённая / потребление, unknown if not stated
+	State    PowerState `json:"state"`
+	Origin   Origin     `json:"origin"` // application_form | client_message | client_edit | manager_edit
 	Evidence []Evidence `json:"evidence"`
 }
 
@@ -149,10 +161,11 @@ func BuildCard(session domain.Session, applicationID string, version int, demo b
 			continue
 		}
 		for _, p := range extractPower(f.Value) {
-			p.Evidence = f.Evidence
+			p.Evidence, p.Origin = f.Evidence, f.Origin
 			card.Power = appendPower(card.Power, p)
 		}
 	}
+	resolvePower(card.Power)
 
 	seenProduct := map[string]bool{}
 	for _, p := range summary.Products {
@@ -240,14 +253,17 @@ func unknowns(card NeedCard, managerQuestions []string) []Field {
 	if len(card.Power) == 0 {
 		add("Мощность объекта не указана", OriginRule)
 	} else {
-		amounts := map[string]bool{}
+		conflict := false
 		for _, p := range card.Power {
-			amounts[p.Amount+" "+p.Unit] = true
+			if p.State == PowerHistory {
+				continue
+			}
+			conflict = conflict || p.State == PowerUnconfirmed
 			if p.Kind.Status == Unknown && p.Unit != "кВт·ч" {
 				add(fmt.Sprintf("Тип мощности %s %s не указан: присоединённая или фактическая", p.Amount, p.Unit), OriginRule)
 			}
 		}
-		if len(amounts) > 1 {
+		if conflict {
 			add("Клиент назвал несколько значений мощности — уточнить актуальное", OriginRule)
 		}
 	}
