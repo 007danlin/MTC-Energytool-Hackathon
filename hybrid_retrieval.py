@@ -48,11 +48,17 @@ def _split_query(query):
 
 
 def _normalize(vector):
-    norm = math.sqrt(sum(x * x for x in vector)) or 1.0
+    if not vector or not all(math.isfinite(x) for x in vector):
+        raise ValueError("embedding_invalid")
+    norm = math.sqrt(sum(x * x for x in vector))
+    if norm == 0 or not math.isfinite(norm):
+        raise ValueError("embedding_invalid")
     return [x / norm for x in vector]
 
 
 def _dot(a, b):
+    if len(a) != len(b) or not a or not all(math.isfinite(x) for x in a + b):
+        raise ValueError("embedding_shape")
     return sum(x * y for x, y in zip(a, b))
 
 
@@ -102,7 +108,10 @@ class APIEmbedder:
                               timeout, attempts)["data"]
             out = [None] * len(chunk)
             for i, item in enumerate(data):
-                out[int(item.get("index", i))] = _normalize([float(x) for x in item["embedding"]])
+                index = item.get("index", i)
+                if type(index) is not int or not 0 <= index < len(chunk) or out[index] is not None:
+                    raise ValueError("embedding_index")
+                out[index] = _normalize([float(x) for x in item["embedding"]])
             if any(v is None for v in out):
                 raise RuntimeError("embedding_count_mismatch")
             vectors.extend(out)
@@ -138,11 +147,11 @@ class HybridRetriever:
             return
         try:
             self.vectors = embedder.embed([f.text for f in self.fragments])
-            if len(self.vectors) != len(self.fragments) or len({len(v) for v in self.vectors}) != 1:
+            if len(self.vectors) != len(self.fragments) or len({len(v) for v in self.vectors}) != 1 or not self.vectors[0]:
                 raise RuntimeError("embedding_shape")
         except Exception as exc:
             self.vectors = None
-            self.stats.update(mode="lexical_fallback", startup_error=str(exc)[:80])
+            self.stats.update(mode="lexical_fallback", startup_error=type(exc).__name__)
 
     @classmethod
     def from_zip(cls, path, embedder, **kwargs):
@@ -246,7 +255,7 @@ class HybridRetriever:
 
 
 def create_retriever(knowledge_zip, settings, environ=None, *, rerank=None):
-    """Factory for solution.py: hybrid when the embedding service answers, else A2 (observable)."""
+    """Keep A2 by default; explicitly opt into experimental hybrid retrieval."""
     import os
     from settings import env_first
     env = os.environ if environ is None else environ
@@ -254,7 +263,10 @@ def create_retriever(knowledge_zip, settings, environ=None, *, rerank=None):
     model = get("EMB_MODEL", default="baai/bge-m3")
     rerank_model = get("RERANKER_MODEL")
     use_rerank = bool(rerank_model) and get("HYBRID_RERANK", default="0") == "1" if rerank is None else rerank
-    disabled = get("RETRIEVAL_MODE", default="hybrid").lower() == "a2"
+    mode = get("RETRIEVAL_MODE", default="a2").strip().lower()
+    if mode not in ("a2", "hybrid"):
+        raise ValueError("invalid_retrieval_mode")
+    disabled = mode == "a2"
     try:
         top_n = max(1, min(20, int(get("RERANKER_TOP_N", default="8"))))
     except ValueError:
