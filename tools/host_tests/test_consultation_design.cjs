@@ -13,7 +13,9 @@ const shots=process.env.WEB_TEST_SHOTS||'/tmp/mts-design-review';fs.mkdirSync(sh
   else {const s=sessions[id];if(path[4]==='messages'){
    const data=req.postDataJSON();s.messages.push({role:'user',content:data.content});
    if(gate)await new Promise(resolve=>{gate.release=resolve});
-   const [status,answer]=queue.shift()||['answered','Начните с раздельного учёта.'];result=makeResult(s,status,answer);s.last_result=result;s.messages.push({role:'assistant',content:answer,response:{status,sources:result.sources,elapsed_ms:result.elapsed_ms}});
+   const [status,answer]=queue.shift()||['answered','Начните с раздельного учёта.'];result=makeResult(s,status,answer);
+   if(data.content==='Хочу поговорить со специалистом')s.lead=result.lead={...result.lead,requested:true,declined:false};
+   s.last_result=result;s.messages.push({role:'assistant',content:answer,response:{status,sources:result.sources,elapsed_ms:result.elapsed_ms}});
   }else if(path[4]==='application'){s.application={...req.postDataJSON(),saved_at:new Date().toISOString()};result=s;}
   else if(path[4]==='close'){s.status='closed';result=s;}else result=s;}
   await route.fulfill({json:result});
@@ -44,6 +46,9 @@ const shots=process.env.WEB_TEST_SHOTS||'/tmp/mts-design-review';fs.mkdirSync(sh
   if(state==='technical_error'){assert.equal(await p.locator('.et-error').count(),1);assert.equal(await p.locator('.et-assistant').count(),0);}
   if(state==='out_of_scope')assert.equal(await p.getByRole('button',{name:'Подготовить заявку',exact:true}).count(),0);
  }
+ await fresh();queue.push(['clarification','Как я могу помочь?']);await send('Хочу поговорить со специалистом');
+ await p.getByRole('button',{name:'Подготовить заявку',exact:true}).click();
+ await p.getByRole('heading',{name:'Как с вами связаться?',exact:true}).waitFor();
  for(const width of [320,390,768,1024,1440]){await p.setViewportSize({width,height:844});assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'overflow '+width);}
  assert.deepEqual(errors,[]);console.log('PASS: design states, correct cards and order, per-answer sources, editable modal, no-phone branch, archive, fresh entry, five viewports.');
 }finally{await browser.close()}})().catch(e=>{console.error(e);process.exit(1)});
