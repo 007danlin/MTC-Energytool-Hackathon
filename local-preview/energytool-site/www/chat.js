@@ -6,9 +6,11 @@
       document.querySelectorAll('#root button').forEach(button => {
         if (button.textContent.trim() !== 'Заказать консультацию') return;
         const parent = button.parentElement;
+        const isHero = parent.parentElement.textContent.includes('Войти в кабинет');
+        if (location.pathname === '/' && !isHero) return;
         if (parent.querySelector('.et-online-link')) return;
         parent.classList.add('et-entry-stack');
-        if (parent.parentElement.textContent.includes('Войти в кабинет')) parent.classList.add('et-entry-hero');
+        if (isHero) parent.classList.add('et-entry-hero');
         const link = document.createElement('a');
         link.className = 'et-online-link';
         link.href = '/consultation.html?start=new&return=' + encodeURIComponent(location.pathname + location.search + location.hash);
@@ -30,6 +32,14 @@
   const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const button = (label, action, primary = false) => `<button type="button" data-action="${action}"${primary ? ' class="et-primary"' : ''}>${label}</button>`;
   let current = null, busy = false, needsSync = false, debug = false, draft = null, stage = 'chat', notice = '', modalFocus = null, selectedSource = null, archived = null, noPhone = false, collapsedAt = 0, pending = false;
+  let unconfirmedMessage = null;
+  const responseLabels = new Map([
+    ['answered', 'Получен ответ'],
+    ['clarification', 'Нужно уточнение'],
+    ['knowledge_gap', 'Нет данных в базе'],
+    ['out_of_scope', 'Вопрос вне темы'],
+    ['technical_error', 'Технический сбой'],
+  ]);
   let savedID;
   try { savedID = localStorage.getItem('energytool-session'); } catch (_) {}
   let returnPath = '/';
@@ -76,24 +86,43 @@
   }
   function adopt(session) {
     current = session; remember(session.id);
+    if (unconfirmedMessage?.sessionID === session.id) {
+      const { offset, text, fromComposer, retry } = unconfirmedMessage;
+      const recorded = session.messages.slice(offset).some(message => message.role === 'user' && message.content === text);
+      if (recorded && fromComposer && input.value.trim() === text) setInput('');
+      if (!recorded && !retry && !input.value.trim()) setInput(text);
+      unconfirmedMessage = null;
+    }
     needsSync = session.status === 'active' && session.messages.at(-1)?.role === 'user';
     if (needsSync) status('Ответ ещё не сохранён. Обновите историю через некоторое время.', true);
   }
-  function metadata(message, index) {
-    return message.response || (index === current?.messages.length - 1 ? current.last_result : null);
+  function metadata(message, index, session = current) {
+    return message.response || (index === session?.messages.length - 1 ? session.last_result : null);
+  }
+  function isRetriedQuestion(message, index, session) {
+    return message.role === 'user' && index > 1 &&
+      session.messages[index - 2].role === 'user' &&
+      metadata(session.messages[index - 1], index - 1, session)?.status === 'technical_error' &&
+      session.messages[index - 2].content === message.content;
   }
   function messageHTML(message) {
     return `<article class="et-message ${message.role === 'user' ? 'et-user' : 'et-assistant'}">${message.role === 'user' ? '' : '<div class="et-message-label">EnergyTool · ИИ-консультант</div>'}<div class="et-message-body">${escape(message.content)}</div></article>`;
   }
+  function responseTime(result) {
+    return Number.isFinite(result?.elapsed_ms)
+      ? (result.elapsed_ms / 1000).toLocaleString('ru-RU', { maximumFractionDigits: 1 }) + ' с'
+      : 'Не указано';
+  }
   function debugCard(result, index) {
-    return `<section class="et-card et-debug"><p class="et-hint">Отладка включена · данные этого ответа</p><div class="et-stack"><button data-source-message="${index}">${escape((result.elapsed_ms/1000).toLocaleString('ru-RU',{maximumFractionDigits:1}))} с · ${result.sources?.length || 0} источников · Подробнее</button>${button('Выключить отладку','debug')}</div></section>`;
+    return `<section class="et-card et-debug"><p class="et-hint">Отладка · ${responseLabels.get(result.status) || 'Статус неизвестен'}</p><div class="et-stack"><button data-source-message="${index}">${responseTime(result)} · Источники: ${result.sources?.length || 0} · Подробнее</button>${button('Выключить отладку','debug')}</div></section>`;
   }
   function chatMessages() {
     return (current?.messages || []).slice(collapsedAt).map((m, offset) => {
       const index = offset + collapsedAt, result = metadata(m,index);
-      if(m.role==='user' && index>1 && metadata(current.messages[index-1],index-1)?.status==='technical_error' && current.messages[index-2]?.content===m.content)return '';
+      if (isRetriedQuestion(m, index, current)) return '';
       if (m.role === 'assistant' && result?.status === 'technical_error') {
-        return index === current.messages.length - 1 ? '' : '<p class="et-hint">Не удалось получить ответ. Вопрос сохранён.</p>';
+        const hint = index === current.messages.length - 1 ? '' : '<p class="et-hint">Не удалось получить ответ. Вопрос сохранён.</p>';
+        return hint + (debug ? `<button class="et-debug-link" data-source-message="${index}">Данные о сбое</button>` : '');
       }
       return messageHTML(m) + (m.role === 'assistant' && debug && result ? (index === current.messages.length-1 ? debugCard(result,index) : `<button class="et-debug-link" data-source-message="${index}">Источники этого ответа</button>`) : '');
     }).join('');
@@ -106,7 +135,7 @@
   }
   function render() {
     const empty = !current?.messages.length;
-    $('.et-welcome').hidden = !empty || stage !== 'chat' || pending;
+    $('.et-welcome').hidden = !empty || stage !== 'chat' || pending || needsSync;
     messages.hidden = stage !== 'chat';
     messages.innerHTML = (collapsedAt && stage === 'chat' ? previous() : '') + chatMessages();
     flow.replaceChildren();
@@ -116,10 +145,10 @@
     else if (stage === 'declined') {
       flow.innerHTML = previous() + messageHTML({role:'user',content:'Продолжить без телефона'}) + assistant('Хорошо, можем продолжить без телефона. Хотите разобраться, какие данные собрать по вашей задаче?') + `<div class="et-stack"><button data-reply="Какие данные нужно собрать по моей задаче?">Какие данные собрать?</button>${button('Вернуться к заявке','contacts')}</div>`;
     } else if (pending) {
-      flow.innerHTML = `<div class="et-pending" role="status">${assistant('Готовлю ответ…')}<p class="et-hint">Локальная модель обычно отвечает за 1–2 минуты. Первый ответ может занять дольше.</p></div>`;
+      flow.innerHTML = `<div class="et-pending" role="status">${assistant('Готовлю ответ…')}<p class="et-hint">Первый ответ может занять больше времени, пока запускается модель.</p></div>`;
     } else if (isClosed()) {
       flow.innerHTML = card('Диалог сохранён','<p>Эта переписка доступна для чтения в истории.</p>',button('Начать новый диалог','new',true));
-    } else {
+    } else if (!needsSync) {
       const result = current?.last_result;
       const state = result?.status;
       host.dataset.screen = empty ? 'welcome' : state || 'conversation';
@@ -127,10 +156,12 @@
         flow.innerHTML = card('Не удалось получить ответ','<p>Ваш вопрос сохранён. Попробуйте ещё раз.</p>',button('Повторить','retry',true),'et-error');
       } else if (state === 'out_of_scope') {
         flow.innerHTML = `<div class="et-stack">${button('Задать другой вопрос','continue')}</div>`;
+      } else if (noPhone && !current?.application) {
+        flow.innerHTML = `<div class="et-stack">${button('Вернуться к заявке','contacts')}</div>`;
       } else if (state === 'knowledge_gap') {
         flow.innerHTML = `<div class="et-stack">${button('Подготовить заявку','contacts',true)}${button('Задать другой вопрос','continue')}</div>`;
-      } else if (noPhone && state !== 'technical_error') {
-        flow.innerHTML = `<div class="et-stack">${button('Вернуться к заявке','contacts')}</div>`;
+      } else if (current?.lead?.requested && !current.lead.declined && !current.application) {
+        flow.innerHTML = `<div class="et-stack">${button('Подготовить заявку','contacts',true)}${button('Продолжить консультацию','continue')}</div>`;
       } else if (state === 'clarification') {
         const choices = clarificationChoices(result.answer || current.messages.at(-1)?.content || '');
         flow.innerHTML = `<div class="et-stack et-replies">${choices.map((text,i)=>`<button class="${i===0?'et-primary':''}" data-reply="${escape(text)}">${escape(text)}</button>`).join('')}</div>`;
@@ -142,6 +173,7 @@
     }
     if (stage !== 'chat') host.dataset.screen = stage;
     if (pending) host.dataset.screen = 'waiting';
+    if (needsSync && stage === 'chat') host.dataset.screen = 'sync';
     controls();
   }
   function summaryText() {
@@ -160,21 +192,48 @@
     return `<div class="et-fields">${field('full_name','Имя и фамилия','Как к вам обращаться','autocomplete="name" maxlength="200"')}${field('phone','Телефон','+7 (___) ___-__-__','type="tel" inputmode="tel" autocomplete="tel" maxlength="40" required')}${field('company','Название компании','Ваша компания','autocomplete="organization" maxlength="200"')}${includeSummary ? `<label class="et-field"><span>Кратко о вашей задаче</span><textarea name="summary" maxlength="2000" required>${escape(value.summary)}</textarea></label>` : ''}</div>`;
   }
   function validForm(form) {
-    const phone = form.elements.phone.value.trim(), count = phone.replace(/\D/g,'').length;
-    form.elements.phone.setCustomValidity(!/^\+?[0-9 ()-]+$/.test(phone) || count < 10 || count > 15 ? 'Проверьте номер телефона' : '');
-    const error = form.querySelector('.et-phone-error');
-    if (error) error.remove();
-    if (!form.elements.phone.validity.valid) {
-      const note = document.createElement('span');note.className='et-phone-error';note.textContent='Проверьте номер телефона';form.elements.phone.parentElement.append(note);form.elements.phone.parentElement.classList.add('et-invalid');
+    const phone = form.elements.phone;
+    const summary = form.elements.summary;
+    const digits = phone.value.replace(/\D/g,'').length;
+    const errors = [];
+    if (!/^\+?[0-9 ()-]+$/.test(phone.value.trim()) || digits < 10 || digits > 15) {
+      errors.push([phone, 'Укажите номер телефона из 10–15 цифр.']);
     }
-    return form.reportValidity();
+    if (summary && !summary.value.trim()) {
+      errors.push([summary, 'Кратко опишите, с чем нужна помощь.']);
+    }
+    for (const [field, message] of errors) {
+      clearFieldError(field);
+      const note = document.createElement('span');
+      note.id = `${form.className}-${field.name}-error`;
+      note.className = field === phone ? 'et-field-error et-phone-error' : 'et-field-error';
+      note.textContent = message;
+      field.setAttribute('aria-invalid','true');
+      field.setAttribute('aria-describedby',note.id);
+      field.parentElement.classList.add('et-invalid');
+      field.after(note);
+    }
+    if (errors.length) {
+      const field = errors[0][0];
+      const details = field.closest('details');
+      if (details) details.open = true;
+      field.focus();
+    }
+    return errors.length === 0;
+  }
+  function clearFieldError(field) {
+    field.removeAttribute('aria-invalid');
+    field.removeAttribute('aria-describedby');
+    field.parentElement.classList.remove('et-invalid');
+    field.parentElement.querySelector('.et-field-error')?.remove();
   }
   function bindForm(form, save) {
-    form.addEventListener('input',()=>{form.elements.phone.setCustomValidity('');form.elements.phone.parentElement.classList.remove('et-invalid');form.querySelector('.et-phone-error')?.remove();});
+    form.noValidate = true;
+    form.addEventListener('input',e=>{if(e.target.hasAttribute('aria-invalid'))clearFieldError(e.target);});
     form.onsubmit = e=>{e.preventDefault();if(busy||!validForm(form))return;save(Object.fromEntries(new FormData(form)));};
   }
   function renderContacts() {
-    flow.innerHTML = previous() + assistant('Подготовлю заявку. Проверьте контакты — их можно будет изменить перед подтверждением.') + `<section class="et-card"><h2>Как с вами связаться?</h2><p class="et-hint">Достаточно телефона. Имя и компания — по желанию.</p><form class="et-contact-form">${contactFields(draft,!draft.summary)}<div class="et-stack"><button type="submit" class="et-primary">Проверить заявку</button>${button('Продолжить без телефона','decline')}</div></form></section>`;
+    flow.innerHTML = previous() + assistant('Подготовлю заявку. Проверьте контакты — их можно будет изменить перед подтверждением.') + `<section class="et-card"><h2>Как с вами связаться?</h2><p class="et-hint">Достаточно телефона. Имя и компания — по желанию.</p><form class="et-contact-form">${contactFields(draft,!summaryText() && !current.application?.summary)}<div class="et-stack"><button type="submit" class="et-primary">Проверить заявку</button>${button('Продолжить без телефона','decline')}</div></form></section>`;
     const form=$('.et-contact-form');
     form.addEventListener('input',()=>{draft={...draft,...Object.fromEntries(new FormData(form))};});
     bindForm(form,fields=>{draft={...draft,...fields};noPhone=false;stage='review';render();scroll.scrollTop=0;});
@@ -183,26 +242,41 @@
     return `<p class="et-eyebrow">КОНТАКТЫ</p>${[application.full_name,application.phone,application.company].filter(Boolean).map(v=>`<p>${escape(v)}</p>`).join('')}<p class="et-eyebrow">РЕЗЮМЕ</p><p>${escape(application.summary)}</p>`;
   }
   function renderReview(application,saved) {
-    flow.innerHTML = previous() + assistant(saved ? 'Заявка сохранена. Вы можете продолжить консультацию или вернуться к ней в истории.' : 'Собрал контакты и резюме нашей беседы. Всё верно?') + card(saved ? 'Заявка сформирована' : 'Проверьте заявку',`<p class="${saved?'et-success':'et-muted'}">${saved?'Сохранено в диалоге':'Заявка сохранится в этом диалоге'}</p>${reviewHTML(application)}`,saved ? button('Продолжить консультацию','continue',true)+button('История диалогов','history') : button('Изменить данные','edit')+button('Сформировать заявку','save',true),'et-review');
+    flow.innerHTML = previous() + assistant(saved ? 'Заявка сохранена. Её можно скачать или открыть в истории диалогов.' : 'Собрал контакты и резюме нашей беседы. Всё верно?') + card(saved ? 'Заявка сформирована' : 'Проверьте заявку',`<p class="${saved?'et-success':'et-muted'}">${saved?'Сохранено в диалоге':'Заявка сохранится в этом диалоге'}</p>${reviewHTML(application)}`,saved ? button('Скачать заявку','download',true)+button('Продолжить консультацию','continue')+button('История диалогов','history') : button('Изменить данные','edit')+button('Сформировать заявку','save',true),'et-review');
+  }
+  async function saveApplication({ full_name, phone, company, summary }) {
+    const session = await api('/sessions/' + current.id + '/application', {
+      full_name: full_name.trim(), phone: phone.trim(), company: company.trim(), summary: summary.trim(),
+    });
+    if (session?.id !== current.id || !session.application?.saved_at) {
+      throw new Error('Сервис не подтвердил сохранение заявки. Введённые данные остались в форме.');
+    }
+    adopt(session);
   }
   function editContacts() {
     const saved = stage==='saved';
     const value = saved ? current.application : draft;
     openModal('Изменить контакты',`<p>Данные сохранятся только после нажатия «Сохранить».</p><form class="et-edit-form">${contactFields(value,false)}<details class="et-summary-edit"><summary>Изменить описание задачи</summary><label class="et-field"><span>Кратко о вашей задаче</span><textarea name="summary" maxlength="2000" required>${escape(value.summary)}</textarea></label></details><div class="et-stack"><button type="submit" class="et-primary">Сохранить</button>${button('Отмена','dismiss')}</div></form>`,'edit');
     bindForm(modalBody.querySelector('form'),fields=>{
-      if(saved)run(async()=>{adopt(await api('/sessions/'+current.id+'/application',fields));dismiss();render();});
+      if(saved)run(async()=>{await saveApplication(fields);dismiss();status('');render();});
       else {draft={...draft,...fields};dismiss();render();}
     });
   }
   function openModal(title,html,kind='') {
-    modalFocus = document.activeElement;
+    if (!modal.open) modalFocus = document.activeElement;
     $('#et-modal-title').textContent = title;
     modalBody.innerHTML = html;
     modal.className = 'et-modal ' + kind;
     if (!modal.open) modal.showModal();
+    else $('.et-modal-head button').focus();
     modal.scrollTop = 0; controls();
   }
-  function dismiss() { modal.close(); if (modalFocus?.isConnected) modalFocus.focus(); }
+  function dismiss() {
+    if (!modal.open) return;
+    modal.close();
+    if (modalFocus?.isConnected) modalFocus.focus();
+  }
+  modal.addEventListener('cancel',e=>{e.preventDefault();dismiss();});
   modal.addEventListener('click',e=> { if (e.target === modal) { const r=modal.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)dismiss(); } });
   function menu() {
     openModal('Действия чата',`<div class="et-stack">${button('Новый диалог','new')}${button('История диалогов','history')}${button(debug ? 'Выключить режим отладки' : 'Включить режим отладки','debug')}${button('Закрыть чат','close')}${current?.application ? button('Сохранённая заявка','application')+button('Изменить контакты','edit-saved')+button('Скачать заявку','download') : button('Подготовить заявку','contacts')}${button('Вернуться на сайт','site')}</div>`,'menu');
@@ -213,7 +287,7 @@
     openModal('История диалогов',`<p class="et-hint">Сохранено на время демонстрации</p>${entries.length ? entries.map(s=>`<section class="et-card"><h2>${escape(s.messages.find(m=>m.role==='user')?.content.slice(0,100) || s.application?.summary.slice(0,100) || 'Консультация')}</h2><p class="et-hint">${escape(new Date(s.updated_at).toLocaleString('ru-RU',{timeZone:'Europe/Moscow',dateStyle:'medium',timeStyle:'short'}))}</p><p class="${s.application ? 'et-success':'et-muted'}">${s.application ? 'Заявка сформирована':'Без заявки'}</p><button data-session="${escape(s.id)}">${s.application?'Открыть диалог':'Посмотреть переписку'}</button></section>`).join('') : '<section class="et-empty-history"><h2>Здесь пока нет диалогов</h2><p>Сохранённые разговоры появятся в истории после консультации.</p></section>'}`,'drawer');
   }
   function transcriptHTML(session) {
-    return session.messages.map(m=>`<article class="et-transcript-message"><p class="et-hint">${m.role==='user'?'Клиент':'EnergyTool'}</p><p>${escape(m.content)}</p></article>`).join('') || '<p>Переписка пока пуста.</p>';
+    return session.messages.map((m,index)=>isRetriedQuestion(m,index,session) ? '' : `<article class="et-transcript-message"><p class="et-hint">${m.role==='user'?'Клиент':'EnergyTool'}</p><p>${escape(m.content)}</p></article>`).join('') || '<p>Переписка пока пуста.</p>';
   }
   async function archive(id) {
     archived=await api('/sessions/'+id);
@@ -222,8 +296,11 @@
   }
   function sources(result = selectedSource || current?.last_result) {
     selectedSource=result;
-    const seconds = ((result?.elapsed_ms||0)/1000).toLocaleString('ru-RU',{maximumFractionDigits:1});
-    openModal('Источники и время',!result?.sources?.length ? `<h2>Для этого ответа источники не указаны</h2><p class="et-muted">Время ответа: ${seconds} с</p>` : `<p class="et-hint">Выбранный ответ</p><section class="et-card"><div class="et-source-time">${seconds} с</div><p class="et-hint">Время ответа</p></section><h2 class="et-source-count">${result.sources.length} источников базы знаний</h2><div class="et-stack">${result.sources.map((source,index)=>`<button data-fragment="${index}">${escape(source.document_id || source.source_id || 'Источник')}</button>`).join('')}</div><p class="et-hint et-source-note">Это источники конкретного ответа, а не всей беседы.</p>`,'drawer sources');
+    const details = `<section class="et-card"><p class="et-hint">Статус ответа</p><p>${responseLabels.get(result?.status) || 'Статус неизвестен'}</p><p class="et-hint">Время ответа</p><p class="et-source-time">${responseTime(result)}</p></section>`;
+    const documents = result?.sources?.length
+      ? `<h2 class="et-source-count">Источники базы знаний</h2><div class="et-stack">${result.sources.map((source,index)=>`<button data-fragment="${index}">${escape(source.document_id || source.source_id || 'Источник')}</button>`).join('')}</div>`
+      : '<h2 class="et-source-count">Для этого ответа источники не указаны</h2>';
+    openModal('Источники и время',details+documents,'drawer sources');
   }
   function fragment(index) {
     const source=selectedSource?.sources?.[index];if(!source)return;
@@ -231,12 +308,29 @@
   }
   function confirm(kind) {
     const isNew = kind === 'new';
-    if (isNew && stage === 'chat' && !draft && current && !current.messages.length && !current.application) { dismiss(); input.focus();return; }
-    openModal(isNew ? 'Начать новый диалог?' : 'Закрыть чат?',`<p>${isNew ? 'Текущий разговор сохранится в истории. В новом диалоге консультант не будет учитывать его сообщения.' : 'Разговор сохранится в истории. При следующем открытии начнётся новый диалог.'}</p>${draft && stage !== 'saved' ? '<p class="et-muted">Неподтверждённые изменения формы не сохранятся.</p>' : ''}<div class="et-stack">${button(isNew ? 'Начать новый' : 'Закрыть чат',isNew ? 'confirm-new' : 'confirm-close',true)}${button('Вернуться в чат','dismiss')}</div>`);
+    if (!draft && !input.value.trim() && !current?.messages.length && !current?.application) {
+      if (!isNew) return run(closeChat);
+      if (!current) return run(newSession);
+      dismiss(); input.focus(); return;
+    }
+    const hasDraft = (draft && stage !== 'saved') || input.value.trim();
+    openModal(isNew ? 'Начать новый диалог?' : 'Закрыть чат?',`<p>${isNew ? 'Текущий разговор сохранится в истории. В новом диалоге консультант не будет учитывать его сообщения.' : 'Разговор сохранится в истории. При следующем открытии начнётся новый диалог.'}</p>${hasDraft ? '<p class="et-muted">Набранный вопрос и неподтверждённые данные формы будут сброшены.</p>' : ''}<div class="et-stack">${button(isNew ? 'Начать новый' : 'Закрыть чат',isNew ? 'confirm-new' : 'confirm-close',true)}${button('Вернуться в чат','dismiss')}</div>`);
+  }
+  async function closeSession() {
+    if (current && !isClosed()) {
+      adopt(await api('/sessions/'+current.id+'/close',null));
+      stage = 'chat';
+      render();
+    }
+  }
+  async function closeChat() {
+    await closeSession();
+    remember(null);
+    location.href = returnPath;
   }
   async function newSession() {
     const fresh = await api('/sessions',null);
-    adopt(fresh); draft=null;noPhone=false;collapsedAt=0;stage='chat';input.value='';status('');render();scroll.scrollTop=0;
+    unconfirmedMessage=null;adopt(fresh);draft=null;noPhone=false;collapsedAt=0;stage='chat';setInput('');status('');render();scroll.scrollTop=0;
   }
   async function refresh() {
     if (current) adopt(await api('/sessions/'+current.id));
@@ -250,20 +344,33 @@
     } else render();
     if (!needsSync) status('');
   }
-  async function send(text, retry = false) {
+  function setInput(text) {
+    input.value = text;
+    input.dispatchEvent(new Event('input'));
+  }
+  async function send(text, { retry = false, fromComposer = false } = {}) {
     if (!text.trim() || !current || isClosed() || needsSync || busy) return;
     await run(async()=> {
+      unconfirmedMessage = { sessionID: current.id, offset: current.messages.length, text, fromComposer, retry };
       stage='chat';status('');pending=true;render();
       if (!retry) messages.insertAdjacentHTML('beforeend',messageHTML({role:'user',content:text}));
       $('.et-welcome').hidden=true;scroll.scrollTop=scroll.scrollHeight;
+      let posted = false;
       try {
         await api('/sessions/'+current.id+'/messages',{content:text});
-        input.value='';input.style.height='';
+        posted = true;
         adopt(await api('/sessions/'+current.id));pending=false;render();
         scroll.scrollTop=Math.max(0,scroll.scrollHeight-scroll.clientHeight);
       } catch(e) {
-        pending=false;needsSync=true;flow.replaceChildren();
-        status((e.name === 'TimeoutError' ? 'Время ожидания истекло.' : e.message)+' Обновите историю перед повторной отправкой.',true);
+        if (!posted && ['history_limit','message_too_long','empty_message'].includes(e.code)) {
+          unconfirmedMessage=null;
+          pending=false;
+          render();
+          status(e.message);
+          return;
+        }
+        pending=false;needsSync=true;render();
+        status((e.name === 'TimeoutError' ? 'Время ожидания истекло.' : 'Не удалось подтвердить состояние диалога.')+' Обновите историю перед повторной отправкой.',true);
       }
     });
   }
@@ -279,7 +386,7 @@
     if (el.dataset.fragment !== undefined) return fragment(Number(el.dataset.fragment));
     if (el.dataset.reply) { if(stage==='declined') collapsedAt=current.messages.length; return send(el.dataset.reply); }
     if (el.dataset.prompt) {
-      input.value={cost:'У нас выросли счета за электроэнергию. С чего начать?',meter:'Хочу наладить учёт электроэнергии. С чего начать?',loss:'Хочу понять, где возникают потери электроэнергии. С чего начать?'}[el.dataset.prompt];input.focus();input.dispatchEvent(new Event('input'));return;
+      setInput({cost:'У нас выросли счета за электроэнергию. С чего начать?',meter:'Хочу наладить учёт электроэнергии. С чего начать?',loss:'Хочу понять, где возникают потери электроэнергии. С чего начать?'}[el.dataset.prompt]);input.focus();return;
     }
     switch(el.dataset.action) {
       case 'dismiss':dismiss();break;
@@ -289,10 +396,10 @@
       case 'debug':debug=!debug;dismiss();render();break;
       case 'new':confirm('new');break;
       case 'close':confirm('close');break;
-      case 'site':location.href=returnPath;break;
-      case 'confirm-new':run(async()=>{if(current&&!isClosed())await api('/sessions/'+current.id+'/close',null);await newSession();dismiss();});break;
-      case 'confirm-close':run(async()=>{if(current&&!isClosed())await api('/sessions/'+current.id+'/close',null);remember(null);location.href=returnPath;});break;
-      case 'refresh':run(refresh);break;
+      case 'site':confirm('close');break;
+      case 'confirm-new':run(async()=>{await closeSession();await newSession();dismiss();}).then(()=>{if(!modal.open)input.focus();});break;
+      case 'confirm-close':run(closeChat);break;
+      case 'refresh':run(refresh).then(()=>input.focus());break;
       case 'contacts':if(modal.open)dismiss();startContacts();break;
       case 'edit':editContacts();break;
       case 'edit-saved':stage='saved';render();editContacts();break;
@@ -300,12 +407,13 @@
       case 'application':if(modal.open)dismiss();if(current?.application){stage='saved';render();scroll.scrollTop=0;}break;
       case 'continue':stage='chat';render();scroll.scrollTop=scroll.scrollHeight;input.focus();break;
       case 'transcript':openModal('Предыдущая переписка',`<div class="et-transcript">${transcriptHTML(current)}</div>`,'archive');break;
-      case 'save':run(async()=>{const payload={full_name:draft.full_name,phone:draft.phone,company:draft.company,summary:draft.summary};adopt(await api('/sessions/'+current.id+'/application',payload));stage='saved';draft=null;status('');render();scroll.scrollTop=0;});break;
+      case 'save':run(async()=>{await saveApplication(draft);stage='saved';draft=null;status('');render();scroll.scrollTop=0;});break;
       case 'download':download();break;
-      case 'retry':send(current.messages.findLast(m=>m.role==='user')?.content || input.value,true);break;
+      case 'retry':send(current.messages.findLast(m=>m.role==='user')?.content || input.value,{retry:true});break;
     }
   });
-  $('.et-composer').onsubmit=e=> {e.preventDefault();send(input.value.trim());};
+  $('.et-brand').addEventListener('click',e=>{e.preventDefault();if(!busy)confirm('close');});
+  $('.et-composer').onsubmit=e=> {e.preventDefault();send(input.value.trim(),{fromComposer:true});};
   input.addEventListener('input',()=>{input.style.height='24px';input.style.height=Math.min(input.scrollHeight,120)+'px';controls();});
   input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();if(!$('.et-send').disabled)$('.et-composer').requestSubmit();}});
   controls();
