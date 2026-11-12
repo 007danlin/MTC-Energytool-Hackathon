@@ -1,4 +1,4 @@
-# Обращение к специалисту и проверенные знания: контракт (v0.1, черновик)
+# Обращение к специалисту и проверенные знания: контракт (v0.2, черновик)
 
 Автор: Артём. Пакет: `backend/internal/expert/` (ветка `artem/expert`). Основа — `main` `62be5cb`.
 Путь: **неизвестный вопрос → обращение → ответ специалиста клиенту → проверенная запись знаний → повторное использование.**
@@ -155,7 +155,123 @@ path: 90-expert/<entry_id>-r<revision>.md   → source_id: 90-expert/<entry_id>-
 | `ErrChecklistIncomplete` | 422 | `checklist_incomplete` |
 | не `knowledge_gap` | — | обращение не создаётся, это не ошибка |
 
-## 6. Сценарий демонстрации (после интеграции)
+## 6. Функции пакета и интерфейсы хранения (для Игоря)
+
+| Шаг | Функция `expert` |
+|---|---|
+| после ответа консультанта | `RegisterGap(existing, GapSignal, messages, newID, now)` — под блокировкой ключа `RequestKey(session_id, origin_message_id)` |
+| очередь специалиста | `RequestStore.List(RequestFilter{Status, AssigneeID})` |
+| действия | `Assign`, `Take`, `Answer`, `Cancel` — `(request, actor, Command{expected_version, command_id}, …)` |
+| доставка | `MarkDelivered`, `MarkDeliveryFailed`, `RetryDelivery` — актор `system` |
+| статус в чате клиента | `StatusForClient(request)` |
+| ответы API | `PublicRequest`, `PublicEntry` — без служебного журнала команд |
+| знания | `NewDraft`, `EditDraft`, `Approve`, `Revoke` |
+| сборка базы | `ActiveSet(entries, test)` → документы → `kb_version` → `ApplyActivation(entry, system, cmd, ActivationResult)` |
+| «доступно боту» | `AvailableToBot(entry)` — только `active` с `kb_version` |
+
+`RequestStore` / `KnowledgeStore` — интерфейсы в `repo.go`: `Save(record, previousVersion)` — сравнение с сохранённой версией
+(0 — создание), иначе `ErrVersionConflict`; ключ `session_id + origin_message_id` уникален. Эталонная реализация в памяти
+`MemoryStore` и `RegisterGapAtomically` показывают нужные гарантии; тест: 20 параллельных сигналов дают одно обращение,
+сохранение по устаревшей версии не затирает чужое действие. Тестовые записи знаний (`test: true`) попадают только
+в отдельную тестовую базу демо (`ActiveSet(entries, true)`).
+
+## 7. JSON-примеры (сгенерированы кодом)
+
+Обращение после ответа и доставки (`PublicRequest`):
+
+```json
+{
+  "id": "req-1",
+  "session_id": "s1",
+  "origin_message_id": "m7",
+  "question": "А нужно ли согласовывать станцию с МЧС?",
+  "necessary_context": [
+    {"message_id": "m1", "sequence": 1, "text": "У нас склад в Казани, 120 кВт."},
+    {"message_id": "m3", "sequence": 3, "text": "Кровля из сэндвич-панелей."},
+    {"message_id": "m5", "sequence": 5, "text": "Около 2000 м²."}
+  ],
+  "assignee_id": "spec-1",
+  "status": "answered",
+  "version": 5,
+  "demo": true,
+  "reply": {
+    "id": "reply-1",
+    "request_id": "req-1",
+    "author_id": "spec-1",
+    "body": "Для вашего склада в Казани согласование не требуется.",
+    "label": "Ответ специалиста",
+    "version": 4,
+    "delivery_status": "delivered",
+    "delivered_at": "2026-11-13T10:00:00Z",
+    "delivery_attempts": 1
+  },
+  "history": [
+    {"version": 1, "action": "register", "actor_id": "system", "role": "system", "to": "queued"},
+    {"version": 2, "action": "assign", "actor_id": "lead-1", "role": "coordinator", "assignee_id": "spec-1"},
+    {"version": 3, "action": "take", "actor_id": "spec-1", "role": "specialist", "from": "queued", "to": "in_review"},
+    {"version": 4, "action": "answer", "actor_id": "spec-1", "role": "specialist", "from": "in_review", "to": "answered"},
+    {"version": 5, "action": "delivered", "actor_id": "web-backend", "role": "system"}
+  ]
+}
+```
+
+Статус для клиента: `{"code": "answered", "label": "Ответ специалиста"}`.
+
+Запись знаний после одобрения и активации (`PublicEntry`, фрагмент). Ответ клиенту про «склад в Казани»
+в запись не попал — в ней только обобщение:
+
+```json
+{
+  "id": "kb-1",
+  "test": true,
+  "revisions": [{
+    "revision": 1,
+    "title": "Согласование солнечной станции на кровле с МЧС",
+    "generalized_question": "Нужно ли отдельно согласовывать сетевую солнечную станцию на кровле с пожарным надзором?",
+    "answer": "ТЕСТОВЫЕ ДАННЫЕ. Требования пожарной безопасности проверяются на этапе проектирования станции.",
+    "applicability": "Сетевые станции 15–500 кВт на кровле коммерческих объектов. Не относится к наземным станциям.",
+    "basis": "Тестовая запись для демонстрации; реальное знание подтверждает профильный специалист.",
+    "author_id": "spec-1",
+    "reviewer_id": "spec-1",
+    "checklist": {"fact_confirmed": true, "conditions_stated": true, "no_contradiction": true,
+                  "no_private_data": true, "reusable": true},
+    "publication_status": "approved",
+    "runtime_status": "active",
+    "kb_version": "kb-7"
+  }],
+  "history": [
+    {"version": 1, "action": "draft", "revision": 1, "actor_id": "spec-1", "role": "specialist"},
+    {"version": 2, "action": "approve", "revision": 1, "actor_id": "spec-1", "role": "reviewer"},
+    {"version": 3, "action": "activated", "revision": 1, "actor_id": "web-backend", "role": "system"}
+  ]
+}
+```
+
+Документ для поиска (`RenderForKB`):
+
+```json
+{
+  "entry_id": "kb-1",
+  "revision": 1,
+  "path": "90-expert/kb-1-r1.md",
+  "source_id": "90-expert/kb-1-r1.md#s001",
+  "markdown": "# Ответ специалиста: Согласование солнечной станции на кровле с МЧС
+
+Вопрос: …
+
+Ответ: …
+
+Применимо: …
+
+Основание: …
+
+Проверено специалистом Energytool: 13.11.2026
+",
+  "test": true
+}
+```
+
+## 8. Сценарий демонстрации (после интеграции)
 
 1. Клиент задаёт вопрос вне базы → `knowledge_gap` → обращение «ожидает назначения».
 2. Координатор назначает специалиста → клиент видит «передано специалисту»; специалист видит обращение в очереди.
@@ -169,8 +285,11 @@ path: 90-expert/<entry_id>-r<revision>.md   → source_id: 90-expert/<entry_id>-
 
 ## Статус
 
-- [x] контракт v0.1
-- [ ] код и тесты: обращение и ответ
-- [ ] код и тесты: знания
-- [ ] JSON-примеры из кода
-- [ ] интеграция (Игорь), экран (Георгий), живой сценарий
+- [x] контракт
+- [x] код и тесты: обращение, ответ, доставка (`request.go`)
+- [x] код и тесты: знания, ревизии, активация, выгрузка (`knowledge.go`, `kb.go`)
+- [x] интерфейсы хранения и эталонная реализация (`repo.go`)
+- [x] JSON-примеры из кода
+- [x] 14 тестов пакета; `go vet ./...` и `go test -race ./...` по всему `backend/` проходят
+- [ ] API и хранение (Игорь), экран специалиста и статусы (Георгий)
+- [ ] живой сценарий раздела 8 — после интеграции; mock-тесты его не заменяют
