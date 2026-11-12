@@ -30,7 +30,7 @@ func main() {
 	var ml consultation.Client
 	mlURL := strings.TrimSpace(os.Getenv("ML_SERVICE_URL"))
 	if mlURL != "" {
-		timeout, err := time.ParseDuration(env("ML_TIMEOUT", "95s"))
+		timeout, err := time.ParseDuration(env("ML_TIMEOUT", "250s"))
 		if err != nil {
 			logger.Error("invalid ML_TIMEOUT", "error", err)
 			os.Exit(1)
@@ -53,9 +53,9 @@ func main() {
 		}
 		return client.Ready(ctx)
 	}
-	api := httpapi.New(app, ready, logger, 100*time.Second)
+	api := httpapi.New(app, ready, logger, 255*time.Second)
 	server := &http.Server{Addr: addr, Handler: api.Handler(), ReadHeaderTimeout: 5 * time.Second,
-		ReadTimeout: 10 * time.Second, WriteTimeout: 110 * time.Second, IdleTimeout: 60 * time.Second}
+		ReadTimeout: 10 * time.Second, WriteTimeout: 270 * time.Second, IdleTimeout: 60 * time.Second}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()

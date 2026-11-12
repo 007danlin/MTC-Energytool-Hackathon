@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -15,12 +16,13 @@ import (
 )
 
 var (
-	ErrNotFound        = store.ErrNotFound
-	ErrClosed          = errors.New("session is closed")
-	ErrHistoryLimit    = errors.New("session history exceeds supported limit")
-	ErrMessageTooLong  = errors.New("message exceeds 10000 characters")
-	ErrEmptyMessage    = errors.New("message must not be empty")
-	ErrSessionConflict = errors.New("session changed while processing")
+	ErrInvalidApplication = errors.New("invalid application")
+	ErrNotFound           = store.ErrNotFound
+	ErrClosed             = errors.New("session is closed")
+	ErrHistoryLimit       = errors.New("session history exceeds supported limit")
+	ErrMessageTooLong     = errors.New("message exceeds 10000 characters")
+	ErrEmptyMessage       = errors.New("message must not be empty")
+	ErrSessionConflict    = errors.New("session changed while processing")
 )
 
 type Service struct {
@@ -135,7 +137,7 @@ func (s *Service) SendMessage(ctx context.Context, id, content string) (domain.C
 	if result.Lead.SessionID != session.ID {
 		return s.recordTechnicalFailure(session, errors.New("ML returned mismatched session id"))
 	}
-	assistant := domain.Message{ID: newID(), Role: "assistant", Content: result.Answer,
+	assistant := domain.Message{ID: newID(), Role: "assistant", Content: result.Answer, Response: &domain.ResponseMeta{Status: result.Status, Sources: result.Sources, ElapsedMS: result.ElapsedMS},
 		Sequence: len(session.Messages) + 1, CreatedAt: time.Now().UTC()}
 	session.Messages = append(session.Messages, assistant)
 	session.UpdatedAt = assistant.CreatedAt
@@ -157,9 +159,10 @@ func (s *Service) recordTechnicalFailure(session domain.Session, cause error) (d
 		result.LeadReady = session.LastResult.LeadReady
 	}
 	result.Debug["backend_elapsed_ms"] = result.ElapsedMS
-	assistant := domain.Message{ID: newID(), Role: "assistant", Content: answer, Sequence: len(session.Messages) + 1, CreatedAt: time.Now().UTC()}
+	assistant := domain.Message{ID: newID(), Role: "assistant", Content: answer, Response: &domain.ResponseMeta{Status: result.Status, Sources: result.Sources, ElapsedMS: result.ElapsedMS}, Sequence: len(session.Messages) + 1, CreatedAt: time.Now().UTC()}
 	session.Messages = append(session.Messages, assistant)
 	session.UpdatedAt = assistant.CreatedAt
+	session.LastResult = &result
 	// Avoid returning or logging the raw upstream error, which could contain private details.
 	_ = cause
 	if err := s.store.Save(session); err != nil {
@@ -183,4 +186,33 @@ func newID() string {
 	b[6] = (b[6] & 0x0f) | 0x40
 	b[8] = (b[8] & 0x3f) | 0x80
 	return fmt.Sprintf("%08x-%04x-%04x-%04x-%012x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:16])
+}
+
+// SaveApplication stores the user's reviewed form, independently of ML extraction.
+// It is a local handoff artifact, not a delivery acknowledgement from a CRM.
+func (s *Service) SaveApplication(id string, input domain.Application) (domain.Session, error) {
+	unlock := s.lock(id)
+	defer unlock()
+	session, err := s.store.Get(id)
+	if err != nil {
+		return domain.Session{}, err
+	}
+	if session.Status != "active" {
+		return domain.Session{}, ErrClosed
+	}
+	input.FullName = strings.TrimSpace(input.FullName)
+	input.Phone = strings.TrimSpace(input.Phone)
+	input.Company = strings.TrimSpace(input.Company)
+	input.Summary = strings.TrimSpace(input.Summary)
+	digits := regexp.MustCompile(`[^0-9]`).ReplaceAllString(input.Phone, "")
+	if !regexp.MustCompile(`^\+?[0-9 ()-]+$`).MatchString(input.Phone) || len(digits) < 10 || len(digits) > 15 || len(input.Phone) > 40 || input.Summary == "" || len([]rune(input.Summary)) > 2000 || len([]rune(input.FullName)) > 200 || len([]rune(input.Company)) > 200 {
+		return domain.Session{}, ErrInvalidApplication
+	}
+	input.SavedAt = time.Now().UTC()
+	session.Application = &input
+	session.UpdatedAt = input.SavedAt
+	if err := s.store.Save(session); err != nil {
+		return domain.Session{}, err
+	}
+	return session, nil
 }

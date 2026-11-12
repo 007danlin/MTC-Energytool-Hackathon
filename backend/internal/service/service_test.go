@@ -102,6 +102,9 @@ func TestLeadSurvivesTechnicalFailureAndSessionCanClose(t *testing.T) {
 	if _, err := app.SendMessage(context.Background(), session.ID, "после закрытия"); !errors.Is(err, ErrClosed) {
 		t.Fatalf("send after close error=%v", err)
 	}
+	if closed.LastResult == nil || closed.LastResult.Status != "technical_error" {
+		t.Fatal("technical fallback result was not persisted")
+	}
 	if len(closed.Messages) != 4 {
 		t.Fatalf("history length=%d, want 4", len(closed.Messages))
 	}

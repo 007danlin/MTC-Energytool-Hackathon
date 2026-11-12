@@ -1,0 +1,40 @@
+{
+  "stage": "complete_investigation",
+  "date": "2026-11-11T12:05:04.738768",
+  "base": "A2",
+  "base_sha256": "fa81606a5e4b89cd4b36a13139d906e8940bbc462d43d127ddfaac129c50f013",
+  "platform_e4_score": 52.532,
+  "platform_a2_score": 55.969,
+  "exact_platform_drop_cause": "not identifiable fromaggregate scorealone",
+  "user_confirmed_artem_not_ready": true,
+  "new_public_zip": false,
+  "runtime_changed": false,
+  "new_real_model_generations": 8,
+  "query_rewrite_probes_pending": false,
+  "fixed_tool": "tools/build_blind_comparison.py",
+  "next_architecture": "task resolution -> broad candidate retrieval -> evidence selection with product scope -> conditional answer validation; dedicated contact handling",
+  "completed_at": "2026-11-11T12:08:24.829518",
+  "query_rewrite_probes": 2,
+  "oracle_cases": 6,
+  "oracle_improvements": 4,
+  "oracle_ties": 2,
+  "report": "docs/root-cause-audit-20261111.md",
+  "cleanup": {
+    "own_server_stopped": 1356,
+    "user_server_preserved": [
+      "56069"
+    ],
+    "weights_preserved": true
+  },
+  "archives_unchanged": {
+    "daniel-submission-a2.zip": "fa81606a5e4b89cd4b36a13139d906e8940bbc462d43d127ddfaac129c50f013",
+    "daniel-submission-e4-experimental.zip": "c08a5d00bb0425ac7ed3fde660a9032cc89452801b03666586c308723e5d9e71",
+    "daniel-submission-v3.zip": "8080cc06980f8dde184cc1320ccafca2dffd7a58b5a7ba6772bef177dde4ab09"
+  },
+  "root_runtime_matches_a2": true,
+  "evaluator_regression_test": {
+    "path": "tools/host_tests/test_blind_packet.py",
+    "result": "1 passed by delegated agent; red-before-fix reproduced missingfields"
+  },
+  "platform_uploads_used": 0
+}

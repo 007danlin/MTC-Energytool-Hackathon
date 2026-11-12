@@ -1,0 +1,161 @@
+{
+  "finished_at": "2026-11-12T01:52:05.764859+03:00",
+  "status": "platform_regression_recommendation_withdrawn",
+  "sha256": "523b4f2c7f7fe60048101ceaa22f53fbfcf6bf77192f33adeb04f161bc24af94",
+  "bytes": 28311,
+  "root_files": [
+    "solution.py",
+    "settings.py",
+    "llm_client.py",
+    "contracts.py",
+    "dialogue.py",
+    "retrieval.py",
+    "hybrid_retrieval.py",
+    "prompts.py",
+    "consultant.py",
+    "requirements.txt"
+  ],
+  "working_version": "A2",
+  "working_platform_score": 55.969,
+  "new_platform_score": 45.877,
+  "main_local_comparison": {
+    "cases": 93,
+    "wins": 23,
+    "losses": 7,
+    "ties": 63,
+    "major_A2": 14,
+    "major_B2": 6,
+    "report": "reports/private/artem-pr4-qwen-cached-20261111/comparison-audited.json"
+  },
+  "boundary_local_comparison": {
+    "method": "One source-based label-shuffled author review of eight new solar boundary wordings, not independent domain holdout. B2 source frozen before probes were read.",
+    "review_sha256": "91e3bcad20c2a7d3772d7b55677d5d389a2db315302897ce65381bddfd11e392",
+    "cases": 8,
+    "B2_wins": 2,
+    "B2_losses": 1,
+    "ties": 5,
+    "major_cases": {
+      "A2": [
+        "n01",
+        "n02",
+        "n03"
+      ],
+      "B2": [
+        "n01",
+        "n02",
+        "n03"
+      ]
+    },
+    "core_requirements_met_cases": {
+      "A2": [
+        "n04",
+        "n05",
+        "n07",
+        "n08"
+      ],
+      "B2": [
+        "n04",
+        "n05",
+        "n06",
+        "n07",
+        "n08"
+      ]
+    },
+    "no_platform_score_prediction": true,
+    "source_changed": false
+  },
+  "A8": "not released: invented days-to-weeks OREM duration in e029",
+  "B8": "not released: no net gain vs B, new major e082",
+  "technical_checks": {
+    "python39_tests": 76,
+    "docker_scenarios": 7,
+    "rows_each": 123,
+    "same_tested_frozen_zip_bytes": true,
+    "new_boundary_requests": 16,
+    "new_boundary_errors": 0,
+    "new_boundary_length_truncations": 0
+  },
+  "protected_archives": {
+    "v2": {
+      "path": "artifacts/daniel-submission-v2.zip",
+      "sha256": "6474f5d607d757257a99c9e991ace4e4ad126a7440275598b9a8d8dc15960604",
+      "unchanged": true
+    },
+    "v3": {
+      "path": "artifacts/daniel-submission-v3.zip",
+      "sha256": "8080cc06980f8dde184cc1320ccafca2dffd7a58b5a7ba6772bef177dde4ab09",
+      "unchanged": true
+    },
+    "a2": {
+      "path": "artifacts/daniel-submission-a2.zip",
+      "sha256": "fa81606a5e4b89cd4b36a13139d906e8940bbc462d43d127ddfaac129c50f013",
+      "unchanged": true
+    },
+    "g": {
+      "path": "artifacts/daniel-submission-g.zip",
+      "sha256": "ad791c6ebb6fecd1e748c30e1666e91b1acfd17a89fdb97b57921c3945656299",
+      "unchanged": true
+    },
+    "e4": {
+      "path": "artifacts/daniel-submission-e4-experimental.zip",
+      "sha256": "c08a5d00bb0425ac7ed3fde660a9032cc89452801b03666586c308723e5d9e71",
+      "unchanged": true
+    },
+    "a3": {
+      "path": "artifacts/daniel-submission-a3-experimental.zip",
+      "sha256": "c3f1f0daaabfce20bc055b97d211e9e0940476f1410a01d4f462d28c8fff77f8",
+      "unchanged": true
+    },
+    "a6": {
+      "path": "artifacts/daniel-submission-a6-contact.zip",
+      "sha256": "4d265272611c0147455f64bf0be73c5b9f82e0f4c1d3ef4847ced26ae8655873",
+      "unchanged": true
+    }
+  },
+  "root_runtime_still_A2": {
+    "solution.py": true,
+    "settings.py": true,
+    "llm_client.py": true,
+    "contracts.py": true,
+    "dialogue.py": true,
+    "retrieval.py": true,
+    "prompts.py": true,
+    "consultant.py": true,
+    "requirements.txt": true
+  },
+  "live_platform_API_verified": false,
+  "score60_confirmed": false,
+  "no_more_experiments_running_in_this_cycle": true,
+  "prompt_screen_observations": {
+    "a8": {
+      "rows": 16,
+      "api_errors": 0,
+      "length_truncations": 0,
+      "max_prompt_tokens": 6429
+    },
+    "b8": {
+      "rows": 13,
+      "api_errors": 0,
+      "length_truncations": 0,
+      "max_prompt_tokens": 6480
+    }
+  },
+  "user_report": "docs/night-score-results-20261112.txt",
+  "user_report_sha256": "302e87860c8e9f1d51ee6a6a7ae31157e8762fb75e184e6e27f0450710722dad",
+  "historical_status_before_platform_result": "completed_one_experimental_zip_ready",
+  "updated_at": "2026-11-12T09:03:56.246424+03:00",
+  "platform_result_report": "reports/platform-result-b2-20261112.json",
+  "platform_score": 45.877,
+  "recommended_for_submission": false,
+  "current_recommendation": {
+    "version": "A2",
+    "archive": "artifacts/daniel-submission-a2.zip",
+    "sha256": "fa81606a5e4b89cd4b36a13139d906e8940bbc462d43d127ddfaac129c50f013",
+    "platform_score": 55.969
+  },
+  "platform_upload_performed_by_this_chat": false,
+  "platform_upload_reported_by_user": true,
+  "historical_selected_archive_before_platform_result": "artifacts/daniel-submission-b2-hybrid.zip",
+  "historical_user_report_sha256_before_platform_result": "fd0c1f75f2a9a554449bb451da07ac904016647530df9801a5cf26913dcdaa5d",
+  "post_platform_audit": "docs/b2-platform-postmortem-20261112.txt"
+}

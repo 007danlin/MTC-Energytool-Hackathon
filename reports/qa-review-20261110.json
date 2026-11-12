@@ -1,0 +1,107 @@
+{
+  "date_msk": "2026-11-10",
+  "baseline_commit": "6a34d79bf119041374b35b377407db2266c6657c",
+  "a2_sha256": "fa81606a5e4b89cd4b36a13139d906e8940bbc462d43d127ddfaac129c50f013",
+  "qa_source_sha256": "e760eb22799ba5ee444c5ab95e74a722257e21822daa0b4bd7a89cb5a9c1ee98",
+  "runtime": {
+    "solution.py": {
+      "sha256": "4fcde04c0c99c2ff85058b1145a2b6b1cffb1f99a73ce4e5b6b439dad33c04ef",
+      "matches_a2": true
+    },
+    "settings.py": {
+      "sha256": "dd35149a44f934857b1cc655eab6b112bba87bbca43986880b2189e3dee0bdb7",
+      "matches_a2": true
+    },
+    "llm_client.py": {
+      "sha256": "511a685300a56bb641959e58261c936d346a06495616e969c75eeb261322e170",
+      "matches_a2": true
+    },
+    "contracts.py": {
+      "sha256": "05a9b759fde35b7af18ffa41f0fcdc832819499d16f65f1fe248a9da4e3ce43e",
+      "matches_a2": true
+    },
+    "dialogue.py": {
+      "sha256": "dd7be5ae698e8037b9131f2a46144e3d58272004cdf1fe3b834b6fb4f4e5774b",
+      "matches_a2": true
+    },
+    "retrieval.py": {
+      "sha256": "781772487ffc76cd494e529b81c09742c02dee1b9cb05b9975d18a47206cde0d",
+      "matches_a2": true
+    },
+    "prompts.py": {
+      "sha256": "053ac34429b7a295543b7a3d831ff4e91ada19b5cd044c1ff01797e935e49e09",
+      "matches_a2": true
+    },
+    "consultant.py": {
+      "sha256": "a3aaa63ee0346ab34fd68081b0517e082372871478dafd3ef2d9aecec05819b3",
+      "matches_a2": true
+    },
+    "requirements.txt": {
+      "sha256": "3c1bf09386a1e27b1c6a14918a0e63f2e4a18fb9e57219ad31e47edfb19767d5",
+      "matches_a2": true
+    }
+  },
+  "readiness_diagnostic": {
+    "phone_only": {
+      "lead_ready": false,
+      "missing_fields": [
+        "full_name",
+        "company"
+      ]
+    },
+    "name_phone": {
+      "lead_ready": false,
+      "missing_fields": [
+        "full_name",
+        "company"
+      ]
+    },
+    "all_fields": {
+      "lead_ready": true,
+      "missing_fields": []
+    },
+    "no_contact": {
+      "lead_ready": false,
+      "missing_fields": [
+        "full_name",
+        "phone",
+        "company"
+      ]
+    },
+    "no_intent": {
+      "lead_ready": false,
+      "missing_fields": [
+        "full_name",
+        "company"
+      ]
+    }
+  },
+  "csv_diagnostic": {
+    "headers": [
+      "id",
+      "answer"
+    ],
+    "ids": [
+      "001",
+      "002"
+    ],
+    "roundtrip_ok": true,
+    "utf8": true
+  },
+  "scope": "Read-only diagnostic of A2; no live model or platform score measurement",
+  "contact_only_validator": {
+    "status": "answered",
+    "citations": [],
+    "error_code": "missing_evidence",
+    "limitation": "Synthetic validation probe, not a live-model failure-rate measurement"
+  },
+  "video_review": {
+    "source_sha256": "48b7d6b58be899fd074fb3441c00888034a62b21292d07a20352df565a8f37d1",
+    "duration_seconds": 3718.272,
+    "transcript_sha256": "6a797b52650b8db21a7eb4420334326867540623cb4bebe6744221fd9f44dc0f",
+    "transcript_parts_read": 7,
+    "method": "Local mlx-whisper small, revision 45f3915923c7a79a5a5b5a7d909d39aeb0e5630e",
+    "limitations": "ASR includes terminology, numerical and repetition errors. Written organizer Q&A is authoritative for formal requirements; no claim of verbatim accuracy.",
+    "external_audio_upload": false
+  }
+}

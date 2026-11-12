@@ -1,0 +1,59 @@
+{
+  "date": "2026-11-11",
+  "decision": "Keep A2; neither candidate recommended for platform submission",
+  "platform_submission_performed": false,
+  "platform_score": null,
+  "baseline_sha256": "fa81606a5e4b89cd4b36a13139d906e8940bbc462d43d127ddfaac129c50f013",
+  "concurrent_work": "Retrieval B in experiments/artem-pr4-20261111 was read, not modified",
+  "reviews_are": "Author review against sources and task criteria; not blind or official judge",
+  "candidates": {
+    "A4": {
+      "archive": "daniel-submission-a4-prompt-experimental.zip",
+      "sha256": "7ec43c832216cdd018f04a07f68bc871dac05af76b8a474618ba1264f1901811",
+      "changed_runtime_files": [
+        "prompts.py"
+      ],
+      "planned_pairs": 12,
+      "completed_pairs": [
+        "e001",
+        "e006",
+        "e024",
+        "e025",
+        "e032",
+        "e046"
+      ],
+      "completed_calls": 12,
+      "technical_errors_in_completed_calls": 0,
+      "same_sources_and_parameters_in_completed_pairs": true,
+      "unit_tests_passed": 65,
+      "mock_csv_rows": 18,
+      "mock_429_passed": true,
+      "early_stopped": true,
+      "reason": "Six completed pairs reviewed. Material regression e032: A4 ignores existing wholesale-market participation and proposes entering again, missing independent metering platform; A2 covers it. Both versions also contradict themselves on 5 MW versus 20 MW. Candidate rejected."
+    },
+    "A5": {
+      "archive": "daniel-submission-a5-contact-experimental.zip",
+      "sha256": "ff264772df206c8076e367c2e4df7a6576748647ce99ccd5ba8dd0ddffd44b94",
+      "changed_runtime_files": [
+        "prompts.py",
+        "consultant.py"
+      ],
+      "planned_pairs": 4,
+      "completed_pairs": [
+        "contact_email",
+        "contact_phone"
+      ],
+      "completed_calls": 4,
+      "technical_errors_in_completed_calls": 0,
+      "same_sources_and_parameters_in_completed_pairs": true,
+      "unit_tests_passed": 65,
+      "mock_csv_rows": 18,
+      "mock_429_passed": true,
+      "early_stopped": true,
+      "reason": "Phone summary improves, but callback promise remains. Email case fails to create requested summary and adds an unsupported callback promise absent in A2. Acceptance criterion failed; remaining cases not generated.",
+      "unchanged_request_count_on_123_cases": 122,
+      "new_identity_tests_passed": 2,
+      "callback_filter": "Attempted deterministic filter rejected and removed: it cannot repair missing application summary; archive restored to exact live-tested prompt variant."
+    }
+  }
+}

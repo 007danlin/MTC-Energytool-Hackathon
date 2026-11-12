@@ -1,0 +1,43 @@
+{
+  "date": "2026-11-11",
+  "design": "design/georgy/Untitled (Copy).fig",
+  "url": "http://127.0.0.1:8768",
+  "result": "passed",
+  "checks": {
+    "design_states": "test_consultation_design.cjs: controlled API responses, all primary design branches",
+    "real_application_api": "test_consultation_ui.cjs: save, edit, reload, archive, isolated new session",
+    "network_and_responsive": "test_consultation_states.cjs: ambiguous network failure, retry, escaping, 320/390/768/1024/1440",
+    "landing": "test_consultation_entry.cjs: login x/y equal original page, new badge upper right, mobile no horizontal scroll",
+    "go": "go test -race ./... and go vet ./...",
+    "web_stack": "python3 -m unittest tools.host_tests.test_web_stack -v",
+    "syntax": "node --check local-preview/energytool-site/www/chat.js",
+    "whitespace": "git diff --check"
+  },
+  "model_note": "This UI acceptance uses controlled responses for model states; it does not re-evaluate live model answer quality.",
+  "screenshots": [
+    "01-welcome.png",
+    "02-input.png",
+    "03-waiting.png",
+    "04-clarification.png",
+    "05-recommendation.png",
+    "06-contacts.png",
+    "07-review.png",
+    "07-updated.png",
+    "09-mobile.png",
+    "09-saved.png",
+    "12-debug.png",
+    "14-error.png",
+    "15-no-phone.png",
+    "15r-continue.png",
+    "16-gap.png",
+    "16b-scope.png",
+    "archive.png",
+    "edit-error.png",
+    "edit.png",
+    "fragment.png",
+    "history.png",
+    "site-desktop.png",
+    "site-mobile.png",
+    "sources.png"
+  ]
+}

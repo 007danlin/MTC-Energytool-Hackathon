@@ -1,0 +1,82 @@
+{
+  "recorded_at": "2026-11-11T23:07:47.627549+03:00",
+  "candidate": "A6 contact state",
+  "archive": "artifacts/daniel-submission-a6-contact.zip",
+  "sha256": "4d265272611c0147455f64bf0be73c5b9f82e0f4c1d3ef4847ced26ae8655873",
+  "bytes": 28390,
+  "root_files": 11,
+  "platform_score": 53.992,
+  "recommendation": "A6 did not improve platform Score; retain A2 55.969. Do not repeat this archive for improvement.",
+  "working_version": {
+    "name": "A2",
+    "score": 55.969,
+    "sha256": "fa81606a5e4b89cd4b36a13139d906e8940bbc462d43d127ddfaac129c50f013"
+  },
+  "changed_existing_files": [
+    "solution.py"
+  ],
+  "added_modules": [
+    "contact_flow.py",
+    "stable_consultant.py"
+  ],
+  "unchanged": "A2 product prompts, retrieval, generation client/settings and backend path",
+  "checks": {
+    "python39_existing_tests": 65,
+    "python39_contact_tests": 33,
+    "docker_http_scenarios": 2,
+    "docker_rows_per_scenario": 10,
+    "full_A2_requests_identical": 123,
+    "contact_regression": {
+      "wins": 8,
+      "losses": 0,
+      "ties": 1
+    },
+    "new_real_model_calls": 0
+  },
+  "saved_model": "A2 answers from local Qwen3-VL-30B-A3B-Instruct Q4_K_M; no platform Qwen verification",
+  "b_status": {
+    "saved_rows": {
+      "checkpoint-A": 60
+    },
+    "runtime_owned_by_other_thread": true,
+    "no_completed_run_repeated": true,
+    "candidate_B_not_in_this_ZIP": true,
+    "quality_improvement_not_yet_known": true,
+    "actual_context_all_required_A2": "81/88",
+    "actual_context_all_required_B": "87/88",
+    "required_evidence_lost": [],
+    "conditional_or_rule_evidence_lost": [
+      "e033",
+      "e049",
+      "e105"
+    ],
+    "technical_candidate_B1_sha256": "cf1f5420ee0e294d628b0a2c27b70d12fa94ae114f2f1b7e5c0a4e6936e2210a",
+    "technical_B1_only": "75Python3.9tests,7syntheticHTTPscenarios; realanswerqualitystillpending"
+  },
+  "limitations": [
+    "Eight candidate answers are deterministic; one unchanged request reuses preserved A2 output.",
+    "Two A5 failures informed the fix; all9are development/regression, no independent quality estimate.",
+    "Product hallucinations from A2 remain; expected platform score is unknown.",
+    "No prediction of60+; frequency of contact cases in hidden platform questions is unknown."
+  ],
+  "evidence": {
+    "reports/private/a6-contact-state-20261111/candidate-a6-r2.manifest.json": "6d915f5452949e15e083cb385ec9c355cf179bec6e4dde7a2dbae827b3958f9b",
+    "reports/private/a6-contact-state-20261111/request-identity-123.json": "c28862e2419c0d7aa4138c3c9153f690a1e46dff9035fd4d9dc4346f995f43fe",
+    "reports/private/a6-contact-state-20261111/final-contact-identity.json": "51fdcdd60b7bab2936896a4bc9b4dee391aaf6b33daff0b86491e1a8864e28af",
+    "reports/private/a6-contact-state-20261111/contact-comparison-nine.json": "cf1cd62b8853cf56f017e7ef7a4314eea5378b43a97f47695bf0d19d4638ccbd",
+    "reports/private/a6-contact-state-20261111/contact-review.json": "22cae5d33810ec2d7674704d981aa5881c6e4f9d07fd5c970f7ac0c91c85d833",
+    "reports/private/a6-contact-state-20261111/python39-final-tests.log": "13d9e3b9ee204db4e4bc04026836d2832cc1a63ce1bbdacb3b983013f55883a6",
+    "reports/private/a6-contact-state-20261111/frozen-zip-protocol.json": "cd9bd08c2edc14982ecf842850744fc1de547d392a90ea64b9328ac2697a39c5"
+  },
+  "human_report": "docs/a6-contact-results-20261111.txt",
+  "human_report_sha256": "7f3e7ec59e53cbe53ab8605453e677f9e7333faf9dcf98b37b752ead1efb83c7",
+  "preserved_archive_checksums": {
+    "artifacts/daniel-submission-a2.zip": "fa81606a5e4b89cd4b36a13139d906e8940bbc462d43d127ddfaac129c50f013",
+    "artifacts/daniel-submission-a3-experimental.zip": "c3f1f0daaabfce20bc055b97d211e9e0940476f1410a01d4f462d28c8fff77f8",
+    "artifacts/daniel-submission-v3.zip": "8080cc06980f8dde184cc1320ccafca2dffd7a58b5a7ba6772bef177dde4ab09",
+    "artifacts/daniel-submission-a6-contact.zip": "4d265272611c0147455f64bf0be73c5b9f82e0f4c1d3ef4847ced26ae8655873"
+  },
+  "platform_delta_vs_A2": -1.977,
+  "platform_result_file": "reports/platform-result-a6-20261111.json",
+  "acceptance_postmortem": "Nine author-reviewed contact regressions were insufficient evidence of aggregate quality gain; all123 product requests unchanged. No per-case platform logs, so mechanism of score movement is unidentifiable."
+}
