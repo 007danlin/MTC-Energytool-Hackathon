@@ -126,6 +126,10 @@ func TestEventLogDeduplicatesAndPersists(t *testing.T) {
 	if n, _ := log.Append(e1, e2, e1); n != 2 {
 		t.Fatalf("duplicate in one batch must be dropped, appended %d", n)
 	}
+	raw, err := os.ReadFile(path)
+	if err != nil || strings.HasPrefix(string(raw), "\n") || strings.Contains(string(raw), "\n\n") {
+		t.Fatal("normal JSONL export must not contain blank records")
+	}
 	if n, _ := log.Append(e2); n != 0 {
 		t.Fatal("replayed event must be ignored")
 	}

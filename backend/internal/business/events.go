@@ -130,7 +130,7 @@ func (l *EventLog) Append(events ...Event) (int, error) {
 		return 0, nil
 	}
 	if l.path != "" {
-		f, err := os.OpenFile(l.path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o600)
+		f, err := os.OpenFile(l.path, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0o600)
 		if err != nil {
 			for _, e := range fresh {
 				delete(l.seen, e.ID)
@@ -138,14 +138,22 @@ func (l *EventLog) Append(events ...Event) (int, error) {
 			return 0, err
 		}
 		w := bufio.NewWriter(f)
-		// Separate a torn final line (or a valid line without LF) from new events.
-		// Empty separator lines are ignored when loading this export.
-		w.WriteByte('\n')
-		for _, e := range fresh {
-			raw, _ := json.Marshal(e)
-			w.Write(append(raw, '\n'))
+		// Separate an unterminated last line without adding blank JSONL records.
+		info, err := f.Stat()
+		if err == nil && info.Size() > 0 {
+			var last [1]byte
+			_, err = f.ReadAt(last[:], info.Size()-1)
+			if err == nil && last[0] != '\n' {
+				err = w.WriteByte('\n')
+			}
 		}
-		err = w.Flush()
+		if err == nil {
+			for _, e := range fresh {
+				raw, _ := json.Marshal(e)
+				w.Write(append(raw, '\n'))
+			}
+			err = w.Flush()
+		}
 		if err == nil {
 			err = f.Sync()
 		}
