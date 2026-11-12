@@ -1,0 +1,14 @@
+{
+  "released_at": "2026-11-11T10:58:04.958540",
+  "reason": "User explicitly requested one strongest candidate for an exploratory platform test after being informed that heldout improvement was not confirmed.",
+  "archive": "artifacts/daniel-submission-e4-experimental.zip",
+  "sha256": "c08a5d00bb0425ac7ed3fde660a9032cc89452801b03666586c308723e5d9e71",
+  "bytes": 940272,
+  "same_as_tested_frozen_candidate": true,
+  "quality_gate_passed": false,
+  "experimental": true,
+  "working_version": "A2",
+  "working_platform_score": 55.969,
+  "platform_upload_performed": false,
+  "platform_embedding_compatibility_verified": false
+}

@@ -1,0 +1,23 @@
+{
+  "source": "User-provided platform result in current chat",
+  "received_date": "2026-11-11",
+  "candidate": {
+    "archive": "artifacts/daniel-submission-g.zip",
+    "sha256": "ad791c6ebb6fecd1e748c30e1666e91b1acfd17a89fdb97b57921c3945656299",
+    "score": 51.729,
+    "duration_seconds": 204.1,
+    "uploaded_time": "07:20",
+    "status": "Успешно"
+  },
+  "baseline": {
+    "archive": "artifacts/daniel-submission-a2.zip",
+    "sha256": "fa81606a5e4b89cd4b36a13139d906e8940bbc462d43d127ddfaac129c50f013",
+    "score": 55.969,
+    "duration_seconds": 363.8,
+    "uploaded_time": "19:24",
+    "status": "Лучшее решение"
+  },
+  "score_difference": -4.24,
+  "decision": "Keep A2 as working baseline. G is worse on platform; retained for comparison, not promoted.",
+  "timing_note": "Different submissions; duration is not a controlled speed benchmark."
+}

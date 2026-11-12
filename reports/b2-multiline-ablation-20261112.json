@@ -1,0 +1,1564 @@
+{
+  "completed_at": "2026-11-12T10:39:56.345978+03:00",
+  "experiment": "B2 multiline fix only; no TOP_K, prompt or generation changes",
+  "status": "local_diagnostic_complete_not_uploaded",
+  "archives": {
+    "A2": {
+      "path": "artifacts/daniel-submission-a2.zip",
+      "sha256": "fa81606a5e4b89cd4b36a13139d906e8940bbc462d43d127ddfaac129c50f013"
+    },
+    "B2": {
+      "path": "artifacts/daniel-submission-b2-hybrid.zip",
+      "sha256": "523b4f2c7f7fe60048101ceaa22f53fbfcf6bf77192f33adeb04f161bc24af94"
+    },
+    "B2fix": {
+      "path": "artifacts/daniel-submission-b2-multiline-fix.zip",
+      "sha256": "51567d87a29eb494589769eed3f83356ab731493d51dcf4a4b96cd707ab82569"
+    }
+  },
+  "changed_runtime_files": [
+    "hybrid_retrieval.py"
+  ],
+  "changed_function": "_split_query",
+  "generation": {
+    "temperature": 0,
+    "max_tokens": 2048,
+    "timeout": 180,
+    "attempts": 1,
+    "retrieval_top_k": 12,
+    "context_chars": 32000,
+    "ollama_seed": 42,
+    "ollama_num_ctx": 16384
+  },
+  "model": "energytool-qwen-local-eval:20261110",
+  "counts": {
+    "completed_at": "2026-11-12T09:55:47.047564+03:00",
+    "logical_cells": 72,
+    "unique_new_calls": 60,
+    "old_answers_reused": 0,
+    "technical_errors": 0,
+    "truncations": 0,
+    "timing_excludes_retrieval": true,
+    "source_changed_during_run": false
+  },
+  "cases_sha256": "9e55a49db95f31a8465278920edcdafc8c6fe10c02170488e2b7304e93ab20fe",
+  "case_families": 12,
+  "formats": {
+    "multiline": {
+      "metrics": {
+        "A2": {
+          "cases": 12,
+          "core_met": 9,
+          "rubric_all_met": 10,
+          "major_error_cases": 2,
+          "major_case_ids": [
+            "m04_m",
+            "m09_m"
+          ]
+        },
+        "B2": {
+          "cases": 12,
+          "core_met": 7,
+          "rubric_all_met": 9,
+          "major_error_cases": 3,
+          "major_case_ids": [
+            "m04_m",
+            "m06_m",
+            "m09_m"
+          ]
+        },
+        "B2fix": {
+          "cases": 12,
+          "core_met": 7,
+          "rubric_all_met": 8,
+          "major_error_cases": 4,
+          "major_case_ids": [
+            "m02_m",
+            "m04_m",
+            "m07_m",
+            "m09_m"
+          ]
+        }
+      },
+      "comparisons": {
+        "B2fix_vs_B2": {
+          "wins": 2,
+          "losses": 2,
+          "ties": 8,
+          "bad_ties": 2,
+          "new_major_regressions": 2,
+          "case_ids": {
+            "wins": [
+              "m05_m",
+              "m06_m"
+            ],
+            "losses": [
+              "m02_m",
+              "m07_m"
+            ],
+            "ties": [
+              "m01_m",
+              "m03_m",
+              "m04_m",
+              "m08_m",
+              "m09_m",
+              "m10_m",
+              "m11_m",
+              "m12_m"
+            ],
+            "bad_ties": [
+              "m04_m",
+              "m09_m"
+            ],
+            "new_major_regressions": [
+              "m02_m",
+              "m07_m"
+            ]
+          }
+        },
+        "B2fix_vs_A2": {
+          "wins": 0,
+          "losses": 3,
+          "ties": 9,
+          "bad_ties": 2,
+          "new_major_regressions": 2,
+          "case_ids": {
+            "wins": [],
+            "losses": [
+              "m02_m",
+              "m06_m",
+              "m07_m"
+            ],
+            "ties": [
+              "m01_m",
+              "m03_m",
+              "m04_m",
+              "m05_m",
+              "m08_m",
+              "m09_m",
+              "m10_m",
+              "m11_m",
+              "m12_m"
+            ],
+            "bad_ties": [
+              "m04_m",
+              "m09_m"
+            ],
+            "new_major_regressions": [
+              "m02_m",
+              "m07_m"
+            ]
+          }
+        },
+        "B2_vs_A2": {
+          "wins": 0,
+          "losses": 2,
+          "ties": 10,
+          "bad_ties": 3,
+          "new_major_regressions": 1,
+          "case_ids": {
+            "wins": [],
+            "losses": [
+              "m05_m",
+              "m06_m"
+            ],
+            "ties": [
+              "m01_m",
+              "m02_m",
+              "m03_m",
+              "m04_m",
+              "m07_m",
+              "m08_m",
+              "m09_m",
+              "m10_m",
+              "m11_m",
+              "m12_m"
+            ],
+            "bad_ties": [
+              "m04_m",
+              "m07_m",
+              "m09_m"
+            ],
+            "new_major_regressions": [
+              "m06_m"
+            ]
+          }
+        }
+      }
+    },
+    "singleline": {
+      "metrics": {
+        "A2": {
+          "cases": 12,
+          "core_met": 9,
+          "rubric_all_met": 10,
+          "major_error_cases": 3,
+          "major_case_ids": [
+            "m04_s",
+            "m09_s",
+            "m12_s"
+          ]
+        },
+        "B2": {
+          "cases": 12,
+          "core_met": 9,
+          "rubric_all_met": 9,
+          "major_error_cases": 1,
+          "major_case_ids": [
+            "m04_s"
+          ]
+        },
+        "B2fix": {
+          "cases": 12,
+          "core_met": 9,
+          "rubric_all_met": 9,
+          "major_error_cases": 1,
+          "major_case_ids": [
+            "m04_s"
+          ]
+        }
+      },
+      "comparisons": {
+        "B2fix_vs_B2": {
+          "wins": 0,
+          "losses": 0,
+          "ties": 12,
+          "bad_ties": 3,
+          "new_major_regressions": 0,
+          "case_ids": {
+            "wins": [],
+            "losses": [],
+            "ties": [
+              "m01_s",
+              "m02_s",
+              "m03_s",
+              "m04_s",
+              "m05_s",
+              "m06_s",
+              "m07_s",
+              "m08_s",
+              "m09_s",
+              "m10_s",
+              "m11_s",
+              "m12_s"
+            ],
+            "bad_ties": [
+              "m04_s",
+              "m06_s",
+              "m09_s"
+            ],
+            "new_major_regressions": []
+          }
+        },
+        "B2fix_vs_A2": {
+          "wins": 4,
+          "losses": 1,
+          "ties": 7,
+          "bad_ties": 1,
+          "new_major_regressions": 0,
+          "case_ids": {
+            "wins": [
+              "m02_s",
+              "m09_s",
+              "m11_s",
+              "m12_s"
+            ],
+            "losses": [
+              "m06_s"
+            ],
+            "ties": [
+              "m01_s",
+              "m03_s",
+              "m04_s",
+              "m05_s",
+              "m07_s",
+              "m08_s",
+              "m10_s"
+            ],
+            "bad_ties": [
+              "m04_s"
+            ],
+            "new_major_regressions": []
+          }
+        },
+        "B2_vs_A2": {
+          "wins": 4,
+          "losses": 1,
+          "ties": 7,
+          "bad_ties": 1,
+          "new_major_regressions": 0,
+          "case_ids": {
+            "wins": [
+              "m02_s",
+              "m09_s",
+              "m11_s",
+              "m12_s"
+            ],
+            "losses": [
+              "m06_s"
+            ],
+            "ties": [
+              "m01_s",
+              "m03_s",
+              "m04_s",
+              "m05_s",
+              "m07_s",
+              "m08_s",
+              "m10_s"
+            ],
+            "bad_ties": [
+              "m04_s"
+            ],
+            "new_major_regressions": []
+          }
+        }
+      }
+    }
+  },
+  "source_coverage": {
+    "A2": {
+      "multiline": {
+        "all_required_groups_present": 12,
+        "cases": 12
+      },
+      "singleline": {
+        "all_required_groups_present": 12,
+        "cases": 12
+      }
+    },
+    "B2": {
+      "multiline": {
+        "all_required_groups_present": 9,
+        "cases": 12
+      },
+      "singleline": {
+        "all_required_groups_present": 12,
+        "cases": 12
+      }
+    },
+    "B2fix": {
+      "multiline": {
+        "all_required_groups_present": 12,
+        "cases": 12
+      },
+      "singleline": {
+        "all_required_groups_present": 12,
+        "cases": 12
+      }
+    }
+  },
+  "controls": "All12 B2/B2fix singleline embedding inputs and full HTTP payloads exactly equal; identical requests share one fresh generated answer.",
+  "review": {
+    "label_masked_reviews": 2,
+    "signature_agreement_cases": 18,
+    "adjudicated_case_ids": [
+      "m02_m",
+      "m06_m",
+      "m06_s",
+      "m07_m",
+      "m09_m",
+      "m09_s"
+    ],
+    "freeze": "reports/private/b2-multiline-ablation-20261112/review-freeze-before-unblinding.json"
+  },
+  "question_results": {
+    "m01_m": {
+      "format": "multiline",
+      "topic": "solar",
+      "answers": {
+        "A2": {
+          "answer_sha256": "18c087dc1bb5ee06146469c35499e48558d07a3bc24eb028880aeaea18ce1865",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        },
+        "B2": {
+          "answer_sha256": "fedacffd9b9e72e428893a6c75fc23dc376bf16989b56e87686951b841e6ad04",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        },
+        "B2fix": {
+          "answer_sha256": "71ac13dd9ac3534449f7be12013e38bfd90c490ca35dbea9751a4af376dd801d",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        }
+      },
+      "rank": {
+        "A2": 0,
+        "B2": 0,
+        "B2fix": 0
+      },
+      "reason": "Все ответы правильно отрицают питание от сетевой станции при отключении сети и называют гибридную конфигурацию с накопителями. Различия только в формулировке; отдельный расчёт параметров не обязателен по заранее записанному уточнению рубрики."
+    },
+    "m01_s": {
+      "format": "singleline",
+      "topic": "solar",
+      "answers": {
+        "A2": {
+          "answer_sha256": "141b88db7f950e82aab7a8b017091919bccaffd3b9de362152286576110753ea",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        },
+        "B2": {
+          "answer_sha256": "1f6ee1a7588e89e4e590c17d24a17a2c8959c90b541005092e9c7316c61047ff",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        },
+        "B2fix": {
+          "answer_sha256": "1f6ee1a7588e89e4e590c17d24a17a2c8959c90b541005092e9c7316c61047ff",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        }
+      },
+      "rank": {
+        "A2": 0,
+        "B2": 0,
+        "B2fix": 0
+      },
+      "reason": "Все ответы правильно отрицают питание от сетевой станции при отключении сети и называют гибридную конфигурацию с накопителями. Различия только в формулировке; отдельный расчёт параметров не обязателен по заранее записанному уточнению рубрики."
+    },
+    "m02_m": {
+      "format": "multiline",
+      "topic": "solar",
+      "answers": {
+        "A2": {
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [
+            "Сравниваются полный срок службы шифера и гарантия панелей вместо оставшегося ресурса 12-летней кровли и ресурса новых панелей. Предупреждение о демонтаже для замены кровли сохранено.",
+            "У дополнительного ориентира окупаемости 7–9 лет пропущена оговорка о центральной полосе. Обе рамки окупаемости и необходимость обследования сохранены, поэтому это ограниченная неточность, а не обещание рассчитанного срока для данного объекта."
+          ],
+          "core_met": true
+        },
+        "B2": {
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [
+            "Сравниваются полный срок службы шифера и гарантия панелей вместо оставшегося ресурса 12-летней кровли и ресурса новых панелей. Предупреждение о демонтаже для замены кровли сохранено."
+          ],
+          "core_met": true
+        },
+        "B2fix": {
+          "required_met": [
+            true,
+            false
+          ],
+          "rubric_all_met": false,
+          "major_errors": [
+            "Указан неподтверждённый верхний ресурс панелей «до 25 лет». Полный 23-solar.md указывает ресурс более 25 лет и отдельно гарантию 25 лет. Это неверное числовое условие ресурса, а не округление."
+          ],
+          "minor_errors": [
+            "Причина демонтажа перевёрнута: ответ говорит о демонтаже до окончания срока службы кровли, источник — о том, что новые панели переживут старую кровлю и потребуют демонтажа с повторной установкой при её замене."
+          ],
+          "core_met": false
+        }
+      },
+      "rank": {
+        "A2": 0,
+        "B2": 0,
+        "B2fix": 1
+      },
+      "reason": "R1 и R3 одинаково решают вопрос о старой кровле: монтаж не рекомендован, замена кровли потребует демонтажа панелей. По предварительному уточнению m02 такого объяснения достаточно. Неточное сравнение сроков отмечено у обоих. Дополнительные сведения R3 не дают преимущества; небольшая географическая недоговорённость при сохранённых рамках и оговорке об обследовании не меняет практический ответ. R2 сохраняет верное предостережение, но искажает ресурс панелей и механизм риска."
+    },
+    "m02_s": {
+      "format": "singleline",
+      "topic": "solar",
+      "answers": {
+        "A2": {
+          "answer_sha256": "0d21c3e3e68f76e8a222a44ac349361826c420fcd9ff13f3df91d17ed62d1d0e",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [
+            "Дополнительный ориентир окупаемости 7–9 лет приведён без ограничения центральной полосой, хотя регион объекта неизвестен; источник 23-solar.md#s011 связывает этот ориентир с центральной полосой."
+          ],
+          "core_met": true
+        },
+        "B2": {
+          "answer_sha256": "00dff4299c46d85fb27995e1ee4fc7908df775ab185e93b0caec40ead571553b",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        },
+        "B2fix": {
+          "answer_sha256": "00dff4299c46d85fb27995e1ee4fc7908df775ab185e93b0caec40ead571553b",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        }
+      },
+      "rank": {
+        "A2": 1,
+        "B2": 0,
+        "B2fix": 0
+      },
+      "reason": "Оба ответа предостерегают от монтажа на старый шифер и объясняют расходы на демонтаж при замене кровли; технический запрет не выдуман. R2 точнее сохраняет условия базы. В R1 25-летняя гарантия реальна (s010), поэтому сама цифра не ошибка, однако добавленный диапазон окупаемости утратил региональную оговорку. Это второстепенная неточность, не major и не провал центрального вопроса."
+    },
+    "m03_m": {
+      "format": "multiline",
+      "topic": "orem",
+      "answers": {
+        "A2": {
+          "answer_sha256": "fbc877f9dd1209569949b0269235866e6eb9dc22816bad09fa9f48c851eb5c72",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        },
+        "B2": {
+          "answer_sha256": "018e1f8b50501d630b2e20a48f576a99e757cc981268bf5be69ba0d59c4f8b14",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        },
+        "B2fix": {
+          "answer_sha256": "4676f8b6927cbf04af8e7d1467be4bec5d5b860daaa2633345cd92dfccd2b247",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        }
+      },
+      "rank": {
+        "A2": 0,
+        "B2": 0,
+        "B2fix": 0
+      },
+      "reason": "Все ответы корректно используют электрическую связность 0,4 кВ, складывают 430 и 460 в 890 кВт и разрешают только посредника при мощности менее 20 МВт. Дополнительный расчёт экономической целесообразности подтверждён источниками и не меняет ответ; ничья."
+    },
+    "m03_s": {
+      "format": "singleline",
+      "topic": "orem",
+      "answers": {
+        "A2": {
+          "answer_sha256": "f08a37d51eabf86176792ea8a794b7b81057859343e5e1650a7886212fa34d03",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        },
+        "B2": {
+          "answer_sha256": "473558a77d1ccc137329fd0baa87cf756b739fa670249b59936dd54899074e61",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        },
+        "B2fix": {
+          "answer_sha256": "473558a77d1ccc137329fd0baa87cf756b739fa670249b59936dd54899074e61",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        }
+      },
+      "rank": {
+        "A2": 0,
+        "B2": 0,
+        "B2fix": 0
+      },
+      "reason": "Все ответы корректно используют электрическую связность 0,4 кВ, складывают 430 и 460 в 890 кВт и разрешают только посредника при мощности менее 20 МВт. Дополнительный расчёт экономической целесообразности подтверждён источниками и не меняет ответ; ничья."
+    },
+    "m04_m": {
+      "format": "multiline",
+      "topic": "orem",
+      "answers": {
+        "A2": {
+          "answer_sha256": "35daa1ee56212b6360fa4620dab7e9e43b601f34f9f93764d0d9f9fc299f7acd",
+          "required_met": [
+            false,
+            false,
+            true
+          ],
+          "rubric_all_met": false,
+          "major_errors": [
+            "Начальное «Да, это действительно запрет» подтверждает ложную предпосылку пользователя о запрете при потреблении меньше миллиона; затем ответ допускает участие и отделяет ориентир потребления от порога мощности. Противоречие на центральный вопрос осталось."
+          ],
+          "minor_errors": [],
+          "core_met": false
+        },
+        "B2": {
+          "answer_sha256": "059dea3041e8cf41581dcd1a73f99e299f2431c14afd50e26a20f2e8735a8f15",
+          "required_met": [
+            false,
+            false,
+            true
+          ],
+          "rubric_all_met": false,
+          "major_errors": [
+            "Начальное «Да, это действительно запрет» подтверждает ложную предпосылку пользователя о запрете при потреблении меньше миллиона; затем ответ допускает участие и отделяет ориентир потребления от порога мощности. Противоречие на центральный вопрос осталось."
+          ],
+          "minor_errors": [],
+          "core_met": false
+        },
+        "B2fix": {
+          "answer_sha256": "f3153f65f853fb7090b01850ecfed4536a1e27669fd73e352cac8628c1d25edf",
+          "required_met": [
+            false,
+            false,
+            true
+          ],
+          "rubric_all_met": false,
+          "major_errors": [
+            "Начальное «Да, это действительно запрет» подтверждает ложную предпосылку пользователя о запрете при потреблении меньше миллиона; затем ответ допускает участие и отделяет ориентир потребления от порога мощности. Противоречие на центральный вопрос осталось."
+          ],
+          "minor_errors": [],
+          "core_met": false
+        }
+      },
+      "rank": {
+        "A2": 0,
+        "B2": 0,
+        "B2fix": 0
+      },
+      "reason": "Все ответы начинают с неверного подтверждения запрета по потреблению, а дальше сообщают правильное условие мощности и необходимость расчёта. Наличие правильных деталей не снимает противоречия прямому ответу. Посредник не упомянут, но это только необязательная полнота рубрики согласно предварительному уточнению. Одинаково существенная ошибка, поэтому ничья при core_met=false."
+    },
+    "m04_s": {
+      "format": "singleline",
+      "topic": "orem",
+      "answers": {
+        "A2": {
+          "answer_sha256": "c7871742e30e820ebc74512a8582b0cf106107e941954950db6f660da22e0ec1",
+          "required_met": [
+            false,
+            false,
+            true
+          ],
+          "rubric_all_met": false,
+          "major_errors": [
+            "Начальное «Да, это действительно запрет» подтверждает ложную предпосылку пользователя о запрете при потреблении меньше миллиона; затем ответ допускает участие и отделяет ориентир потребления от порога мощности. Противоречие на центральный вопрос осталось."
+          ],
+          "minor_errors": [],
+          "core_met": false
+        },
+        "B2": {
+          "answer_sha256": "c1dfea076fe5c126798eb9d02c5be7a4e76360b1f01c15984e400f40469cc728",
+          "required_met": [
+            false,
+            false,
+            true
+          ],
+          "rubric_all_met": false,
+          "major_errors": [
+            "Начальное «Да, это действительно запрет» подтверждает ложную предпосылку пользователя о запрете при потреблении меньше миллиона; затем ответ допускает участие и отделяет ориентир потребления от порога мощности. Противоречие на центральный вопрос осталось."
+          ],
+          "minor_errors": [],
+          "core_met": false
+        },
+        "B2fix": {
+          "answer_sha256": "c1dfea076fe5c126798eb9d02c5be7a4e76360b1f01c15984e400f40469cc728",
+          "required_met": [
+            false,
+            false,
+            true
+          ],
+          "rubric_all_met": false,
+          "major_errors": [
+            "Начальное «Да, это действительно запрет» подтверждает ложную предпосылку пользователя о запрете при потреблении меньше миллиона; затем ответ допускает участие и отделяет ориентир потребления от порога мощности. Противоречие на центральный вопрос осталось."
+          ],
+          "minor_errors": [],
+          "core_met": false
+        }
+      },
+      "rank": {
+        "A2": 0,
+        "B2": 0,
+        "B2fix": 0
+      },
+      "reason": "Все ответы начинают с неверного подтверждения запрета по потреблению, а дальше сообщают правильное условие мощности и необходимость расчёта. Наличие правильных деталей не снимает противоречия прямому ответу. Посредник не упомянут, но это только необязательная полнота рубрики согласно предварительному уточнению. Одинаково существенная ошибка, поэтому ничья при core_met=false."
+    },
+    "m05_m": {
+      "format": "multiline",
+      "topic": "askue",
+      "answers": {
+        "A2": {
+          "answer_sha256": "5309652d17198da54eb0fe701d44a4c7ceab861a656256286a22229b119a78ae",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        },
+        "B2": {
+          "answer_sha256": "424f5c3885bad07111ff5ac4fd7d50fbcd59d7a43f866a629c0d65032ca23565",
+          "required_met": [
+            true,
+            false
+          ],
+          "rubric_all_met": false,
+          "major_errors": [],
+          "minor_errors": [
+            "Не сообщён предусмотренный в рубрике способ: сформировать отчёты платформы и передать их самостоятельно."
+          ],
+          "core_met": false
+        },
+        "B2fix": {
+          "answer_sha256": "225c0b9f2e77c4129ae744a221cb64ce30b49b95ae6867d23b604ddb46bffa5c",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        }
+      },
+      "rank": {
+        "A2": 0,
+        "B2": 1,
+        "B2fix": 0
+      },
+      "reason": "Все ответы правильно запрещают рублёвый биллинг и прямую передачу. R2 и R3 также сохраняют конкретный рабочий путь — отчёты и самостоятельную передачу клиентом. R1 заменяет его общим советом использовать дополнительные сервисы и не сообщает предусмотренную передачу сформированных отчётов; это небольшой пропуск, а не выдуманная функция."
+    },
+    "m05_s": {
+      "format": "singleline",
+      "topic": "askue",
+      "answers": {
+        "A2": {
+          "answer_sha256": "093ff6ad06c46bd8ec6a0831c1152c98c029e52732bc6048956d232d80648c57",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        },
+        "B2": {
+          "answer_sha256": "94f695807a542dbfe410a485e44d749b25ee0ab41d1aec1667635f1646e98db6",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        },
+        "B2fix": {
+          "answer_sha256": "94f695807a542dbfe410a485e44d749b25ee0ab41d1aec1667635f1646e98db6",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        }
+      },
+      "rank": {
+        "A2": 0,
+        "B2": 0,
+        "B2fix": 0
+      },
+      "reason": "Оба ответа правильно отрицают рублёвый биллинг и прямую передачу показаний, сохраняя доступные учёт кВт·ч и самостоятельную передачу отчётов. Дополнительное замечание R2 о распределении по арендаторам подтверждено базой; у R1 общее указание на необходимость другого средства для биллинга не обещает готовую интеграцию. По требуемым фактам ничья."
+    },
+    "m06_m": {
+      "format": "multiline",
+      "topic": "askue",
+      "answers": {
+        "A2": {
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        },
+        "B2": {
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [
+            "Дано готовое заключение о договоре и факте обработки: «нельзя в договоре ... указать» и «а значит, обработка персональных данных осуществляется». 26-general.md#s009 оставляет состав данных, роли и ответственность договору и специалисту; идентификация не разрешает помощнику вынести окончательное заключение о роли МТС и допустимой записи."
+          ],
+          "minor_errors": [],
+          "core_met": false
+        },
+        "B2fix": {
+          "required_met": [
+            true,
+            false
+          ],
+          "rubric_all_met": false,
+          "major_errors": [],
+          "minor_errors": [
+            "Пропущена часть required_facts[1] об определении договором ролей/ответственности сторон. Состав данных, договор и необходимость юридической оценки переданы верно."
+          ],
+          "core_met": false
+        }
+      },
+      "rank": {
+        "A2": 0,
+        "B2": 2,
+        "B2fix": 1
+      },
+      "reason": "R1 полностью сохраняет продуктовую и договорную границы. R2 правильно отвечает на практический вопрос о недопустимости автоматического переноса ответа фото-сервиса, но неполон по замороженному договорному требованию. Это minor, а не юридическая ошибка. R3 упоминает договор и специалиста, но последующая оговорка не отменяет уже выданного запрещённого заключения."
+    },
+    "m06_s": {
+      "format": "singleline",
+      "topic": "askue",
+      "answers": {
+        "A2": {
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        },
+        "B2": {
+          "required_met": [
+            true,
+            false
+          ],
+          "rubric_all_met": false,
+          "major_errors": [],
+          "minor_errors": [
+            "Пропущена часть required_facts[1] об определении договором ролей/ответственности сторон. Состав данных, договор и необходимость юридической оценки переданы верно."
+          ],
+          "core_met": false
+        },
+        "B2fix": {
+          "required_met": [
+            true,
+            false
+          ],
+          "rubric_all_met": false,
+          "major_errors": [],
+          "minor_errors": [
+            "Пропущена часть required_facts[1] об определении договором ролей/ответственности сторон. Состав данных, договор и необходимость юридической оценки переданы верно."
+          ],
+          "core_met": false
+        }
+      },
+      "rank": {
+        "A2": 0,
+        "B2": 1,
+        "B2fix": 1
+      },
+      "reason": "Оба ответа верно отказываются переносить режим фото-сервиса на платформу учёта. R1 полностью передаёт обязательное договорное разъяснение. У R2 пропущены только договорные роли/ответственность; ложного юридического заключения нет."
+    },
+    "m07_m": {
+      "format": "multiline",
+      "topic": "losses",
+      "answers": {
+        "A2": {
+          "required_met": [
+            true,
+            false
+          ],
+          "rubric_all_met": false,
+          "major_errors": [],
+          "minor_errors": [
+            "Не объяснено, что часовые интервалы желательны для повышения точности (required_facts[1]). Их необязательность передана верно."
+          ],
+          "core_met": false
+        },
+        "B2": {
+          "required_met": [
+            true,
+            false
+          ],
+          "rubric_all_met": false,
+          "major_errors": [],
+          "minor_errors": [
+            "Не объяснено, что часовые интервалы желательны для повышения точности (required_facts[1]). Их необязательность передана верно."
+          ],
+          "core_met": false
+        },
+        "B2fix": {
+          "required_met": [
+            false,
+            true
+          ],
+          "rubric_all_met": false,
+          "major_errors": [
+            "18 месяцев имеющегося архива превращены в обязательный минимум. Источник 24-losses.md#s009 требует не менее одного года. Это неверное числовое условие продукта, даже если данный клиент ему удовлетворяет."
+          ],
+          "minor_errors": [],
+          "core_met": false
+        }
+      },
+      "rank": {
+        "A2": 0,
+        "B2": 0,
+        "B2fix": 1
+      },
+      "reason": "R1 и R3 одинаково правильно разрешают старт с суточными данными день/ночь и называют минимум один год; отсутствует только объяснение пользы часовых интервалов для точности. Это ничья без major. Дополнительные поля R1 и ежедневное приращение R3 подтверждены источником и не дают преимущества. R2 существенно искажает минимальную глубину архива."
+    },
+    "m07_s": {
+      "format": "singleline",
+      "topic": "losses",
+      "answers": {
+        "A2": {
+          "answer_sha256": "ad2365bf3030ff2f6d4d16077c3b48e3591574f2b5aefe304fb38511494ff82e",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        },
+        "B2": {
+          "answer_sha256": "fdbe51d7d3b20e6c082600baeff42474ff93bae9f7984b9bf27781c11064baee",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        },
+        "B2fix": {
+          "answer_sha256": "fdbe51d7d3b20e6c082600baeff42474ff93bae9f7984b9bf27781c11064baee",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        }
+      },
+      "rank": {
+        "A2": 0,
+        "B2": 0,
+        "B2fix": 0
+      },
+      "reason": "Оба ответа правильно допускают начало с 18-месячного суточного архива день/ночь, называют минимум год и отделяют желательные часовые интервалы от обязательного минимума. Дополнительная рекомендация ежедневного приращения у R1 подтверждена источником; отсутствие её у R2 не неполнота поставленного вопроса."
+    },
+    "m08_m": {
+      "format": "multiline",
+      "topic": "losses",
+      "answers": {
+        "A2": {
+          "answer_sha256": "6e06c8e3a401b9ae4e8748a5ea4010f62ef838e65ad2314a57a4648bb8261022",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        },
+        "B2": {
+          "answer_sha256": "f3928282235b78492098e1c4a6d1070096e101beb8a90b75a51cf6d87ed0a0c7",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        },
+        "B2fix": {
+          "answer_sha256": "5b7e8953f7fcf2e9840eaf90e332737ab227197e16fe6afccd312ff81a7164cd",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        }
+      },
+      "rank": {
+        "A2": 0,
+        "B2": 0,
+        "B2fix": 0
+      },
+      "reason": "Все три ответа применяют исправление пользователя: энергосбыт без сетевой организации на балансе не подходит для поиска коммерческих потерь. Дополнительные предложения платформы учёта условны и не отменяют отказ. Функции контроля потребления/отклонений подтверждены 22-askue.md#s002,s003,s008. Существенного различия качества нет."
+    },
+    "m08_s": {
+      "format": "singleline",
+      "topic": "losses",
+      "answers": {
+        "A2": {
+          "answer_sha256": "143414ad6aee75091d4e1119d2c548c4c40bb269fe2cbbae473322cef5b947dc",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        },
+        "B2": {
+          "answer_sha256": "7b8e9f34af6af311b1a0f1096e5b07c52142a6d4aee13e22ced8cdd411cd787e",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        },
+        "B2fix": {
+          "answer_sha256": "7b8e9f34af6af311b1a0f1096e5b07c52142a6d4aee13e22ced8cdd411cd787e",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        }
+      },
+      "rank": {
+        "A2": 0,
+        "B2": 0,
+        "B2fix": 0
+      },
+      "reason": "Оба ответа прямо отказывают в применимости поиска потерь сбытовой компании без сетевых организаций на балансе и правильно отделяют целевых сетевых клиентов. Дополнительные замечания о платформе учёта не меняют вывод; общее утверждение R1 о техническом учёте промышленных предприятий подтверждено 22-askue.md#s002. Различий по фактическому качеству нет."
+    },
+    "m09_m": {
+      "format": "multiline",
+      "topic": "meter_reading",
+      "answers": {
+        "A2": {
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [
+            "«Точность ... превышает 90%, но/а не 95%» отрицает превышение порога 95%. Опубликованный ориентир >90% для воды и штрих-кодов не устанавливает верхнюю границу ≤95% (25-meter-reading.md#s006, #s016 и предварительное уточнение m09). Правильная итоговая цитата для презентации не отменяет предшествующего утверждения."
+          ],
+          "minor_errors": [],
+          "core_met": false
+        },
+        "B2": {
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [
+            "«Точность ... превышает 90%, но/а не 95%» отрицает превышение порога 95%. Опубликованный ориентир >90% для воды и штрих-кодов не устанавливает верхнюю границу ≤95% (25-meter-reading.md#s006, #s016 и предварительное уточнение m09)."
+          ],
+          "minor_errors": [],
+          "core_met": false
+        },
+        "B2fix": {
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [
+            "«Точность ... превышает 90%, но/а не 95%» отрицает превышение порога 95%. Опубликованный ориентир >90% для воды и штрих-кодов не устанавливает верхнюю границу ≤95% (25-meter-reading.md#s006, #s016 и предварительное уточнение m09)."
+          ],
+          "minor_errors": [],
+          "core_met": false
+        }
+      },
+      "rank": {
+        "A2": 0,
+        "B2": 0,
+        "B2fix": 0
+      },
+      "reason": "Все три ответа правильно разделяют категории опубликованных показателей и отвергают перенос >95% с электричества. Но все добавляют прямое отрицание превышения 95% в предложении о самой точности. Предварительное уточнение m09 не разрешает выводить этот верхний предел. Это ничья с одной существенной числовой ошибкой у каждого; дополнительная цитата R1 и союз «а» вместо «но» у R3 не меняют вердикт."
+    },
+    "m09_s": {
+      "format": "singleline",
+      "topic": "meter_reading",
+      "answers": {
+        "A2": {
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [
+            "«Точность ... превышает 90%, но/а не 95%» отрицает превышение порога 95%. Опубликованный ориентир >90% для воды и штрих-кодов не устанавливает верхнюю границу ≤95% (25-meter-reading.md#s006, #s016 и предварительное уточнение m09). Последующая правильная цитата не отменяет этой фразы."
+          ],
+          "minor_errors": [],
+          "core_met": false
+        },
+        "B2": {
+          "required_met": [
+            true,
+            false
+          ],
+          "rubric_all_met": false,
+          "major_errors": [],
+          "minor_errors": [
+            "В составном required[1] пропущено указание, что >95% относится к электросчётчикам. Для обеих запрошенных категорий верно предложено >90%, перенос показателей отвергнут."
+          ],
+          "core_met": false
+        },
+        "B2fix": {
+          "required_met": [
+            true,
+            false
+          ],
+          "rubric_all_met": false,
+          "major_errors": [],
+          "minor_errors": [
+            "В составном required[1] пропущено указание, что >95% относится к электросчётчикам. Для обеих запрошенных категорий верно предложено >90%, перенос показателей отвергнут."
+          ],
+          "core_met": false
+        }
+      },
+      "rank": {
+        "A2": 1,
+        "B2": 0,
+        "B2fix": 0
+      },
+      "reason": "R1 корректно отвечает на практический вопрос: для презентации следует использовать >90% для воды и штрих-кодов. Он оценивает допустимость публикации и переноса показателей, не устанавливая фактический верхний предел. Его недостаток — только строгий рубричный пропуск категории электричества. R2 полон по перечню, но добавляет неподтверждённое числовое ограничение. Отсутствие major важнее буквальной полноты, поэтому R1 выше."
+    },
+    "m10_m": {
+      "format": "multiline",
+      "topic": "meter_reading",
+      "answers": {
+        "A2": {
+          "answer_sha256": "56f656a47da63efb05827c47d17090f11c0ab2d881ed674a894f9ace12877a78",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        },
+        "B2": {
+          "answer_sha256": "cd6af035515c296bbf13c7478046981b6909898efb0c6462e943ea6610289bb6",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        },
+        "B2fix": {
+          "answer_sha256": "4fa8d5965d630147f626865c570d906cc30cefac9021df903df4f7db683522bd",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        }
+      },
+      "rank": {
+        "A2": 0,
+        "B2": 0,
+        "B2fix": 0
+      },
+      "reason": "Все ответы отделяют готовую поддержку электроэнергии от отдельной доработки для газа и не допускают начисление по фото без верификации. У R1 техническое назначение относится к распознанному показанию без верификации в предыдущей части фразы; запрет коммерческого учёта после проверки не утверждается. Различий по центральным требованиям нет."
+    },
+    "m10_s": {
+      "format": "singleline",
+      "topic": "meter_reading",
+      "answers": {
+        "A2": {
+          "answer_sha256": "0f5182e43af25df71d097234056ca797e203e1282081a396e9f8730d51cfb647",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        },
+        "B2": {
+          "answer_sha256": "4d047eadee7c744ba7fca5bd6e1150a27dc1087101ca3a71c212e6ee8aabfa75",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        },
+        "B2fix": {
+          "answer_sha256": "4d047eadee7c744ba7fca5bd6e1150a27dc1087101ca3a71c212e6ee8aabfa75",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        }
+      },
+      "rank": {
+        "A2": 0,
+        "B2": 0,
+        "B2fix": 0
+      },
+      "reason": "Оба ответа отделяют готовую электроэнергию от газа как доработки и требуют верификацию перед начислением. Дополнительная фраза о подтверждении данных у R1 согласуется с этой проверкой. Различий в фактах нет."
+    },
+    "m11_m": {
+      "format": "multiline",
+      "topic": "general",
+      "answers": {
+        "A2": {
+          "answer_sha256": "1575f5a9a94826fa53327e5ee493b2cf6700a89523ab430a0db4758bcf15202d",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        },
+        "B2": {
+          "answer_sha256": "c741a98a26aa7d160eb904be7a5f5ac075b2a9aac5976f7830da1b15a21fd20f",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        },
+        "B2fix": {
+          "answer_sha256": "c6224894d7f9f21c0032fd2a2f31c98a3847015f4864be42d5e6ee45f6ef4e9f",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        }
+      },
+      "rank": {
+        "A2": 0,
+        "B2": 0,
+        "B2fix": 0
+      },
+      "reason": "Все три ответа оставляют данные и историю у клиента и прямо отрицают необходимость переустановки при смене поставщика. Дополнительное замечание о существующей схеме/приборах подтверждено 22-askue.md#s014, а в самом вопросе приборы уже подключены. Уточняющие предложения не создают гарантии конкретной интеграции или сроков. По фактическому качеству ничья."
+    },
+    "m11_s": {
+      "format": "singleline",
+      "topic": "general",
+      "answers": {
+        "A2": {
+          "answer_sha256": "5e0f0fc30a81618188f787fc2b85b0f4a583d6845da890d3b31b71d4d5ba9d0c",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [
+            "Неограниченное «данные ... не передаются энергосбытовой компании» шире подтверждённого тезиса о принадлежности истории клиенту; источник допускает передачу отчётов клиентом."
+          ],
+          "core_met": true
+        },
+        "B2": {
+          "answer_sha256": "c83b2c8870515f2b5966a1497e0497bf5504662484b61772c91f9f890a394d43",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        },
+        "B2fix": {
+          "answer_sha256": "c83b2c8870515f2b5966a1497e0497bf5504662484b61772c91f9f890a394d43",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        }
+      },
+      "rank": {
+        "A2": 1,
+        "B2": 0,
+        "B2fix": 0
+      },
+      "reason": "Оба ответа сохраняют историю у клиента и отрицают переустановку при смене поставщика. R2 дополнительно и без ограничения утверждает, что данные не передаются сбытовой компании; владение историей само по себе не доказывает отсутствие передачи копий или отчётов. Центральные требования выполнены, но R1 точнее."
+    },
+    "m12_m": {
+      "format": "multiline",
+      "topic": "orem",
+      "answers": {
+        "A2": {
+          "answer_sha256": "001e762434b5207b9651e74cd2c050afbccfe52dd3800ab1bd9a3bb17a3f5e58",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        },
+        "B2": {
+          "answer_sha256": "414961f386c35bed6e1030e2353199cc3c3715b309f1b43cc4971e96cc955f45",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        },
+        "B2fix": {
+          "answer_sha256": "aa4718a2d256912d47cf38f92d071fcf8031f91b715b94c5e01d7824c242e3f8",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        }
+      },
+      "rank": {
+        "A2": 0,
+        "B2": 0,
+        "B2fix": 0
+      },
+      "reason": "Все три ответа используют исправленную мощность 680 кВт и прямо отказывают в выходе при пороге 750 кВт. Часы и большой расход не предлагаются как обход; R3 проговаривает это отдельно, у других это следует из безусловного ограничения. Возможные альтернативы предложены для отдельной оценки без обещания применимости; по центральному вопросу ничья."
+    },
+    "m12_s": {
+      "format": "singleline",
+      "topic": "orem",
+      "answers": {
+        "A2": {
+          "answer_sha256": "0c661e1a3d5d08e2823d23c1c62debdc824bac6274c0e3d2b9c4aa8dab0dc9e6",
+          "required_met": [
+            false,
+            false
+          ],
+          "rubric_all_met": false,
+          "major_errors": [
+            "После верного начального порога ответ оставляет путь через посредника при 680 кВт и предлагает подтвердить, что мощность «не превышает 750 кВт». Это обратное условие допуска: в базе посредник допустим от 750 кВт, а для текущих 680 кВт выход невозможен."
+          ],
+          "minor_errors": [],
+          "core_met": false
+        },
+        "B2": {
+          "answer_sha256": "a32bb06a423b7b14a9d8ff21f51c6da3032763d33d38c22c0330e032cd400a6d",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        },
+        "B2fix": {
+          "answer_sha256": "a32bb06a423b7b14a9d8ff21f51c6da3032763d33d38c22c0330e032cd400a6d",
+          "required_met": [
+            true,
+            true
+          ],
+          "rubric_all_met": true,
+          "major_errors": [],
+          "minor_errors": [],
+          "core_met": true
+        }
+      },
+      "rank": {
+        "A2": 1,
+        "B2": 0,
+        "B2fix": 0
+      },
+      "reason": "R1 последовательно применяет исправленные 680 кВт и закрывает как прямое участие, так и посредника: имеющийся расход/учёт не снимает запрет. R2 противоречит своему правильному началу неверным условием для посредника и продолжает оценку с опросным листом, не давая однозначного отказа для текущей мощности. Само условное суммирование связанных площадок допустимо, но не исправляет обратный знак порога."
+    }
+  },
+  "individual_review_sensitivity": {
+    "1": {
+      "multiline": {
+        "B2fix_vs_B2": {
+          "wins": 2,
+          "losses": 2,
+          "ties": 8
+        },
+        "B2fix_vs_A2": {
+          "wins": 0,
+          "losses": 2,
+          "ties": 10
+        }
+      },
+      "singleline": {
+        "B2fix_vs_B2": {
+          "wins": 0,
+          "losses": 0,
+          "ties": 12
+        },
+        "B2fix_vs_A2": {
+          "wins": 3,
+          "losses": 0,
+          "ties": 9
+        }
+      }
+    },
+    "2": {
+      "multiline": {
+        "B2fix_vs_B2": {
+          "wins": 2,
+          "losses": 2,
+          "ties": 8
+        },
+        "B2fix_vs_A2": {
+          "wins": 0,
+          "losses": 3,
+          "ties": 9
+        }
+      },
+      "singleline": {
+        "B2fix_vs_B2": {
+          "wins": 0,
+          "losses": 0,
+          "ties": 12
+        },
+        "B2fix_vs_A2": {
+          "wins": 4,
+          "losses": 1,
+          "ties": 7
+        }
+      }
+    }
+  },
+  "platform": {
+    "uploaded": false,
+    "score_prediction": null,
+    "best_confirmed_version": "A2",
+    "best_confirmed_score": 55.969
+  },
+  "limitations": [
+    "Purposeful diagnostic sample:12 scenarios, not24 independent questions; known KB concepts in new wordings.",
+    "Local Qwen3-VL-30B-A3B Q4_K_M differs from platform Qwen3.8-27B.",
+    "All variants use retrieval TOP_K12 to isolate fix; actual platform settings unknown.",
+    "Local BGE query vectors and hash-verified reused document vectors replayed through frozen APIEmbedder; platform network/fallback/deadline behavior not measured.",
+    "One deterministic generation per unique HTTP payload; identical requests share answers and are not independent replicates.",
+    "Two Codex reviewers are not independent human experts or the platform judge."
+  ],
+  "report_directory": "reports/private/b2-multiline-ablation-20261112",
+  "decision": {
+    "recommend_for_platform": false,
+    "reason": "B2fix vs B2 2/2/8; vs A2 0/3/9 on primary multiline set; two new major numerical regressions.",
+    "working_version": "A2",
+    "human_report": "docs/b2-multiline-ablation-20261112.txt"
+  }
+}

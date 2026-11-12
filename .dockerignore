@@ -11,3 +11,18 @@ __pycache__
 *.pyc
 .venv
 submission.csv
+
+# Research exports, model caches and local session data are not build inputs.
+experiments
+exports
+handoffs
+design
+knowledge-base
+backend/var
+backend/api
+.hf-cache
+**/.hf-cache
+**/.venv
+**/venv
+**/__pycache__
+*.log

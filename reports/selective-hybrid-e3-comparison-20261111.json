@@ -1,0 +1,43 @@
+{
+  "cases": 41,
+  "exact_request_reuse_counts": {
+    "a2": 28,
+    "e2": 13
+  },
+  "unknown_request_ids": [],
+  "new_qwen_generation_calls": 0,
+  "real_bge_api_calls": 42,
+  "embedding_status": {
+    "mode": "hybrid",
+    "reason": "verified_probes",
+    "probe_cosines": [
+      1.0000000000000002,
+      1.0,
+      1.0
+    ]
+  },
+  "elapsed_seconds": 9.927,
+  "all_a2_contexts_preserved": true,
+  "wins": [
+    "n04",
+    "17"
+  ],
+  "losses": [
+    "q02"
+  ],
+  "ties": 38,
+  "new_major_ids": [
+    "q02"
+  ],
+  "is_fresh_generation_sample": false,
+  "reuse_basis": "Exact serialized model API request hashes match previously observed real Qwen30B requests; copied answers are not fresh independent generations.",
+  "open_gate_passed": false,
+  "variant": "E3",
+  "decision": "rejected",
+  "new_public_zip": false,
+  "holdout_opened": false,
+  "private_evidence": "reports/private/selective-hybrid-e3-20261111",
+  "frozen_zip_sha256": "f38354dbbd97e7df4cdf1f699fb506dfb4c217b9156b9c089caef7f85f148257",
+  "evaluation_independent": false,
+  "platform_score": null
+}

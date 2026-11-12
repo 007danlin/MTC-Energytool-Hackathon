@@ -1,0 +1,233 @@
+openapi: 3.0.3
+info:
+  title: Energytool Consultation API
+  version: 1.0.0
+  description: Go backend API for isolated Energytool consultation sessions.
+servers:
+  - url: /api/v1
+paths:
+  /health/live:
+    servers:
+      - url: /
+    get:
+      summary: Liveness probe
+      responses:
+        '200':
+          description: Process is running
+  /health/ready:
+    servers:
+      - url: /
+    get:
+      summary: Readiness probe
+      responses:
+        '200':
+          description: Required dependencies are ready
+        '503':
+          description: One or more required dependencies are unavailable
+  /sessions:
+    post:
+      summary: Create an isolated consultation session
+      operationId: createSession
+      responses:
+        '201':
+          description: Session created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+  /sessions/{session_id}:
+    parameters:
+      - $ref: '#/components/parameters/SessionID'
+    get:
+      summary: Get session metadata
+      responses:
+        '200':
+          description: Session metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /sessions/{session_id}/messages:
+    parameters:
+      - $ref: '#/components/parameters/SessionID'
+    get:
+      summary: Get ordered session history
+      responses:
+        '200':
+          description: Ordered messages
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [messages]
+                properties:
+                  messages:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Message'
+    post:
+      summary: Add a user message and run consultation
+      operationId: appendMessage
+      description: Automatic retries are not safe; idempotency keys are not implemented.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content:
+                  type: string
+                  minLength: 1
+                  maxLength: 10000
+      responses:
+        '200':
+          description: Consultation completed, including a typed technical error status if ML was unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsultationResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Session is closed
+        '413':
+          description: Request exceeds configured size limits
+  /sessions/{session_id}/lead:
+    parameters:
+      - $ref: '#/components/parameters/SessionID'
+    get:
+      summary: Get current lead state for a session
+      responses:
+        '200':
+          description: Current lead state; sent is always false until a delivery integration exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lead'
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  parameters:
+    SessionID:
+      in: path
+      name: session_id
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    Session:
+      type: object
+      required: [id, status, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [active, closed]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    Message:
+      type: object
+      required: [id, role, content, sequence, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [user, assistant]
+        content:
+          type: string
+        sequence:
+          type: integer
+          minimum: 1
+        created_at:
+          type: string
+          format: date-time
+    ConsultationResult:
+      type: object
+      required: [answer, status, sources, elapsed_ms, lead, lead_ready, summary, schema_version]
+      properties:
+        answer:
+          type: string
+        status:
+          type: string
+          enum: [answered, clarification, knowledge_gap, out_of_scope, technical_error]
+        sources:
+          type: array
+          items:
+            type: object
+            required: [document_id, chunk_id, source_id, quote]
+            properties:
+              document_id: { type: string }
+              chunk_id: { type: string }
+              source_id: { type: string }
+              quote: { type: string }
+        elapsed_ms:
+          type: integer
+          minimum: 0
+        lead:
+          $ref: '#/components/schemas/Lead'
+        lead_ready:
+          type: boolean
+        summary:
+          type: object
+          additionalProperties: true
+        schema_version:
+          type: string
+    Lead:
+      type: object
+      required: [session_id, fields, evidence, requested, declined]
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        fields:
+          type: object
+          properties:
+            full_name: { type: string }
+            phone: { type: string }
+            company: { type: string }
+          additionalProperties: false
+        evidence:
+          type: object
+          additionalProperties: true
+        requested:
+          type: boolean
+        declined:
+          type: boolean
+    Error:
+      type: object
+      required: [code, message, request_id]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        request_id:
+          type: string
