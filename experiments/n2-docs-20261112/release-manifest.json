@@ -1,0 +1,71 @@
+{
+  "archive": "artifacts/mts-energytool-n2-docs.zip",
+  "sha256": "a22d786f895257e14fb89e747a674cd419be0d711ed43b834fb9442ef3b6ac9b",
+  "files": [
+    {
+      "name": "solution.py",
+      "bytes": 10990,
+      "sha256": "b7d1c36bbe88999e401c6f87cfb5774c19549ccfea32a4a8ab233d714172bae6"
+    },
+    {
+      "name": "settings.py",
+      "bytes": 6834,
+      "sha256": "58e87e74221b04b230b4cb5ef552fd8fbdde7f73fb13c9b53a086ff691971e2b"
+    },
+    {
+      "name": "llm_client.py",
+      "bytes": 15536,
+      "sha256": "4ebfad727d66bcf29adec88d5fe8c850ab6ddddf8cbf594c7880507ec2e830a8"
+    },
+    {
+      "name": "consultant.py",
+      "bytes": 21363,
+      "sha256": "2c66e4ab43f17902427eab8ceda859abc0f992752d56f9f4c8f0d3854e387cf6"
+    },
+    {
+      "name": "prompts.py",
+      "bytes": 12724,
+      "sha256": "87c6b5edb468eaf24c3b4b2ac6f25263a3bff3be8510abe06929a21af978ccae"
+    },
+    {
+      "name": "prompts_a2.py",
+      "bytes": 11794,
+      "sha256": "053ac34429b7a295543b7a3d831ff4e91ada19b5cd044c1ff01797e935e49e09"
+    },
+    {
+      "name": "dialogue_n1.py",
+      "bytes": 1623,
+      "sha256": "0af4e523bf45934a15be5ef02ca1d90cf32d0f4df1e8f39107b793c8ea4aef1b"
+    },
+    {
+      "name": "fewshot.py",
+      "bytes": 14955,
+      "sha256": "e299ee9c181f1fe3685f514a268f4e3acec2311ee430adb0dbe0e952668da481"
+    },
+    {
+      "name": "retrieval.py",
+      "bytes": 9229,
+      "sha256": "aa5534af95aa7be08a21fa6a797a1234a0a430de460541f1ba8c9a3d0ce4b768"
+    },
+    {
+      "name": "retrieval_a2.py",
+      "bytes": 12990,
+      "sha256": "781772487ffc76cd494e529b81c09742c02dee1b9cb05b9975d18a47206cde0d"
+    },
+    {
+      "name": "dialogue.py",
+      "bytes": 2558,
+      "sha256": "dd7be5ae698e8037b9131f2a46144e3d58272004cdf1fe3b834b6fb4f4e5774b"
+    },
+    {
+      "name": "contracts.py",
+      "bytes": 711,
+      "sha256": "dc6f15609bc6dd1cfb7622be36b781f0cd4a030fe70896f1b5bf19e8d8dd30a3"
+    },
+    {
+      "name": "requirements.txt",
+      "bytes": 80,
+      "sha256": "3c1bf09386a1e27b1c6a14918a0e63f2e4a18fb9e57219ad31e47edfb19767d5"
+    }
+  ]
+}

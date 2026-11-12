@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+!.env.web.example
 
 # Python
 __pycache__/
@@ -38,3 +39,13 @@ artifacts/
 
 # Organizer knowledge base copy (do not publish)
 knowledge-base/
+
+# Local case materials; never commit organizer documents
+/temp_docs/
+
+# Go backend local state and build output
+/backend/var/
+/backend/api
+
+# Local model caches
+.hf-cache/

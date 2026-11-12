@@ -23,7 +23,7 @@ TOOL_SHA256 = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
 
 OBSERVER = '''import hashlib,json,os,resource,runpy,threading,time
 from pathlib import Path
-import consultant,llm_client
+import consultant,llm_client,solution
 original=llm_client.HTTPTransport.post
 lock=threading.Lock()
 sequence=0
@@ -38,6 +38,9 @@ def observed(self,url,headers,payload,timeout):
             data=json.loads(response[2])
             record['usage']=data.get('usage',{})
             record['finish_reason']=data.get('choices',[{}])[0].get('finish_reason')
+            with lock:
+                with (Path(os.environ['LIVE_EVAL_OUTPUT_DIR'])/'model-responses.jsonl').open('a',encoding='utf8') as capture:
+                    capture.write(json.dumps({'request_sha256':record['request_sha256'],'choices':data.get('choices',[])},ensure_ascii=False)+'\\n')
         except (ValueError,KeyError,TypeError,IndexError):
             pass
         return response
@@ -53,7 +56,8 @@ def observed(self,url,headers,payload,timeout):
                 stream.write(json.dumps(record)+'\\n')
             print(json.dumps({'event':'observed_api_call',**record}),flush=True)
 llm_client.HTTPTransport.post=observed
-original_respond=consultant.Consultant.respond
+service_class=solution.Consultant
+original_respond=service_class.respond
 def observe_case(self,request,**kwargs):
     result=original_respond(self,request,**kwargs)
     record={'session_id':request.session_id,'answer':result.answer,'status':result.status,
@@ -65,7 +69,7 @@ def observe_case(self,request,**kwargs):
     print(json.dumps({'event':'observed_case','session_id':request.session_id,
                       'status':result.status,'elapsed_ms':result.elapsed_ms}),flush=True)
     return result
-consultant.Consultant.respond=observe_case
+service_class.respond=observe_case
 try:
     runpy.run_path('solution.py',run_name='__main__')
 finally:

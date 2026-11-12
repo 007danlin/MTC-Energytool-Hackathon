@@ -1,0 +1,106 @@
+{
+  "created_at": "2026-11-12T00:22:36.386629+03:00",
+  "archive": "artifacts/daniel-submission-b2-hybrid.zip",
+  "sha256": "523b4f2c7f7fe60048101ceaa22f53fbfcf6bf77192f33adeb04f161bc24af94",
+  "bytes": 28311,
+  "root_files": 10,
+  "status": "platform_regression_recommendation_withdrawn",
+  "platform_score": 45.877,
+  "working_A2_score": 55.969,
+  "working_A2_sha256": "fa81606a5e4b89cd4b36a13139d906e8940bbc462d43d127ddfaac129c50f013",
+  "changes": [
+    "B hybrid search using platform bge-m3; A2generation unchanged",
+    "B1 validates embeddings and deadlines; writes early fullCSV",
+    "B2minimumTOP_K12; effective depth/contextlogged"
+  ],
+  "unchanged_generation": "A2prompts,consultant,LLMclient; atTOP_K12Bqualitycomparisonapplies tohealthyB2",
+  "local_tests": {
+    "docker_python39": 76,
+    "frozen_zip_mockHTTP_scenarios": 7,
+    "rows_per_scenario": 123,
+    "quality_verified_by_mock": false,
+    "same93modelpayloads_at_requestedTOPK4": true
+  },
+  "evidence": {
+    "tests": "reports/private/b2-fixed-depth-20261112/python39-all-tests.log",
+    "integration": "reports/private/b2-fixed-depth-20261112/docker-integration.json",
+    "runtime_equivalence": "reports/private/b2-fixed-depth-20261112/request-equivalence-93.json",
+    "completed_real_Qwen": "reports/private/artem-pr4-qwen-cached-20261111/comparison-audited.json"
+  },
+  "limitations": [
+    "Unknown platformTOP_K; floor12protects a demonstrated risk, does not prove cause of earlier scorechanges",
+    "Real platformAPI not accessible; embeddingmodel names/keys follow organizer sample",
+    "Local Qwen3VL30B is notplatformQwen3.8-27B",
+    "No prediction60+; local93dev gainwithremainingerrors; A2preserved"
+  ],
+  "updated_at": "2026-11-12T09:03:56.246424+03:00",
+  "local_quality": {
+    "cases": 93,
+    "wins_vs_A2": 23,
+    "losses_vs_A2": 7,
+    "ties": 63,
+    "major_error_cases_A2": 14,
+    "major_error_cases_B": 6,
+    "original_blind_counts": [
+      23,
+      6,
+      64
+    ],
+    "review": "One Codex source-based label-blinded review, frozen before key reveal; separate post-unblinding source audit. Known dev set, not independent holdout.",
+    "report": "docs/b-vs-a2-qwen-20261112.txt",
+    "machine_report": "reports/b-vs-a2-qwen-20261112.json",
+    "platform_score_prediction": null
+  },
+  "final_selection_report": "reports/night-score-release-20261112.json",
+  "final_boundary_check": {
+    "review_sha256": "91e3bcad20c2a7d3772d7b55677d5d389a2db315302897ce65381bddfd11e392",
+    "cases": 8,
+    "B2_wins": 2,
+    "B2_losses": 1,
+    "ties": 5,
+    "major_cases": {
+      "A2": [
+        "n01",
+        "n02",
+        "n03"
+      ],
+      "B2": [
+        "n01",
+        "n02",
+        "n03"
+      ]
+    },
+    "core_requirements_met_cases": {
+      "A2": [
+        "n04",
+        "n05",
+        "n07",
+        "n08"
+      ],
+      "B2": [
+        "n04",
+        "n05",
+        "n06",
+        "n07",
+        "n08"
+      ]
+    },
+    "no_platform_score_prediction": true,
+    "source_changed": false
+  },
+  "remaining_numerical_boundary_failures": [
+    "n01:480kW classified individual",
+    "n02:510kW classified standard",
+    "n03:14.5kW classified in15–500"
+  ],
+  "historical_status_before_platform_result": "selected_experimental_local_gain_with_documented_remaining_errors",
+  "platform_result_report": "reports/platform-result-b2-20261112.json",
+  "recommended_for_submission": false,
+  "current_recommendation": {
+    "version": "A2",
+    "archive": "artifacts/daniel-submission-a2.zip",
+    "sha256": "fa81606a5e4b89cd4b36a13139d906e8940bbc462d43d127ddfaac129c50f013",
+    "platform_score": 55.969
+  },
+  "post_platform_audit": "docs/b2-platform-postmortem-20261112.txt"
+}

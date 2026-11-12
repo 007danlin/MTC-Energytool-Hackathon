@@ -1,0 +1,52 @@
+{
+  "design_source": "design/georgy/Untitled (Copy).fig",
+  "decoded_nodes": 2693,
+  "entry": "http://127.0.0.1:8768",
+  "consultation": "http://127.0.0.1:8768/consultation.html",
+  "checks": {
+    "go_race_tests": "passed",
+    "go_vet": "passed",
+    "web_go_python_integration": "passed",
+    "browser_application_flow": "passed",
+    "browser_failure_and_escaping": "passed",
+    "viewports": [
+      320,
+      390,
+      768,
+      1024,
+      1440
+    ]
+  },
+  "live_checks": [
+    {
+      "question": "Что такое технический учёт электроэнергии?",
+      "status": "technical_error",
+      "seconds": 85,
+      "reason": "transport_error on repair"
+    },
+    {
+      "question": "Что такое технический учёт электроэнергии?",
+      "status": "technical_error",
+      "seconds": 61.2,
+      "reason": "ungrounded_citation"
+    },
+    {
+      "question": "У нас три магазина, и за последние месяцы выросли счета за электроэнергию. С чего начать?",
+      "status": "technical_error",
+      "seconds": 72.4,
+      "reason": "model response rejected by existing validator"
+    },
+    {
+      "path": "Python consultant -> Ollama (diagnostic, outside browser)",
+      "question": "У нас три магазина, и за последние месяцы выросли счета за электроэнергию. С чего начать?",
+      "status": "answered",
+      "repairs": 1,
+      "note": "Successful after citation repair; does not replace failed browser live checks"
+    }
+  ],
+  "notes": [
+    "Application persisted locally, no external delivery",
+    "Model citation validator unchanged",
+    "Browser screenshots under reports/consultation-ui"
+  ]
+}
