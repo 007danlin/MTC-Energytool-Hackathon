@@ -1,6 +1,8 @@
 package business
 
 import (
+	"crypto/sha256"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -71,6 +73,7 @@ var (
 	ErrInvalidTransition = errors.New("transition is not allowed from the current status")
 	ErrReasonRequired    = errors.New("reason code is required for this action")
 	ErrApplicationClosed = errors.New("application is not editable in this status")
+	ErrRequestConflict   = errors.New("request id was used for a different command")
 )
 
 type TransitionEntry struct {
@@ -104,17 +107,21 @@ type ApplicationRecord struct {
 	Transitions []TransitionEntry  `json:"transitions"`
 	// RequestIDs remembers recent client_request_id values -> resulting version,
 	// so a retried call returns the same outcome instead of applying twice.
-	RequestIDs map[string]int `json:"request_ids,omitempty"`
+	RequestIDs    map[string]int    `json:"request_ids,omitempty"`
+	RequestHashes map[string]string `json:"request_hashes,omitempty"`
 }
 
 const maxRememberedRequests = 200
 
-func (r *ApplicationRecord) remember(requestID string) {
+func (r *ApplicationRecord) remember(requestID, fingerprint string) {
 	if requestID == "" {
 		return
 	}
 	if r.RequestIDs == nil {
 		r.RequestIDs = map[string]int{}
+	}
+	if r.RequestHashes == nil {
+		r.RequestHashes = map[string]string{}
 	}
 	if len(r.RequestIDs) >= maxRememberedRequests { // forget the request with the oldest version
 		oldest, minVersion := "", int(^uint(0)>>1)
@@ -124,13 +131,26 @@ func (r *ApplicationRecord) remember(requestID string) {
 			}
 		}
 		delete(r.RequestIDs, oldest)
+		delete(r.RequestHashes, oldest)
 	}
 	r.RequestIDs[requestID] = r.Version
+	r.RequestHashes[requestID] = fingerprint
 }
 
-func (r *ApplicationRecord) seen(requestID string) bool {
+func (r *ApplicationRecord) replay(requestID, fingerprint string) (bool, error) {
 	_, ok := r.RequestIDs[requestID]
-	return requestID != "" && ok
+	if requestID == "" || !ok {
+		return false, nil
+	}
+	if r.RequestHashes[requestID] != fingerprint {
+		return false, ErrRequestConflict
+	}
+	return true, nil
+}
+
+func commandFingerprint(parts ...interface{}) string {
+	raw, _ := json.Marshal(parts) // command fields contain only strings, ints and Edit slices
+	return fmt.Sprintf("%x", sha256.Sum256(raw))
 }
 
 func clone(r ApplicationRecord) ApplicationRecord {
@@ -142,6 +162,10 @@ func clone(r ApplicationRecord) ApplicationRecord {
 	out.RequestIDs = make(map[string]int, len(r.RequestIDs))
 	for k, v := range r.RequestIDs {
 		out.RequestIDs[k] = v
+	}
+	out.RequestHashes = make(map[string]string, len(r.RequestHashes))
+	for k, v := range r.RequestHashes {
+		out.RequestHashes[k] = v
 	}
 	return out
 }
@@ -175,6 +199,9 @@ func SaveApplication(existing *ApplicationRecord, session domain.Session, newID 
 	if sameForm(existing.Form, form) {
 		return *existing, nil, nil
 	}
+	if existing.Status == StatusAccepted || existing.Status == StatusRejected {
+		return *existing, nil, ErrApplicationClosed
+	}
 	rec := clone(*existing)
 	card, err := BuildCard(session, rec.ID, rec.Version+1, rec.Demo, now)
 	if err != nil {
@@ -189,8 +216,9 @@ func SaveApplication(existing *ApplicationRecord, session domain.Session, newID 
 
 // EditCard applies card edits as a new record version. A retried requestID is a no-op.
 func EditCard(rec ApplicationRecord, expectedVersion int, actor Actor, edits []Edit, requestID string, now time.Time) (ApplicationRecord, error) {
-	if rec.seen(requestID) {
-		return rec, nil
+	fingerprint := commandFingerprint("edit", expectedVersion, actor, edits)
+	if replay, err := rec.replay(requestID, fingerprint); replay || err != nil {
+		return rec, err
 	}
 	if rec.Status == StatusAccepted || rec.Status == StatusRejected {
 		return rec, ErrApplicationClosed
@@ -205,8 +233,12 @@ func EditCard(rec ApplicationRecord, expectedVersion int, actor Actor, edits []E
 	out := clone(rec)
 	out.PrevCards = append(out.PrevCards, rec.Card)
 	out.Card, out.Version, out.UpdatedAt = card, card.Version, now.UTC()
+	out.Form.Phone, out.Form.FullName, out.Form.Company, out.Form.Summary = card.Contact.Phone.Value, card.Contact.FullName.Value, card.Contact.Company.Value, card.Task.Value
+	if !sameForm(rec.Form, out.Form) {
+		out.Form.SavedAt = now.UTC()
+	}
 	out.Changes = append(out.Changes, change)
-	out.remember(requestID)
+	out.remember(requestID, fingerprint)
 	return out, nil
 }
 
@@ -219,11 +251,17 @@ func Transition(rec ApplicationRecord, action Action, reason ReasonCode, comment
 	if !ok {
 		return rec, nil, fmt.Errorf("%w: unknown action %q", ErrInvalidTransition, action)
 	}
-	if rec.seen(requestID) || rec.Status == rule.to && action != ActionReopen {
-		return rec, nil, nil
+	fingerprint := commandFingerprint("transition", expectedVersion, action, reason, comment)
+	if replay, err := rec.replay(requestID, fingerprint); replay || err != nil {
+		return rec, nil, err
 	}
 	if expectedVersion != rec.Version {
 		return rec, nil, ErrVersionConflict
+	}
+	if rec.Status == rule.to && action != ActionReopen {
+		out := clone(rec)
+		out.remember(requestID, fingerprint)
+		return out, nil, nil
 	}
 	allowed := false
 	for _, s := range rule.from {
@@ -250,7 +288,7 @@ func Transition(rec ApplicationRecord, action Action, reason ReasonCode, comment
 		Reason: reason, Comment: comment, At: now.UTC(), RequestID: requestID}
 	out.Status, out.Reason, out.Comment, out.UpdatedAt = rule.to, reason, comment, now.UTC()
 	out.Transitions = append(out.Transitions, entry)
-	out.remember(requestID)
+	out.remember(requestID, fingerprint)
 	events := []Event{}
 	switch rule.to {
 	case StatusInReview:

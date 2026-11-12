@@ -23,7 +23,7 @@ const (
 	EventAccepted              EventType = "accepted"
 	EventNeedsInfo             EventType = "needs_info"
 	EventRejected              EventType = "rejected"
-	// Optional extra (knowledge-gap journal): an answer with status knowledge_gap/out_of_scope.
+	// Optional extra (knowledge-gap journal): an answer with status knowledge_gap.
 	EventKnowledgeGap EventType = "knowledge_gap"
 )
 
@@ -56,9 +56,12 @@ func FirstAnswerReceived(sessionID string, demo bool, at time.Time) Event {
 	return Event{ID: "first_answer_received:" + sessionID, Type: EventFirstAnswerReceived, SessionID: sessionID, At: at.UTC(), Demo: demo}
 }
 
-// KnowledgeGap records that an answer had status knowledge_gap or out_of_scope.
+// KnowledgeGap records a knowledge_gap; other answer statuses produce no event.
 // topic is a coarse label such as a knowledge-base document id; never the user's text.
 func KnowledgeGap(sessionID, messageID, status, topic string, demo bool, at time.Time) Event {
+	if status != "knowledge_gap" {
+		return Event{}
+	}
 	if topic == "" {
 		topic = "unknown"
 	}
@@ -135,6 +138,9 @@ func (l *EventLog) Append(events ...Event) (int, error) {
 			return 0, err
 		}
 		w := bufio.NewWriter(f)
+		// Separate a torn final line (or a valid line without LF) from new events.
+		// Empty separator lines are ignored when loading this export.
+		w.WriteByte('\n')
 		for _, e := range fresh {
 			raw, _ := json.Marshal(e)
 			w.Write(append(raw, '\n'))
