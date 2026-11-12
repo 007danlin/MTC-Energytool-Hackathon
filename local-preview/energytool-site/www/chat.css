@@ -35,3 +35,7 @@ body.et-app{margin:0;background:#f6f7f9;color:#17181c;overflow:hidden}
 @media(min-width:761px){.et-entry-hero{width:var(--et-original-width)!important;flex:0 0 var(--et-original-width)}}
 #energytool-chat .et-field>.et-phone-error{color:#ff0032;font-size:12px}.et-summary-edit{margin-top:20px;font-size:14px}.et-summary-edit summary{cursor:pointer}.et-summary-edit .et-field{margin-top:12px}#energytool-chat .et-debug-link{align-self:flex-start;min-height:32px;padding:6px 12px;font-size:12px}
 @media(max-width:760px){#root:has(.et-online-link){overflow-x:clip}}
+.et-demo-disabled:disabled{opacity:.55;cursor:default}
+#energytool-chat .et-specialist-link{margin-top:12px;padding-inline:0}
+#energytool-chat .et-field>.et-field-error{color:#b90025;font-size:12px;margin-top:8px;margin-bottom:0}
+#energytool-chat .et-modal.sources .et-card .et-hint:not(:first-child){margin-top:12px}
