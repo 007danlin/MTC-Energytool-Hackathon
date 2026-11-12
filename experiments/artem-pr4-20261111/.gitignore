@@ -1,0 +1,40 @@
+# Ключи и локальные настройки
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+
+# Frontend
+node_modules/
+dist/
+build/
+.next/
+
+# Локальные данные и индексы
+data/
+indexes/
+*.db
+*.sqlite
+*.sqlite3
+
+# Система и редакторы
+.DS_Store
+.idea/
+.vscode/
+*.log
+
+# Private organizer materials and local evaluation artifacts
+reports/private/
+submission.csv
+artifacts/
+.coverage
+
+# Organizer knowledge base copy (do not publish)
+knowledge-base/

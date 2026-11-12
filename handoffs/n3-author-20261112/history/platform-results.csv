@@ -1,0 +1,15 @@
+version,filename,score,date,time_moscow,ui_duration_seconds,status,sha256_local_artifact,note
+v2,daniel-submission-v2.zip,5.836,2026-11-10,11:02,466.3,Успешно,6474f5d607d757257a99c9e991ace4e4ad126a7440275598b9a8d8dc15960604,
+v3,daniel-submission-v3.zip,50.438,2026-11-10,16:31,312.6,Успешно,8080cc06980f8dde184cc1320ccafca2dffd7a58b5a7ba6772bef177dde4ab09,
+a2,a2.zip,55.969,2026-11-10,19:24,363.8,Успешно,fa81606a5e4b89cd4b36a13139d906e8940bbc462d43d127ddfaac129c50f013,
+g,daniel-submission-g.zip,51.729,2026-11-11,07:20,204.1,Успешно,ad791c6ebb6fecd1e748c30e1666e91b1acfd17a89fdb97b57921c3945656299,
+e4,daniel-submission-e4-experimental.zip,52.532,2026-11-11,11:09,273.2,Успешно,c08a5d00bb0425ac7ed3fde660a9032cc89452801b03666586c308723e5d9e71,
+a3,daniel-submission-a3-experimental.zip,54.232,2026-11-11,18:38,396.2,Успешно,c3f1f0daaabfce20bc055b97d211e9e0940476f1410a01d4f462d28c8fff77f8,
+a6,daniel-submission-a6-contact.zip,53.992,2026-11-11,23:50,307.7,Успешно,4d265272611c0147455f64bf0be73c5b9f82e0f4c1d3ef4847ced26ae8655873,
+b2,daniel-submission-b2-hybrid.zip,45.877,2026-11-12,08:51,337.9,Успешно,523b4f2c7f7fe60048101ceaa22f53fbfcf6bf77192f33adeb04f161bc24af94,
+n1-docs,mts-energytool-n1-docs.zip,58.758,2026-11-12,13:44,290.5,Успешно,772375bc7a691d20684dc65c2d7a4098b7f934cd3fd2caf7c648778f174e19eb,лучший до 12.11 вечера; хранится без изменений
+a10,daniel-submission-a10-verified.zip,43.71,2026-11-12,13:51,294.8,Успешно,086ecc5b60c67cb5487b194a0a15bf9f8e41e47d2aef5f81f378aa94c14597d4,
+n2-docs,mts-energytool-n2-docs.zip,69.912,2026-11-12,≈20:00,345.6,Лучшее решение,a22d786f895257e14fb89e747a674cd419be0d711ed43b834fb9442ef3b6ac9b,лучший подтверждённый; хранится без изменений (control/)
+n2-quick,mts-energytool-n2-quick.zip,,,,,не отправлен,61096364598ab8fa7f91988c234bfc1edb6e851872c8abd10af648092f6b0864,компактный контекст без рассуждений
+n3-docs,mts-energytool-n3-docs.zip,,,,,"кандидат на 12.11, не отправлен",0a5dce8b3e8abbf5454e2a16d609a91463010b610fc0035652efe911643d0ce0,запросы N2 без изменений + обработка сбоев сервиса
+n3-kb,mts-energytool-n3-kb.zip,,,,,"подготовлен, не отправлять до измерения шума",91a29848e509c4ff2336e8aab7346774057d36ac13418eb77071b9bb7d58c1f4,запрос N2 + остальные документы базы в неизменяемой части

@@ -1,0 +1,52 @@
+{
+  "zip": "daniel-submission-v2.zip",
+  "bytes": 19586,
+  "sha256": "6474f5d607d757257a99c9e991ace4e4ad126a7440275598b9a8d8dc15960604",
+  "files": [
+    {
+      "file": "solution.py",
+      "bytes": 6978,
+      "sha256": "2a1d56691b906ba01033b67e8d54d856b5c037a5238d67d32e6685573edf01ea"
+    },
+    {
+      "file": "settings.py",
+      "bytes": 4168,
+      "sha256": "4e872ac16762d766e86f656c1b89dbf27bc437bc9e9b0622aac7637632cffb14"
+    },
+    {
+      "file": "llm_client.py",
+      "bytes": 5852,
+      "sha256": "1d9698ed513fcbc45edcf17ffc8ae3f479d2d83c392b1a5a5ba51d95d0eaf917"
+    },
+    {
+      "file": "contracts.py",
+      "bytes": 2132,
+      "sha256": "05a9b759fde35b7af18ffa41f0fcdc832819499d16f65f1fe248a9da4e3ce43e"
+    },
+    {
+      "file": "dialogue.py",
+      "bytes": 2201,
+      "sha256": "b2aef1abca0062e1cc989c7594fa560ad0a5dd6706328be485f292501d1fc45d"
+    },
+    {
+      "file": "retrieval.py",
+      "bytes": 8469,
+      "sha256": "e5b83b630c58f3346a8dc4b83652994c67601a24e28fc2d8757532cac48b1345"
+    },
+    {
+      "file": "prompts.py",
+      "bytes": 7675,
+      "sha256": "176b05c798788fa6335eacc470bcc7a46a1bf775b7de3525572a196b52258e30"
+    },
+    {
+      "file": "consultant.py",
+      "bytes": 14143,
+      "sha256": "37c18d2b57304c6a2c3189ef6f39c8bb9008e236a35e79bfdeb80145e7c9434b"
+    },
+    {
+      "file": "requirements.txt",
+      "bytes": 80,
+      "sha256": "3c1bf09386a1e27b1c6a14918a0e63f2e4a18fb9e57219ad31e47edfb19767d5"
+    }
+  ]
+}

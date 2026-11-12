@@ -1,0 +1,21 @@
+--- original-B2/hybrid_retrieval.py
++++ B2-multiline-fix/hybrid_retrieval.py
+@@ -41,10 +41,14 @@
+ 
+ 
+ def _split_query(query):
+-    current, _, history = query.partition("\nКонтекст разговора:\n")
+-    lines = [line for line in current.split("\n") if line.strip()]
+-    latest = lines[0] if lines else current
+-    return latest.strip(), history.strip()
++    current, separator, history = query.partition("\nКонтекст разговора:\n")
++    # retrieval_query duplicates the whole latest message for lexical weighting.
++    # Remove that exact duplication once, preserving every line of the message.
++    midpoint = len(current) // 2
++    if (separator and current[midpoint:midpoint + 1] == "\n"
++            and current[:midpoint] == current[midpoint + 1:]):
++        current = current[:midpoint]
++    return current.strip(), history.strip()
+ 
+ 
+ def _vector_norm(vector, dimension=None):

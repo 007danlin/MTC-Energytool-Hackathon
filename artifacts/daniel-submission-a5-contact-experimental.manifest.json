@@ -1,0 +1,16 @@
+{
+  "zip": "daniel-submission-a5-contact-experimental.zip",
+  "sha256": "ff264772df206c8076e367c2e4df7a6576748647ce99ccd5ba8dd0ddffd44b94",
+  "files": [
+    "consultant.py",
+    "contracts.py",
+    "dialogue.py",
+    "llm_client.py",
+    "prompts.py",
+    "requirements.txt",
+    "retrieval.py",
+    "settings.py",
+    "solution.py"
+  ],
+  "baseline_sha256": "fa81606a5e4b89cd4b36a13139d906e8940bbc462d43d127ddfaac129c50f013"
+}

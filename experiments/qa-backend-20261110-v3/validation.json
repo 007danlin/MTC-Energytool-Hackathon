@@ -1,0 +1,22 @@
+{
+  "unit_tests_passed": 76,
+  "live_contact_cases": 3,
+  "live_contact_cases_passed": 3,
+  "live_api_calls": 3,
+  "local_export_cases_passed": 3,
+  "csv_api_requests_equal_a2": 29,
+  "source_validation_not_disabled": true,
+  "product_prose_discarded_on_fallback": true,
+  "backend_product_generation_fully_verified": false,
+  "known_unresolved_product_case": "q05 failed source validation in v1; product path remains strict; not claimed fixed",
+  "schema_version": "1.1",
+  "baseline_sha256": "fa81606a5e4b89cd4b36a13139d906e8940bbc462d43d127ddfaac129c50f013",
+  "files": {
+    "consultant.py": "2143c5ffb210f55ebb1a8495bf7281224ec362f86c3e0fe8974d27dba1881411",
+    "contracts.py": "f4850700729577e0357360cd90c0040911add617c7ad50b8638daf6705f3eb54",
+    "integration.py": "be230d8864713c4ea91d8bfad4fcee9f9c79c9806a1c7866b57d557a6b3d8042",
+    "prompts.py": "57e28dc4ccc0419f79f6b328d2f3fb5be7df36d5d0b6d32ba2e80e240c93f3d9",
+    "tests/test_core.py": "2391c6d53e91e3e7707fa0de1939c6e8caf49afb6045cbbce5a162d9a54b5849",
+    "tests/test_qa_lead.py": "1212e79f5687f0d7eb0100a67137d80364cf2625f4291af90e3567237e7ab2dc"
+  }
+}

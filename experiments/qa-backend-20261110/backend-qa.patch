@@ -1,0 +1,226 @@
+--- a/consultant.py
++++ b/consultant.py
+@@ -113,8 +113,7 @@
+ 
+ 
+ def lead_is_ready(lead):
+-    return bool(lead.requested and not lead.declined and all(lead.fields.get(f) for f in FIELDS)
+-                and len(lead.fields["full_name"].split()) >= 2)
++    return bool(lead.requested and not lead.declined and lead.fields.get("phone"))
+ 
+ 
+ def parse_payload(raw):
+@@ -127,7 +126,7 @@
+         raise ModelError("invalid_consultation_schema", retryable=True)
+     if (not isinstance(obj.get("answer"), str) or not obj["answer"].strip()
+             or len(obj["answer"]) > 10000
+-            or obj.get("status") not in ("answered", "clarification", "knowledge_gap", "out_of_scope")):
++            or obj.get("status") not in ("answered", "clarification", "knowledge_gap", "out_of_scope", "lead_step")):
+         raise ModelError("invalid_consultation_schema", retryable=True)
+     for key in ("citations", "contacts"):
+         if not isinstance(obj.get(key), list) or len(obj[key]) > 40 or not all(isinstance(x, dict) for x in obj[key]):
+@@ -181,12 +180,36 @@
+     questions = raw.get("manager_questions", [])
+     summary["manager_questions"] = [q[:500] for q in questions[:10] if isinstance(q, str)] if isinstance(questions, list) else []
+     summary["contacts"] = dict(lead.fields)
+-    summary["missing_fields"] = [f for f in FIELDS if not lead.fields.get(f)]
+-    if lead.fields.get("full_name") and len(lead.fields["full_name"].split()) < 2:
+-        summary["missing_fields"].insert(0, "full_name")
++    summary["missing_fields"] = [] if lead.fields.get("phone") else ["phone"]
++    summary["optional_missing_fields"] = [f for f in ("full_name", "company") if not lead.fields.get(f)]
+     summary["delivery_status"] = "prepared" if lead_is_ready(lead) else "draft"
+     summary["sent"] = False
++    # Use verified user quotes, not an unchecked generated manager summary.
++    chosen = []
++    for field in ("task", "constraints", "parameters", "object"):
++        for item in sorted(summary[field], key=lambda row: row["message_index"], reverse=True):
++            value = item["value"]
++            if value not in chosen and len(value) <= 400:
++                chosen.append(value)
++            if len(chosen) == 2:
++                break
++        if len(chosen) == 2:
++            break
++    summary["brief"] = " ".join("Клиент: «" + text + "»." for text in chosen)
+     return summary
++
++
++def render_lead_step(lead, summary):
++    # Never expose arbitrary model claims under a citation-free contact status.
++    if lead.declined:
++        return "Продолжим консультацию без заявки и контактов."
++    if not lead.requested:
++        return "Хотите подготовить обращение к специалисту?"
++    if not lead.fields.get("phone"):
++        return "Какой телефон указать для связи? Имя и компания необязательны."
++    brief = summary["brief"]
++    return ("Обращение подготовлено, но не отправлено. " + (brief + " " if brief else "")
++            + "Телефон: " + lead.fields["phone"] + ".")
+ 
+ 
+ class Consultant:
+@@ -266,7 +289,8 @@
+                         "Если подтверждения нет, status=knowledge_gap. Не добавляй рассуждения."})
+             lead = extract_lead(payload, request)
+             summary = make_summary(payload, request, lead, fragments)
+-            answer = payload["answer"].strip()
++            answer = (render_lead_step(lead, summary) if payload["status"] == "lead_step"
++                      else payload["answer"].strip())
+             # Delivery is not implemented: never let a generated claim imply it is.
+             answer = sanitize_delivery(answer)
+             ready_claim = re.search(r"заявк\w*\s+(?:уже\s+)?(?:готова|подготовлена|сформирована)", answer, re.I)
+--- a/contracts.py
++++ b/contracts.py
+@@ -69,7 +69,7 @@
+     lead_ready: bool
+     summary: dict
+     debug: dict = field(default_factory=dict)
+-    schema_version: str = "1.0"
++    schema_version: str = "1.1"
+ 
+     def to_dict(self):
+         return asdict(self)
+--- a/integration.py
++++ b/integration.py
+@@ -36,3 +36,23 @@
+                         old.get("requested", False), old.get("declined", False))
+     request = ConsultationRequest(payload.get("session_id"), messages, old)
+     return service.respond(request, deadline=deadline).to_dict()
++
++
++def save_prepared_lead(result, directory):
++    """Explicit local export for a prepared lead; no network delivery is performed."""
++    import os
++    import uuid
++    from contracts import ConsultationResult
++    if not isinstance(result, ConsultationResult) or not result.lead_ready or result.lead.declined:
++        raise ValueError("Only a validated, requested lead with a contact can be saved")
++    directory = Path(directory)
++    directory.mkdir(parents=True, exist_ok=True)
++    destination = directory / ("lead-" + uuid.uuid4().hex + ".txt")
++    lines = ["Обращение подготовлено. Внешней отправки не было.", result.summary.get("brief", "")]
++    lines.extend(label + ": " + result.lead.fields[field]
++                 for field, label in (("phone", "Телефон"), ("full_name", "Имя"), ("company", "Компания"))
++                 if result.lead.fields.get(field))
++    descriptor = os.open(destination, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
++    with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
++        stream.write("\n".join(line for line in lines if line) + "\n")
++    return destination
+--- a/prompts.py
++++ b/prompts.py
+@@ -73,7 +73,17 @@
+ 
+ ЗАЯВКА
+ Собираются full_name (ФИО), phone (телефон), company (название компании).
+-Уточняй только недостающие поля, когда клиент согласен на заявку.
++Для подготовки обращения достаточно phone; full_name и company необязательны.
++Это процедурное уточнение важнее старого списка контактных полей в источниках,
++но не меняет фактов о продуктах. При прямой просьбе о менеджере не задерживай
++контактный шаг новой продуктовой анкетой. Не спрашивай уже оставленный телефон.
++Не считай своё предложение согласием клиента.
++Если текущий шаг только про контакты или подготовку обращения, используй
++status=lead_step, citations=[], извлеки актуальные contacts и intent. Его ответ
++формируется программно из проверенных данных: не добавляй продуктовые факты.
++Если отвечаешь на продуктовый вопрос, сохраняй обычный статус и цитаты.
++В summary выбери только актуальную фактическую задачу и до двух существенных
++условий; не включай общие вопросы, отвергнутые продукты и устаревшие параметры.
+ Не дополняй фамилию или отчество, номер, название или параметры объекта.
+ Исправления заменяют прежние значения. Отзыв контакта удаляет его.
+ Пользователь может не иметь отчества: явно указанное отсутствие не требует выдумки.
+@@ -84,7 +94,7 @@
+ ФОРМАТ
+ {
+  "answer": "Готовый ответ клиенту без JSON и служебных ссылок внутри текста",
+- "status": "answered | clarification | knowledge_gap | out_of_scope",
++ "status": "answered | clarification | knowledge_gap | out_of_scope | lead_step",
+  "citations": [{"source_id": "точный id из sources", "quote": "дословный отрывок источника"}],
+  "contacts": [{"field": "full_name | phone | company", "value": "точное актуальное значение либо null при отзыве",
+                "message_index": 0, "quote": "дословная фраза user, подтверждающая значение или отзыв"}],
+--- a/tests/test_core.py
++++ b/tests/test_core.py
+@@ -270,7 +270,7 @@
+         self.assertEqual(lead.fields["phone"], "+79990000002")
+ 
+     def test_incomplete_lead_never_ready(self):
+-        self.assertFalse(lead_is_ready(LeadState("s", {"full_name": "Иван", "phone": "+79990000001", "company": "Тест"}, requested=True)))
++        self.assertTrue(lead_is_ready(LeadState("s", {"full_name": "Иван", "phone": "+79990000001", "company": "Тест"}, requested=True)))
+         self.assertFalse(lead_is_ready(LeadState("s", {"full_name": "Иван Примеров", "company": "Тест"}, requested=True)))
+ 
+     def test_no_session_state_leak(self):
+@@ -301,7 +301,7 @@
+     def test_backend_adapter_round_trip(self):
+         service, _ = self.service(payload())
+         result = respond_json(service, {"session_id": "api-1", "messages": [{"role": "user", "content": "Вопрос"}]})
+-        self.assertEqual(result["schema_version"], "1.0")
++        self.assertEqual(result["schema_version"], "1.1")
+         self.assertEqual(result["lead"]["session_id"], "api-1")
+         with self.assertRaises(ValueError):
+             respond_json(service, {"session_id": "api-2", "messages": [{"role": "user", "content": "Вопрос"}], "lead": result["lead"]})
+--- /dev/null
++++ b/tests/test_qa_lead.py
+@@ -0,0 +1,65 @@
++import tempfile
++import unittest
++from contracts import ConsultationRequest, Message, LeadState
++from consultant import Consultant, lead_is_ready
++from integration import save_prepared_lead
++from test_core import ScriptedClient, FixedRetriever, FRAGMENT, CFG, payload
++
++class QALeadTests(unittest.TestCase):
++    def respond(self, text, **changes):
++        model = payload(status='lead_step', citations=[], **changes)
++        service = Consultant(ScriptedClient(model), FixedRetriever([FRAGMENT]), CFG)
++        return service.respond(ConsultationRequest('qa', [Message('user', text)]))
++
++    def prepared(self):
++        text='Подготовьте заявку. Нужен учёт трёх площадок. Телефон +79990000001.'
++        return self.respond(text, answer='Сэкономите 90%, менеджер завтра позвонит.',
++            contacts=[dict(field='phone',value='+79990000001',message_index=0,quote=text)],
++            intent=dict(requested=True,declined=False,message_index=0,quote='Подготовьте заявку.'),
++            summary={'task':[dict(value='выдуманный продукт',message_index=0,quote='Нужен учёт трёх площадок.')]})
++
++    def test_phone_only_is_ready_and_no_unverified_model_claims(self):
++        r=self.prepared()
++        self.assertTrue(r.lead_ready); self.assertEqual(r.summary['missing_fields'],[])
++        self.assertEqual(set(r.summary['optional_missing_fields']),{'full_name','company'})
++        self.assertIn('+79990000001',r.answer);self.assertIn('трёх площадок',r.answer)
++        self.assertNotIn('90%',r.answer);self.assertNotIn('позвонит',r.answer)
++        self.assertNotIn('выдуманный',r.summary['brief']);self.assertEqual(r.sources,[])
++        self.assertEqual(r.debug['repairs'],0);self.assertFalse(r.summary['sent'])
++
++    def test_request_without_contact_asks_only_phone(self):
++        text='Хочу связаться с менеджером'
++        r=self.respond(text,intent=dict(requested=True,declined=False,message_index=0,quote=text))
++        self.assertFalse(r.lead_ready);self.assertEqual(r.summary['missing_fields'],['phone'])
++        self.assertIn('телефон',r.answer.lower());self.assertNotIn('мощност',r.answer)
++
++    def test_company_is_not_contact(self):
++        self.assertFalse(lead_is_ready(LeadState('qa',{'company':'Завод'},requested=True)))
++
++    def test_contact_without_consent_not_ready(self):
++        self.assertFalse(lead_is_ready(LeadState('qa',{'phone':'+79990000001'})))
++
++    def test_refusal_does_not_ask_contact(self):
++        text='Не хочу оставлять телефон'
++        r=self.respond(text,intent=dict(requested=False,declined=True,message_index=0,quote=text))
++        self.assertFalse(r.lead_ready);self.assertNotIn('Какой телефон',r.answer)
++
++    def test_fabricated_phone_does_not_prepare(self):
++        text='Нужен менеджер'
++        r=self.respond(text,contacts=[dict(field='phone',value='+79990000001',message_index=0,quote=text)],
++                       intent=dict(requested=True,declined=False,message_index=0,quote=text))
++        self.assertFalse(r.lead_ready);self.assertNotIn('+79990000001',r.answer)
++
++    def test_product_answer_still_requires_citation(self):
++        service=Consultant(ScriptedClient(payload(citations=[])),FixedRetriever([FRAGMENT]),CFG)
++        r=service.respond(ConsultationRequest('qa',[Message('user','Что делает платформа?')]))
++        self.assertEqual(r.status,'technical_error');self.assertEqual(r.debug['error_code'],'missing_evidence')
++
++    def test_local_export_retains_contact_and_actual_task(self):
++        r=self.prepared()
++        with tempfile.TemporaryDirectory() as directory:
++            path=save_prepared_lead(r,directory);text=path.read_text()
++            self.assertIn('+79990000001',text);self.assertIn('трёх площадок',text)
++            self.assertIn('Внешней отправки не было',text);self.assertEqual(path.stat().st_mode & 0o777,0o600)
++            r.lead.declined=True
++            with self.assertRaises(ValueError):save_prepared_lead(r,directory)

@@ -1,0 +1,73 @@
+{
+  "archive": "mts-energytool-n3-docs.zip",
+  "sha256": "0a5dce8b3e8abbf5454e2a16d609a91463010b610fc0035652efe911643d0ce0",
+  "bytes": 44879,
+  "default_overrides": {},
+  "files": [
+    {
+      "name": "solution.py",
+      "sha256": "7c45e80f7bddd8265955fddbbc9d5062d14d554b756e80ffdfdb447000bfee27",
+      "bytes": 12379
+    },
+    {
+      "name": "settings.py",
+      "sha256": "63a25770fdb5155bbb560d070238210b10160aa5b7570f7f9c171e752b98fe25",
+      "bytes": 7059
+    },
+    {
+      "name": "llm_client.py",
+      "sha256": "bb4d5aba9a06f7b6c48c464204db9c2a93644e2be5f613094d74a0b67e08cef7",
+      "bytes": 16730
+    },
+    {
+      "name": "consultant.py",
+      "sha256": "2ed82291c5f43218e07ed5fb641f4ba652010c99d654cbb9d19191833d7b8954",
+      "bytes": 28038
+    },
+    {
+      "name": "prompts.py",
+      "sha256": "d6297caeac42b3223c48f0797c7ba0bb6e8143f03e86d0e40ae3e304fa2329b5",
+      "bytes": 13210
+    },
+    {
+      "name": "prompts_a2.py",
+      "sha256": "053ac34429b7a295543b7a3d831ff4e91ada19b5cd044c1ff01797e935e49e09",
+      "bytes": 11794
+    },
+    {
+      "name": "dialogue_n1.py",
+      "sha256": "0af4e523bf45934a15be5ef02ca1d90cf32d0f4df1e8f39107b793c8ea4aef1b",
+      "bytes": 1623
+    },
+    {
+      "name": "fewshot.py",
+      "sha256": "e299ee9c181f1fe3685f514a268f4e3acec2311ee430adb0dbe0e952668da481",
+      "bytes": 14955
+    },
+    {
+      "name": "retrieval.py",
+      "sha256": "aa5534af95aa7be08a21fa6a797a1234a0a430de460541f1ba8c9a3d0ce4b768",
+      "bytes": 9229
+    },
+    {
+      "name": "retrieval_a2.py",
+      "sha256": "781772487ffc76cd494e529b81c09742c02dee1b9cb05b9975d18a47206cde0d",
+      "bytes": 12990
+    },
+    {
+      "name": "dialogue.py",
+      "sha256": "dd7be5ae698e8037b9131f2a46144e3d58272004cdf1fe3b834b6fb4f4e5774b",
+      "bytes": 2558
+    },
+    {
+      "name": "contracts.py",
+      "sha256": "dc6f15609bc6dd1cfb7622be36b781f0cd4a030fe70896f1b5bf19e8d8dd30a3",
+      "bytes": 711
+    },
+    {
+      "name": "requirements.txt",
+      "sha256": "3c1bf09386a1e27b1c6a14918a0e63f2e4a18fb9e57219ad31e47edfb19767d5",
+      "bytes": 80
+    }
+  ]
+}

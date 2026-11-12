@@ -1,0 +1,25 @@
+{
+  "date_moscow": "2026-11-12",
+  "version": "n3-docs",
+  "filename_reported": "mts-energytool-n3-docs.zip",
+  "dashboard_score": "61.958",
+  "upload_time_moscow_reported": "21:23",
+  "ui_duration_seconds": 330.8,
+  "status_reported": "Успешно",
+  "source": "User-provided platform table in this chat; not independently fetched",
+  "local_artifact": "artifacts/mts-energytool-n3-docs.zip",
+  "local_artifact_sha256": "0a5dce8b3e8abbf5454e2a16d609a91463010b610fc0035652efe911643d0ce0",
+  "uploaded_bytes_independently_verified": false,
+  "delta_vs_n2_points": "-7.954",
+  "score_is_accuracy_percent": false,
+  "duration_semantics": "UI displayed duration; pipeline components unknown",
+  "repeatability": "One reported attempt per variant; score variance and cause of difference are unknown",
+  "local_checks_this_turn": {
+    "zip_crc": "passed",
+    "root_entries": 13,
+    "python39_grammar": "passed",
+    "frozen_source_matches_zip": true,
+    "model_generation": "not run",
+    "author_acceptance": "47/47 on mock API according to REPORT-N3.md; not rerun this turn"
+  }
+}

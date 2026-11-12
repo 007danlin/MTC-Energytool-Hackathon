@@ -1,0 +1,395 @@
+{
+  "zip": "/home/claude/work/out3/release/mts-energytool-n3-docs.zip",
+  "zip_sha256": "0a5dce8b3e8abbf5454e2a16d609a91463010b610fc0035652efe911643d0ce0",
+  "passed": 47,
+  "total": 47,
+  "results": [
+    {
+      "check": "zip: size <= 128 MB",
+      "ok": true,
+      "detail": "44879 bytes"
+    },
+    {
+      "check": "zip: root files only, no folders",
+      "ok": true,
+      "detail": [
+        "solution.py",
+        "settings.py",
+        "llm_client.py",
+        "consultant.py",
+        "prompts.py",
+        "prompts_a2.py",
+        "dialogue_n1.py",
+        "fewshot.py",
+        "retrieval.py",
+        "retrieval_a2.py",
+        "dialogue.py",
+        "contracts.py",
+        "requirements.txt"
+      ]
+    },
+    {
+      "check": "zip: solution.py and requirements.txt present",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "zip: no data, secrets or indexes",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "requirements: only allowed pinned packages",
+      "ok": true,
+      "detail": "standard library only"
+    },
+    {
+      "check": "python: syntax valid for Python 3.9 grammar",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "python: imports are stdlib or root modules; no pip/subprocess/eval",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "check": "zip: no key-like strings",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "check": "code: no hardcoded model identifier or service address",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "check": "S01 normal run: all ids, valid CSV, no stubs",
+      "ok": true,
+      "detail": {
+        "rows": 209,
+        "problems": [],
+        "technical_stubs": 0,
+        "max_answer_chars": 97,
+        "multiline_answers": 0,
+        "sha256": "1c68864edf81a71fc2c81cd8fd97125deadede70f8d0979325cf05ee14ff9e1f"
+      }
+    },
+    {
+      "check": "S01 key from environment in Authorization; model id from environment",
+      "ok": true,
+      "detail": [
+        "mock-model"
+      ]
+    },
+    {
+      "check": "S01 answers single-line plain text",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "S01 one API call per row",
+      "ok": true,
+      "detail": 209
+    },
+    {
+      "check": "S02b long 429 burst (4 refusals per worker): patient retries keep the first request, no row degraded",
+      "ok": true,
+      "detail": [
+        {
+          "ok": 209
+        },
+        {
+          "injected": 12,
+          "ok": 209
+        }
+      ]
+    },
+    {
+      "check": "S02 429 burst: bounded retries recover every row",
+      "ok": true,
+      "detail": {
+        "injected": 9,
+        "ok": 209
+      }
+    },
+    {
+      "check": "S03 5xx burst: bounded retries recover every row",
+      "ok": true,
+      "detail": {
+        "injected": 9,
+        "ok": 209
+      }
+    },
+    {
+      "check": "S04 strict proxy rejects reasoning hints: hints dropped, run clean",
+      "ok": true,
+      "detail": {
+        "ok": 209,
+        "strict": 13
+      }
+    },
+    {
+      "check": "S05 proxy caps max_tokens at platform value: falls back, run clean",
+      "ok": true,
+      "detail": {
+        "cap": 2,
+        "ok": 209
+      }
+    },
+    {
+      "check": "S06 thinking exhausts tokens: recovery call answers, no stubs",
+      "ok": true,
+      "detail": [
+        {
+          "ok": 209,
+          "truncated": 418
+        },
+        {
+          "recovered": 209
+        }
+      ]
+    },
+    {
+      "check": "S07 every generation token-limited: grounded fallback text, valid CSV, no stubs, bounded calls",
+      "ok": true,
+      "detail": [
+        627,
+        {
+          "fallback": 209
+        }
+      ]
+    },
+    {
+      "check": "S08 full base over a small context window: learns the window, compact context for every row, run clean",
+      "ok": true,
+      "detail": [
+        {
+          "context": 5,
+          "ok": 209
+        },
+        {
+          "wide": 209
+        },
+        59460
+      ]
+    },
+    {
+      "check": "S08b full base over a medium context window: documents for every row, run clean",
+      "ok": true,
+      "detail": [
+        {
+          "context": 3,
+          "ok": 209
+        },
+        {
+          "docs": 209
+        },
+        128050
+      ]
+    },
+    {
+      "check": "S08d documents slightly over the window: sized to the stated window, documents kept for every row",
+      "ok": true,
+      "detail": [
+        {
+          "context": 1,
+          "ok": 209
+        },
+        74636
+      ]
+    },
+    {
+      "check": "S08c large contexts time out: steps down to the compact context, complete CSV without stubs",
+      "ok": true,
+      "detail": [
+        32.61,
+        {
+          "ok": 201,
+          "retried": 8
+        }
+      ]
+    },
+    {
+      "check": "S06b reasoning longer than the first budget: second try in the same context with 8192 tokens answers every row",
+      "ok": true,
+      "detail": [
+        {
+          "4096": 0,
+          "8192": 209
+        },
+        {
+          "retried": 209
+        },
+        {
+          "docs": 209
+        }
+      ]
+    },
+    {
+      "check": "S06c same with a proxy that rejects reasoning hints: hints dropped, larger budget still answers",
+      "ok": true,
+      "detail": [
+        {
+          "ok": 209,
+          "strict": 11,
+          "truncated": 209
+        },
+        {
+          "retried": 209
+        }
+      ]
+    },
+    {
+      "check": "S06d proxy caps max_tokens at 4096: ladder stops at 4096, never falls to the platform value",
+      "ok": true,
+      "detail": [
+        [
+          4096,
+          8192
+        ],
+        {
+          "4096": 209,
+          "8192": 0
+        },
+        {
+          "cap": 1,
+          "ok": 209,
+          "truncated": 209
+        }
+      ]
+    },
+    {
+      "check": "S06e repetition loop of the first prompt: the second try (other prompt) answers every row",
+      "ok": true,
+      "detail": {
+        "retried": 209
+      }
+    },
+    {
+      "check": "S06f a share of token-limited rows does not change the context of the other rows",
+      "ok": true,
+      "detail": [
+        {
+          "ok": 188,
+          "retried": 21
+        },
+        {
+          "docs": 209
+        }
+      ]
+    },
+    {
+      "check": "S09 full-base mode accepted: one call per row",
+      "ok": true,
+      "detail": 160617
+    },
+    {
+      "check": "S09b documents mode: one call per row",
+      "ok": true,
+      "detail": 92245
+    },
+    {
+      "check": "S09c compact mode: one call per row",
+      "ok": true,
+      "detail": 28392
+    },
+    {
+      "check": "S10 budget exhausted: complete valid CSV without stubs, stops near the budget",
+      "ok": true,
+      "detail": [
+        12.43,
+        {
+          "deadline_fallback": 72,
+          "ok": 137
+        }
+      ]
+    },
+    {
+      "check": "S11 empty content with finish=stop: recovered",
+      "ok": true,
+      "detail": {
+        "ok": 148,
+        "recovered": 12,
+        "retried": 49
+      }
+    },
+    {
+      "check": "S12 inline <think> removed; Connection: close handled",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "S13 HTTP 401 for every call: no retry storm, complete CSV without stubs",
+      "ok": true,
+      "detail": 209
+    },
+    {
+      "check": "S14 malformed optional settings do not abort",
+      "ok": true,
+      "detail": [
+        4096
+      ]
+    },
+    {
+      "check": "S15 OPENAI_BASE_URL accepted",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "S16 runs under Python 3.11",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "S17 tricky CSV (BOM, CRLF, reversed columns, quotes, newlines, JSON dialogue, 30k chars)",
+      "ok": true,
+      "detail": {
+        "rows": 9,
+        "problems": [],
+        "technical_stubs": 0,
+        "max_answer_chars": 97,
+        "multiline_answers": 0,
+        "sha256": "be8f4fbf1388ce7876536a0c6185fe532ebec006d9525910fae6401dba92b97b"
+      }
+    },
+    {
+      "check": "S17 output ids equal input ids in order",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "S17 isolation: contact data of one id appears only in its own request",
+      "ok": true,
+      "detail": 1
+    },
+    {
+      "check": "S17 identical questions under different ids produce identical requests (no shared state)",
+      "ok": true,
+      "detail": [
+        9,
+        8
+      ]
+    },
+    {
+      "check": "S17 multi-line question reaches the model whole",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "S18 legacy names train.csv/kb.zip, absolute DATA_DIR, BASE_URL/OPENAI_API_KEY/GEN_MODEL",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "S18 logs contain no key, address, question or answer text",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "S19 missing API configuration: clear non-zero exit, no traceback",
+      "ok": true,
+      "detail": "{\"event\": \"startup\", \"python\": \"3.13.18\", \"build\": \"n3\"}\nMissing configuration: LLM_BASE_URL/OPENAI_BASE_URL/BASE_URL, L"
+    }
+  ]
+}

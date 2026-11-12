@@ -1,0 +1,28 @@
+{
+  "created_utc": "2026-11-10T17:07:07.510994+00:00",
+  "mode": "docker_compose_mock_http",
+  "build_verified": true,
+  "image": "energytool-ml:validation",
+  "image_id": "sha256:bc79703fd5fc5f50d73170578496a1b8276c0fba3a18ac2c35f84001670f1aa1",
+  "platform": "linux/arm64",
+  "unit_tests_passed": 65,
+  "runtime": {
+    "uid": 10001,
+    "data_read_only": true,
+    "python": "3.11.18"
+  },
+  "rows": 18,
+  "api_calls": 19,
+  "recovered_429": true,
+  "selector_calls": 0,
+  "answer_calls": 19,
+  "selector_failures": 0,
+  "stage_counts_exact": true,
+  "selector_failure_fell_back": false,
+  "csv_valid": true,
+  "exit_code": 0,
+  "missing_config_exit_code": 2,
+  "image_matches_zip": true,
+  "zip_sha256": "fa81606a5e4b89cd4b36a13139d906e8940bbc462d43d127ddfaac129c50f013",
+  "live_model_verified": false
+}

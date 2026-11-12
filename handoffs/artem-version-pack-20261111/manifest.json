@@ -1,0 +1,37 @@
+[
+  {
+    "version": "a2",
+    "archive": "artifacts/daniel-submission-a2.zip",
+    "sha256": "fa81606a5e4b89cd4b36a13139d906e8940bbc462d43d127ddfaac129c50f013",
+    "platform_score": "55.969",
+    "description": "a2.md"
+  },
+  {
+    "version": "e4",
+    "archive": "artifacts/daniel-submission-e4-experimental.zip",
+    "sha256": "c08a5d00bb0425ac7ed3fde660a9032cc89452801b03666586c308723e5d9e71",
+    "platform_score": "52.532",
+    "description": "e4.md"
+  },
+  {
+    "version": "g",
+    "archive": "artifacts/daniel-submission-g.zip",
+    "sha256": "ad791c6ebb6fecd1e748c30e1666e91b1acfd17a89fdb97b57921c3945656299",
+    "platform_score": "51.729",
+    "description": "g.md"
+  },
+  {
+    "version": "v3",
+    "archive": "artifacts/daniel-submission-v3.zip",
+    "sha256": "8080cc06980f8dde184cc1320ccafca2dffd7a58b5a7ba6772bef177dde4ab09",
+    "platform_score": "50.438",
+    "description": "v3.md"
+  },
+  {
+    "version": "a3-r7",
+    "archive": "reports/private/a3-evidence-20261111/candidate-r7.zip",
+    "sha256": "f362f6e630c05fe7381cd7f6019a407bbb3420f16e778e8cacc198846e59af6d",
+    "platform_score": "Нет платформенного результата",
+    "description": "a3-r7.md"
+  }
+]

@@ -1,0 +1,34 @@
+{
+  "date_moscow": "2026-11-12",
+  "base_commit": "147b8624c18da2aafc1193640aa2280f61136bc4",
+  "scope": "Archive previously untracked experiments and authored handoffs; preserve submission artifacts; record N3 outcome; publish next team assignments.",
+  "runtime_changes": false,
+  "checks": {
+    "python_ast_files": 349,
+    "json_files": 52,
+    "zip_crc_archives": 31,
+    "n2_n3_source_byte_identity": "passed",
+    "platform_history_hashes": "passed",
+    "recognizable_secret_token_patterns": "no matches; heuristic check, not a full audit",
+    "diff_whitespace": "passed outside the listed byte-preserved historical files"
+  },
+  "historical_whitespace_exceptions": [
+    "experiments/b2-multiline-fix-20261112/change.patch",
+    "experiments/b3-query-depth-20261112/tests/test_multiline_query.py",
+    "experiments/qa-backend-20261110-v3/backend-qa.patch",
+    "experiments/qa-backend-20261110/backend-qa.patch"
+  ],
+  "application_test_suites": "not rerun: current application code unchanged",
+  "model_generation": "not run",
+  "author_n3_mock_results": "imported as author evidence, not independently rerun",
+  "n2_unchanged_sha256": "a22d786f895257e14fb89e747a674cd419be0d711ed43b834fb9442ef3b6ac9b",
+  "kept_local": [
+    "secrets and local environment settings",
+    "model weights and caches",
+    "organizer inputs and knowledge-base archives",
+    "private evaluation traces",
+    "exports containing full project copies and video",
+    "transfer ZIPs containing private inputs"
+  ],
+  "historical_export_notes": "Authored instructions copied to docs/agent-handoffs-20261112; original bundles remain local."
+}

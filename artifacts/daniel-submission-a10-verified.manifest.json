@@ -1,0 +1,28 @@
+{
+  "archive": "artifacts/daniel-submission-a10-verified.zip",
+  "sha256": "086ecc5b60c67cb5487b194a0a15bf9f8e41e47d2aef5f81f378aa94c14597d4",
+  "files": {
+    "solution.py": "d0e86ffdf48a77368f1cbf7871bcf01ab85ee455e5f126e68ec9ece404d22b62",
+    "settings.py": "dd35149a44f934857b1cc655eab6b112bba87bbca43986880b2189e3dee0bdb7",
+    "llm_client.py": "511a685300a56bb641959e58261c936d346a06495616e969c75eeb261322e170",
+    "contracts.py": "05a9b759fde35b7af18ffa41f0fcdc832819499d16f65f1fe248a9da4e3ce43e",
+    "dialogue.py": "dd7be5ae698e8037b9131f2a46144e3d58272004cdf1fe3b834b6fb4f4e5774b",
+    "retrieval.py": "781772487ffc76cd494e529b81c09742c02dee1b9cb05b9975d18a47206cde0d",
+    "prompts.py": "053ac34429b7a295543b7a3d831ff4e91ada19b5cd044c1ff01797e935e49e09",
+    "consultant.py": "a3aaa63ee0346ab34fd68081b0517e082372871478dafd3ef2d9aecec05819b3",
+    "requirements.txt": "3c1bf09386a1e27b1c6a14918a0e63f2e4a18fb9e57219ad31e47edfb19767d5",
+    "verified_conditions.py": "94edf61bee292b2f5f09d1bfd591344e07d1ef28bd7290e3474cd950ce778ec7"
+  },
+  "bytes": 28089,
+  "cases_sha256": "962f4f12c7429af0f645276fa028bcb84a7b6a13ef6339bf2b944da95677a8d3",
+  "cases": 23,
+  "changed_requests": 9,
+  "new_model_calls": 0,
+  "tested_revision": "r5",
+  "changed_vs_a2": [
+    "solution.py",
+    "verified_conditions.py"
+  ],
+  "baseline_sha256": "fa81606a5e4b89cd4b36a13139d906e8940bbc462d43d127ddfaac129c50f013",
+  "platform_tested": false
+}

@@ -1,0 +1,159 @@
+{
+  "platform_submissions_used": 0,
+  "model": "qwen3-vl:30b-a3b-instruct",
+  "same_model_as_platform": false,
+  "runs": {
+    "v2_selected": {
+      "execution": {
+        "mode": "real_model_immutable_zip",
+        "model_label": "Local Qwen3-VL-30B-A3B Instruct, Ollama, 16384 context; not platform Qwen3.8-27B",
+        "platform_model_verified": false,
+        "platform_score": null,
+        "zip_sha256": "6474f5d607d757257a99c9e991ace4e4ad126a7440275598b9a8d8dc15960604",
+        "questions_sha256": "bc5124d7b00df101ea5e8a0fc01f6606bc164ece5829592900e2a6223e1ed2eb",
+        "knowledge_base_sha256": "d5f1bbba0094d1eb7e4918bd7a1d37c621ae5cd498010ca2cba041ddddafd66a",
+        "rows": 5,
+        "exit_code": 0,
+        "elapsed_seconds": 585.18,
+        "csv_valid": true,
+        "runtime_statuses": {
+          "clarification": 1,
+          "ungrounded_citation": 4
+        },
+        "api_calls": 9,
+        "http_failures": 0,
+        "length_cutoffs": 0,
+        "content_review_complete": false,
+        "note": "Nonempty CSV is not evidence of factual quality; inspect answers against the knowledge base."
+      }
+    },
+    "v3_demo": {
+      "execution": {
+        "mode": "real_model_immutable_zip",
+        "model_label": "Local Qwen3-VL-30B-A3B Instruct, Ollama, 16384 context; not platform Qwen3.8-27B",
+        "platform_model_verified": false,
+        "platform_score": null,
+        "zip_sha256": "8080cc06980f8dde184cc1320ccafca2dffd7a58b5a7ba6772bef177dde4ab09",
+        "questions_sha256": "2adab2f1781b8b12c50230bf82a1af2e74259fc09ff6f998eb5ae68ef72ac4ea",
+        "knowledge_base_sha256": "d5f1bbba0094d1eb7e4918bd7a1d37c621ae5cd498010ca2cba041ddddafd66a",
+        "rows": 18,
+        "exit_code": 0,
+        "elapsed_seconds": 423.31,
+        "csv_valid": true,
+        "runtime_statuses": {
+          "answered": 18
+        },
+        "api_calls": 18,
+        "http_failures": 0,
+        "length_cutoffs": 0,
+        "content_review_complete": true,
+        "note": "Nonempty CSV is not evidence of factual quality; inspect answers against the knowledge base.",
+        "review_method": "Codex review against provided KB; not platform judge"
+      },
+      "review_counts": {
+        "годен": 10,
+        "неполон": 6,
+        "существенная ошибка": 2
+      }
+    },
+    "v4_demo": {
+      "execution": {
+        "mode": "real_model_immutable_zip",
+        "model_label": "Local Qwen3-VL-30B-A3B Instruct, Ollama, 16384 context; not platform Qwen3.8-27B",
+        "platform_model_verified": false,
+        "platform_score": null,
+        "zip_sha256": "7ff765c87d98d5c000f0cbd57af06ffcbe3ae9565904b4e3d12e5f94422608ec",
+        "questions_sha256": "2adab2f1781b8b12c50230bf82a1af2e74259fc09ff6f998eb5ae68ef72ac4ea",
+        "knowledge_base_sha256": "d5f1bbba0094d1eb7e4918bd7a1d37c621ae5cd498010ca2cba041ddddafd66a",
+        "rows": 18,
+        "exit_code": 0,
+        "elapsed_seconds": 421.31,
+        "csv_valid": true,
+        "runtime_statuses": {
+          "answered": 18
+        },
+        "api_calls": 18,
+        "http_failures": 0,
+        "length_cutoffs": 0,
+        "content_review_complete": true,
+        "note": "Nonempty CSV is not evidence of factual quality; inspect answers against the knowledge base.",
+        "review_method": "Codex review against provided KB; not platform judge"
+      },
+      "review_counts": {
+        "годен": 12,
+        "существенная ошибка": 2,
+        "неполон": 4
+      }
+    },
+    "v4_extra": {
+      "execution": {
+        "mode": "real_model_immutable_zip",
+        "model_label": "Local Qwen3-VL-30B-A3B Instruct, Ollama, 16384 context; not platform Qwen3.8-27B",
+        "platform_model_verified": false,
+        "platform_score": null,
+        "zip_sha256": "7ff765c87d98d5c000f0cbd57af06ffcbe3ae9565904b4e3d12e5f94422608ec",
+        "questions_sha256": "a860e5bc526f5ea26274538a97e8ad9e7a27651a0d2f724273dca67fdfc54e82",
+        "knowledge_base_sha256": "d5f1bbba0094d1eb7e4918bd7a1d37c621ae5cd498010ca2cba041ddddafd66a",
+        "rows": 5,
+        "exit_code": 0,
+        "elapsed_seconds": 136.66,
+        "csv_valid": true,
+        "runtime_statuses": {
+          "answered": 5
+        },
+        "api_calls": 5,
+        "http_failures": 0,
+        "length_cutoffs": 0,
+        "content_review_complete": true,
+        "note": "Nonempty CSV is not evidence of factual quality; inspect answers against the knowledge base.",
+        "review_method": "Codex review against provided KB; not platform judge"
+      },
+      "review_counts": {
+        "reviewed": 5,
+        "clean_pass": 3,
+        "fail": 1,
+        "needs_correction": 1
+      }
+    },
+    "v3_recheck_23": {
+      "execution": {
+        "mode": "real_model_immutable_zip",
+        "model_label": "Local Qwen3-VL-30B-A3B Instruct Q4_K_M, Ollama 0.32.14 isolated server, 16384 context; not platform Qwen3.8-27B",
+        "platform_model_verified": false,
+        "platform_score": null,
+        "zip_sha256": "8080cc06980f8dde184cc1320ccafca2dffd7a58b5a7ba6772bef177dde4ab09",
+        "questions_sha256": "36f0b771fc227189fdc7dcf6712c4b706ad76ec1dab56f39b413ce0eab2ce139",
+        "knowledge_base_sha256": "d5f1bbba0094d1eb7e4918bd7a1d37c621ae5cd498010ca2cba041ddddafd66a",
+        "rows": 23,
+        "exit_code": 0,
+        "elapsed_seconds": 605.73,
+        "csv_valid": true,
+        "runtime_statuses": {
+          "answered": 23
+        },
+        "api_calls": 23,
+        "http_failures": 0,
+        "length_cutoffs": 0,
+        "content_review_complete": true,
+        "note": "Nonempty CSV is not evidence of factual quality; inspect answers against the knowledge base.",
+        "review_method": "Codex review against organizer KB and predeclared rubric; not platform LLM judge",
+        "review_counts": {
+          "годен": 14,
+          "существенная ошибка": 2,
+          "неполон": 7
+        }
+      },
+      "review_counts": {
+        "годен": 14,
+        "существенная ошибка": 2,
+        "неполон": 7
+      }
+    }
+  },
+  "review_pass_experiment_in_runtime": false,
+  "qwen38_download": "stopped at user request before completion",
+  "main_runtime": "restored byte-for-byte from tested v3 ZIP",
+  "v4_status": "experimental; not promoted",
+  "score_prediction": null,
+  "latest_recheck": "reports/qwen30b-recheck.json"
+}

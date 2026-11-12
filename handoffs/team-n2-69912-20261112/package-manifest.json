@@ -1,0 +1,91 @@
+{
+  "date_moscow": "2026-11-12",
+  "score_commit": "9c195cf",
+  "files": [
+    {
+      "path": "00_ОБЩИЙ_ПЛАН.txt",
+      "sha256": "50ff7df215ab01890ee43bde987e7bd67f8191f210cc627f93e799dba1ce5cdf",
+      "bytes": 8911
+    },
+    {
+      "path": "01_ИГОРЬ_ОСНОВНОЙ_БЭКЕНД_И_ИНТЕГРАЦИЯ.txt",
+      "sha256": "93aff688fe94b865d14e84b56f9b8be7d37e3791d86896b4ff19eff577b1f48c",
+      "bytes": 8587
+    },
+    {
+      "path": "02_ГЕОРГИЙ_ИНТЕРФЕЙС_И_ДЕМО.txt",
+      "sha256": "b53841b830b066651e9e9c298666d28f1ac77c493e45f0f6379c2914329efbcd",
+      "bytes": 8499
+    },
+    {
+      "path": "03_АРТЁМ_БИЗНЕС_БЭКЕНД_И_ФИЧИ.txt",
+      "sha256": "2997adf5c65f167b463b57e3bd11f0db3add002c7b2e7f67040b4f3d3c6633b3",
+      "bytes": 12291
+    },
+    {
+      "path": "04_ТРЕБОВАНИЯ_И_ОБЩАЯ_ПРИЁМКА.txt",
+      "sha256": "23a75b2375d8b3278d10e6bc376f21dfe159affa147dd5283a1f510998642846",
+      "bytes": 8232
+    },
+    {
+      "path": "05_КОНТРАКТ_И_ПЕРЕДАЧА.txt",
+      "sha256": "65016785335352eafcda7d79ba2790c454aa2a23c16b002a24c08cc4ee856c9c",
+      "bytes": 4207
+    },
+    {
+      "path": "prototype-source-snapshot.zip",
+      "sha256": "d0d100b2896c9cc1a75a992aaad39b60d7bc6539750ce92080caa92d5b841f8d",
+      "bytes": 222363
+    },
+    {
+      "path": "snapshot-manifest.json",
+      "sha256": "9e66b700312fc8be8207efb374d606f86a8fc1d11beb2821af7131f590674c35",
+      "bytes": 15555
+    },
+    {
+      "path": "sources/case.pdf",
+      "sha256": "578c402cbb007d13f59c436d3d4db66103a0c3fdcfb1063cd7475aa79a299f9f",
+      "bytes": 4574887
+    },
+    {
+      "path": "sources/criteria-page12.png",
+      "sha256": "90dc07d0a25bdbdb71058b5c560428873bc098751575e9e4c9eab5f10da49fb5",
+      "bytes": 169001
+    },
+    {
+      "path": "sources/organizer-messages.txt",
+      "sha256": "b68147072d7ddb1b3d356f13aa24991d53d2d873779cd2d6ca659fdcd5f61e92",
+      "bytes": 8805
+    },
+    {
+      "path": "sources/qa.md",
+      "sha256": "e760eb22799ba5ee444c5ab95e74a722257e21822daa0b4bd7a89cb5a9c1ee98",
+      "bytes": 29503
+    },
+    {
+      "path": "sources/regulation.docx",
+      "sha256": "19893d1502bf5dfa404da35415acab0eabcbd8e1421a4694a3d44d9a321b70a1",
+      "bytes": 126080
+    },
+    {
+      "path": "sources/source-manifest.json",
+      "sha256": "ba34fb40bb57d328c43dc81618ab267442586e614eb9fe38297c306521b2dfa0",
+      "bytes": 1375
+    },
+    {
+      "path": "winner/mts-energytool-n2-docs.zip",
+      "sha256": "a22d786f895257e14fb89e747a674cd419be0d711ed43b834fb9442ef3b6ac9b",
+      "bytes": 42377
+    },
+    {
+      "path": "winner/n2-platform-result-20261112.txt",
+      "sha256": "202108c3648d057725544bbc4ba5e313643af3b232a59fa9ff85c5aa0d7eb179",
+      "bytes": 2485
+    },
+    {
+      "path": "winner/platform-result-n2-docs-20261112.json",
+      "sha256": "9eb873b392d49599bd6204d273dbfedaef10bd21963f98fe2b7c6eea590db140",
+      "bytes": 1071
+    }
+  ]
+}

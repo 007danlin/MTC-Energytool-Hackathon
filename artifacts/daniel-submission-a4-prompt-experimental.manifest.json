@@ -1,0 +1,16 @@
+{
+  "zip": "daniel-submission-a4-prompt-experimental.zip",
+  "sha256": "7ec43c832216cdd018f04a07f68bc871dac05af76b8a474618ba1264f1901811",
+  "files": [
+    "consultant.py",
+    "contracts.py",
+    "dialogue.py",
+    "llm_client.py",
+    "prompts.py",
+    "requirements.txt",
+    "retrieval.py",
+    "settings.py",
+    "solution.py"
+  ],
+  "baseline_sha256": "fa81606a5e4b89cd4b36a13139d906e8940bbc462d43d127ddfaac129c50f013"
+}
