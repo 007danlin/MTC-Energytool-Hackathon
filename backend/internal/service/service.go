@@ -497,7 +497,7 @@ func (s *Service) SaveApplicationWithID(id, requestID string, input domain.Appli
 		session.ApplicationRequests = map[string]domain.ApplicationRequestRecord{}
 	}
 	input.RequestID = requestID
-	fingerprint := requestFingerprint("application", input.FullName, input.Phone, input.Company, input.Summary)
+	fingerprint := requestFingerprint("application", input.FullName, input.Phone, input.Company, input.Summary, input.CallbackMode, input.CallbackAt)
 	if requestID != "" {
 		if record, ok := session.ApplicationRequests[requestID]; ok {
 			if record.Fingerprint != fingerprint {
@@ -515,7 +515,31 @@ func (s *Service) SaveApplicationWithID(id, requestID string, input domain.Appli
 	if !regexp.MustCompile(`^\+?[0-9 ()-]+$`).MatchString(input.Phone) || len(digits) < 10 || len(digits) > 15 || len(input.Phone) > 40 || input.Summary == "" || len([]rune(input.Summary)) > 2000 || len([]rune(input.FullName)) > 200 || len([]rune(input.Company)) > 200 {
 		return domain.Session{}, ErrInvalidApplication
 	}
+
+	switch input.CallbackMode {
+	case "", "asap":
+		if input.CallbackAt != "" {
+			return domain.Session{}, ErrInvalidApplication
+		}
+	case "scheduled":
+		at, parseErr := time.Parse(time.RFC3339, input.CallbackAt)
+		if parseErr != nil {
+			return domain.Session{}, ErrInvalidApplication
+		}
+		input.CallbackAt = at.In(time.FixedZone("MSK", 3*3600)).Format(time.RFC3339)
+		unchanged := session.Application != nil && session.Application.CallbackMode == "scheduled" && session.Application.CallbackAt == input.CallbackAt
+		if !unchanged && !at.After(time.Now()) {
+			return domain.Session{}, ErrInvalidApplication
+		}
+	default:
+		return domain.Session{}, ErrInvalidApplication
+	}
+	input.ID = domain.ApplicationID(session.ID)
+	if session.Application != nil && session.Application.ID != "" {
+		input.ID = session.Application.ID
+	}
 	input.SavedAt = time.Now().UTC()
+	input.RequestID = requestID
 	session.Application = &input
 	if requestID != "" {
 		session.ApplicationRequests[requestID] = domain.ApplicationRequestRecord{Fingerprint: fingerprint, Application: input}
