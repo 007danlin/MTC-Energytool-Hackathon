@@ -208,6 +208,25 @@ func (s *Service) SaveApplication(id string, input domain.Application) (domain.S
 	if !regexp.MustCompile(`^\+?[0-9 ()-]+$`).MatchString(input.Phone) || len(digits) < 10 || len(digits) > 15 || len(input.Phone) > 40 || input.Summary == "" || len([]rune(input.Summary)) > 2000 || len([]rune(input.FullName)) > 200 || len([]rune(input.Company)) > 200 {
 		return domain.Session{}, ErrInvalidApplication
 	}
+
+	switch input.CallbackMode {
+	case "", "asap":
+		if input.CallbackAt != "" {
+			return domain.Session{}, ErrInvalidApplication
+		}
+	case "scheduled":
+		at, parseErr := time.Parse(time.RFC3339, input.CallbackAt)
+		if parseErr != nil {
+			return domain.Session{}, ErrInvalidApplication
+		}
+		input.CallbackAt = at.In(time.FixedZone("MSK", 3*3600)).Format(time.RFC3339)
+		unchanged := session.Application != nil && session.Application.CallbackMode == "scheduled" && session.Application.CallbackAt == input.CallbackAt
+		if !unchanged && !at.After(time.Now()) {
+			return domain.Session{}, ErrInvalidApplication
+		}
+	default:
+		return domain.Session{}, ErrInvalidApplication
+	}
 	input.ID = domain.ApplicationID(session.ID)
 	if session.Application != nil && session.Application.ID != "" {
 		input.ID = session.Application.ID

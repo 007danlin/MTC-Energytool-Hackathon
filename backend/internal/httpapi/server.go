@@ -235,10 +235,12 @@ func writeError(w http.ResponseWriter, r *http.Request, status int, code, messag
 func (s *Server) saveApplication(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, 16<<10)
 	var payload struct {
-		FullName string `json:"full_name"`
-		Phone    string `json:"phone"`
-		Company  string `json:"company"`
-		Summary  string `json:"summary"`
+		CallbackMode string `json:"callback_mode"`
+		CallbackAt   string `json:"callback_at"`
+		FullName     string `json:"full_name"`
+		Phone        string `json:"phone"`
+		Company      string `json:"company"`
+		Summary      string `json:"summary"`
 	}
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
@@ -250,7 +252,7 @@ func (s *Server) saveApplication(w http.ResponseWriter, r *http.Request) {
 		writeError(w, r, http.StatusBadRequest, "invalid_json", "Некорректные данные заявки.")
 		return
 	}
-	session, err := s.service.SaveApplication(r.PathValue("sessionID"), domain.Application{FullName: payload.FullName, Phone: payload.Phone, Company: payload.Company, Summary: payload.Summary})
+	session, err := s.service.SaveApplication(r.PathValue("sessionID"), domain.Application{CallbackMode: payload.CallbackMode, CallbackAt: payload.CallbackAt, FullName: payload.FullName, Phone: payload.Phone, Company: payload.Company, Summary: payload.Summary})
 	if err != nil {
 		s.mapError(w, r, err)
 		return

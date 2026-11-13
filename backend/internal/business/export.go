@@ -56,6 +56,7 @@ func ExportTXT(card NeedCard) string {
 	w("%s", fieldLine("Имя", card.Contact.FullName))
 	w("%s", fieldLine("Компания", card.Contact.Company))
 	w("%s", fieldLine("Способ связи", card.Contact.PreferredChannel))
+	w("%s", fieldLine("Желаемое время связи", card.ContactTime))
 	w("")
 	w("ЗАДАЧА КЛИЕНТА")
 	w("%s", fieldLine("Задача", card.Task))

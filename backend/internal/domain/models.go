@@ -3,12 +3,14 @@ package domain
 import "time"
 
 type Application struct {
-	ID       string    `json:"id"`
-	FullName string    `json:"full_name"`
-	Phone    string    `json:"phone"`
-	Company  string    `json:"company"`
-	Summary  string    `json:"summary"`
-	SavedAt  time.Time `json:"saved_at"`
+	CallbackMode string    `json:"callback_mode,omitempty"`
+	CallbackAt   string    `json:"callback_at,omitempty"`
+	ID           string    `json:"id"`
+	FullName     string    `json:"full_name"`
+	Phone        string    `json:"phone"`
+	Company      string    `json:"company"`
+	Summary      string    `json:"summary"`
+	SavedAt      time.Time `json:"saved_at"`
 }
 
 type Session struct {
@@ -77,3 +79,16 @@ type APIError struct {
 
 // ApplicationID identifies the single reviewed application belonging to a session.
 func ApplicationID(sessionID string) string { return "ET-" + sessionID }
+
+// ContactPreference describes a requested callback, never a confirmed booking.
+func (a Application) ContactPreference() string {
+	if a.CallbackMode == "asap" {
+		return "Как можно скорее (по возможности менеджера)"
+	}
+	if a.CallbackMode == "scheduled" {
+		if at, err := time.Parse(time.RFC3339, a.CallbackAt); err == nil {
+			return at.In(time.FixedZone("MSK", 3*3600)).Format("02.01.2006 в 15:04") + " МСК — желаемое время"
+		}
+	}
+	return ""
+}
