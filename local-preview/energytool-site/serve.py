@@ -1,4 +1,4 @@
-"""Static demo site with a same-origin proxy to the Go chat API."""
+"""Static demo site with a same-origin proxy to the Go API."""
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 import http.client
@@ -57,19 +57,26 @@ class Handler(SimpleHTTPRequestHandler):
             response = connection.getresponse()
             data = response.read()
             self.send_response(response.status)
-            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Content-Type', response.getheader('Content-Type', 'application/json; charset=utf-8'))
             self.send_header('Content-Length', str(len(data)))
-            if response.getheader('X-Request-ID'):
-                self.send_header('X-Request-ID', response.getheader('X-Request-ID'))
+            for header in ('X-Request-ID', 'Content-Disposition', 'Cache-Control'):
+                if value := response.getheader(header):
+                    self.send_header(header, value)
             self.end_headers()
             self.wfile.write(data)
         except (OSError, http.client.HTTPException):
-            self.reply(502, {'message': 'Сервис чата недоступен. Обновите историю перед повторной отправкой.'})
+            self.reply(502, {'message': 'Сервис временно недоступен. Попробуйте ещё раз.'})
         finally:
             connection.close()
 
     def do_POST(self):
         if urlsplit(self.path).path.startswith('/api/v1/'):
+            return self.proxy()
+        self.unavailable()
+
+    def do_PATCH(self):
+        path = urlsplit(self.path).path
+        if path.startswith('/api/v1/applications/') and path.endswith('/card'):
             return self.proxy()
         self.unavailable()
 
@@ -90,5 +97,6 @@ class Handler(SimpleHTTPRequestHandler):
 
 if __name__ == '__main__':
     address = (os.getenv('WEB_HOST', '127.0.0.1'), int(os.getenv('WEB_PORT', '8767')))
-    print(f'Energytool: http://{address[0]}:{address[1]}', flush=True)
-    ThreadingHTTPServer(address, Handler).serve_forever()
+    with ThreadingHTTPServer(address, Handler) as server:
+        print(f'Energytool: http://{address[0]}:{server.server_port}', flush=True)
+        server.serve_forever()
