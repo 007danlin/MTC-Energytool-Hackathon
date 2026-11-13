@@ -39,3 +39,5 @@ body.et-app{margin:0;background:#f6f7f9;color:#17181c;overflow:hidden}
 #energytool-chat .et-specialist-link{margin-top:12px;padding-inline:0}
 #energytool-chat .et-field>.et-field-error{color:#b90025;font-size:12px;margin-top:8px;margin-bottom:0}
 #energytool-chat .et-modal.sources .et-card .et-hint:not(:first-child){margin-top:12px}
+
+.et-application-summary { white-space: pre-wrap; overflow-wrap: anywhere; }

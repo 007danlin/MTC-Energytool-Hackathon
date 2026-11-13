@@ -178,8 +178,34 @@
   }
   function summaryText() {
     const summary = current?.last_result?.summary || {};
-    const parts = ['task','object','parameters','constraints'].flatMap(k => Array.isArray(summary[k]) ? summary[k] : []).map(v => typeof v === 'string' ? v : v?.value || v?.text || v?.quote || '').filter(Boolean);
-    return (parts.join(' ') || current?.messages.find(m => m.role === 'user')?.content || '').slice(0,2000);
+    const sections = [];
+    const seen = new Set();
+    for (const [key,label] of [['task','Задача клиента'],['object','Объект'],['parameters','Известные параметры'],['constraints','Условия и ограничения']]) {
+      const values = (Array.isArray(summary[key]) ? summary[key] : [])
+        .map(v => typeof v === 'string' ? v : v?.value || v?.text || v?.quote || '')
+        .map(v => String(v).trim()).filter(v => {
+          if (!v || seen.has(v)) return false;
+          seen.add(v); return true;
+        });
+      if (values.length) sections.push(`${label}:\n${values.map(v => '• ' + v).join('\n')}`);
+    }
+    if (!sections.length) {
+      const messages = (current?.messages || []).filter(m => m.role === 'user' && m.content?.trim());
+      if (messages.length) {
+        const selected = messages.length > 4 ? [messages[0], ...messages.slice(-3)] : messages;
+        sections.push(`Из сообщений клиента${messages.length > 4 ? ' (начало и последние уточнения)' : ''}:\n${selected.map(m => '• ' + m.content.trim()).join('\n')}`);
+      }
+    }
+    const products = [...new Set((Array.isArray(summary.products) ? summary.products : [])
+      .map(p => p?.name).filter(p => typeof p === 'string' && p.trim()))];
+    if (products.length) sections.push(`Обсуждавшиеся решения (выбор нужно подтвердить):\n${products.map(p => '• ' + p).join('\n')}`);
+    const questions = [...new Set((Array.isArray(summary.manager_questions) ? summary.manager_questions : [])
+      .filter(q => typeof q === 'string' && q.trim()))];
+    if (questions.length) sections.push(`Уточнить с менеджером:\n${questions.map(q => '• ' + q).join('\n')}`);
+    const text = sections.join('\n\n');
+    if (text.length <= 2000) return text;
+    const note = '\n\n[Описание сокращено. Полные сообщения — в истории диалога.]';
+    return text.slice(0, 2000 - note.length - 1).trimEnd() + '…' + note;
   }
   function startContacts() {
     if (!current || isClosed()) return;
@@ -239,7 +265,7 @@
     bindForm(form,fields=>{draft={...draft,...fields};noPhone=false;stage='review';render();scroll.scrollTop=0;});
   }
   function reviewHTML(application) {
-    return `<p class="et-eyebrow">КОНТАКТЫ</p>${[application.full_name,application.phone,application.company].filter(Boolean).map(v=>`<p>${escape(v)}</p>`).join('')}<p class="et-eyebrow">РЕЗЮМЕ</p><p>${escape(application.summary)}</p>`;
+    return `<p class="et-eyebrow">КОНТАКТЫ</p>${[application.full_name,application.phone,application.company].filter(Boolean).map(v=>`<p>${escape(v)}</p>`).join('')}<p class="et-eyebrow">РЕЗЮМЕ</p><p class="et-application-summary">${escape(application.summary)}</p>`;
   }
   function renderReview(application,saved) {
     flow.innerHTML = previous() + assistant(saved ? 'Заявка сохранена. Её можно скачать или открыть в истории диалогов.' : 'Собрал контакты и резюме нашей беседы. Всё верно?') + card(saved ? 'Заявка сформирована' : 'Проверьте заявку',`<p class="${saved?'et-success':'et-muted'}">${saved?'Сохранено в диалоге':'Заявка сохранится в этом диалоге'}</p>${reviewHTML(application)}`,saved ? button('Скачать заявку','download',true)+button('Продолжить консультацию','continue')+button('История диалогов','history') : button('Изменить данные','edit')+button('Сформировать заявку','save',true),'et-review');
