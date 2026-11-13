@@ -18,6 +18,9 @@ import (
 type SessionService interface {
 	CreateSession() (domain.Session, error)
 	SaveApplication(string, domain.Application) (domain.Session, error)
+	SaveApplicationWithID(string, string, domain.Application) (domain.Session, error)
+	SendMessageWithID(context.Context, string, string, string) (domain.ConsultationResult, error)
+	FindRequest(string, string) (domain.ConsultationResult, error)
 	GetSession(string) (domain.Session, error)
 	ListSessions() ([]domain.Session, error)
 	CloseSession(string) (domain.Session, error)
@@ -54,6 +57,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/v1/sessions/{sessionID}/close", s.closeSession)
 	mux.HandleFunc("GET /api/v1/sessions/{sessionID}/messages", s.getMessages)
 	mux.HandleFunc("POST /api/v1/sessions/{sessionID}/messages", s.postMessage)
+	mux.HandleFunc("GET /api/v1/sessions/{sessionID}/requests/{requestID}", s.getRequest)
 	mux.HandleFunc("GET /api/v1/sessions/{sessionID}/lead", s.getLead)
 	mux.HandleFunc("POST /api/v1/sessions/{sessionID}/application", s.saveApplication)
 	return requestID(recoverer(s.logger, mux))
@@ -138,7 +142,8 @@ func (s *Server) getMessages(w http.ResponseWriter, r *http.Request) {
 func (s *Server) postMessage(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, 32<<10)
 	var payload struct {
-		Content string `json:"content"`
+		Content         string `json:"content"`
+		ClientRequestID string `json:"client_request_id"`
 	}
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
@@ -157,7 +162,11 @@ func (s *Server) postMessage(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), s.timeout)
 	defer cancel()
-	result, err := s.service.SendMessage(ctx, r.PathValue("sessionID"), payload.Content)
+	requestID := payload.ClientRequestID
+	if requestID == "" {
+		requestID = r.Header.Get("Idempotency-Key")
+	}
+	result, err := s.service.SendMessageWithID(ctx, r.PathValue("sessionID"), requestID, payload.Content)
 	if err != nil {
 		s.mapError(w, r, err)
 		return
@@ -191,6 +200,10 @@ func (s *Server) mapError(w http.ResponseWriter, r *http.Request, err error) {
 		writeError(w, r, http.StatusRequestEntityTooLarge, "message_too_long", "Message exceeds 10000 characters")
 	case errors.Is(err, service.ErrEmptyMessage):
 		writeError(w, r, http.StatusBadRequest, "empty_message", "Message content is required")
+	case errors.Is(err, service.ErrRequestConflict):
+		writeError(w, r, http.StatusConflict, "request_id_conflict", "client_request_id was already used with different data")
+	case errors.Is(err, service.ErrRequestNotFound):
+		writeError(w, r, http.StatusNotFound, "request_not_found", "Request result was not found")
 	default:
 		s.internalError(w, r, err)
 	}
@@ -235,10 +248,11 @@ func writeError(w http.ResponseWriter, r *http.Request, status int, code, messag
 func (s *Server) saveApplication(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, 16<<10)
 	var payload struct {
-		FullName string `json:"full_name"`
-		Phone    string `json:"phone"`
-		Company  string `json:"company"`
-		Summary  string `json:"summary"`
+		ClientRequestID string `json:"client_request_id"`
+		FullName        string `json:"full_name"`
+		Phone           string `json:"phone"`
+		Company         string `json:"company"`
+		Summary         string `json:"summary"`
 	}
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
@@ -250,10 +264,26 @@ func (s *Server) saveApplication(w http.ResponseWriter, r *http.Request) {
 		writeError(w, r, http.StatusBadRequest, "invalid_json", "Некорректные данные заявки.")
 		return
 	}
-	session, err := s.service.SaveApplication(r.PathValue("sessionID"), domain.Application{FullName: payload.FullName, Phone: payload.Phone, Company: payload.Company, Summary: payload.Summary})
+	requestID := r.Header.Get("Idempotency-Key")
+	if requestID == "" {
+		requestID = payload.ClientRequestID
+	}
+	if requestID == "" {
+		requestID = r.URL.Query().Get("client_request_id")
+	}
+	session, err := s.service.SaveApplicationWithID(r.PathValue("sessionID"), requestID, domain.Application{FullName: payload.FullName, Phone: payload.Phone, Company: payload.Company, Summary: payload.Summary})
 	if err != nil {
 		s.mapError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, session)
+}
+
+func (s *Server) getRequest(w http.ResponseWriter, r *http.Request) {
+	result, err := s.service.FindRequest(r.PathValue("sessionID"), r.PathValue("requestID"))
+	if err != nil {
+		s.mapError(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, result)
 }
