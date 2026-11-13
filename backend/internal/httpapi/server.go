@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"energytool/backend/internal/domain"
+	"energytool/backend/internal/expert"
 	"energytool/backend/internal/service"
 	"energytool/backend/internal/store"
 )
@@ -26,25 +27,41 @@ type SessionService interface {
 	CloseSession(string) (domain.Session, error)
 	Lead(string) (domain.LeadState, error)
 	SendMessage(context.Context, string, string) (domain.ConsultationResult, error)
+	ListExpertRequests(expert.RequestFilter) ([]expert.Request, error)
+	GetExpertRequest(string) (expert.Request, error)
+	CreateKnowledge(expert.Actor, string, expert.DraftInput, bool) (expert.KnowledgeEntry, error)
+	GetKnowledge(string) (expert.KnowledgeEntry, error)
+	ListKnowledge() ([]expert.KnowledgeEntry, error)
+	ApproveKnowledge(string, expert.Actor, expert.Command, int, expert.ReviewChecklist) (expert.KnowledgeEntry, error)
+	RevokeKnowledge(string, expert.Actor, expert.Command, string) (expert.KnowledgeEntry, error)
+	AssignExpert(string, expert.Actor, expert.Command, string) (expert.Request, error)
+	StartExpert(string, expert.Actor, expert.Command) (expert.Request, error)
+	AnswerExpert(string, expert.Actor, expert.Command, string, string) (expert.Request, error)
+	CancelExpert(string, expert.Actor, expert.Command, expert.CancelReason, string) (expert.Request, error)
 }
 
 type Readiness func(context.Context) error
 
 type Server struct {
-	service SessionService
-	ready   Readiness
-	logger  *slog.Logger
-	timeout time.Duration
+	service       SessionService
+	ready         Readiness
+	logger        *slog.Logger
+	timeout       time.Duration
+	operatorToken string
 }
 
-func New(service SessionService, ready Readiness, logger *slog.Logger, requestTimeout time.Duration) *Server {
+func New(service SessionService, ready Readiness, logger *slog.Logger, requestTimeout time.Duration, operatorToken ...string) *Server {
 	if logger == nil {
 		logger = slog.Default()
 	}
 	if requestTimeout <= 0 {
 		requestTimeout = 100 * time.Second
 	}
-	return &Server{service: service, ready: ready, logger: logger, timeout: requestTimeout}
+	token := ""
+	if len(operatorToken) > 0 {
+		token = operatorToken[0]
+	}
+	return &Server{service: service, ready: ready, logger: logger, timeout: requestTimeout, operatorToken: token}
 }
 
 func (s *Server) Handler() http.Handler {
@@ -60,6 +77,18 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/v1/sessions/{sessionID}/requests/{requestID}", s.getRequest)
 	mux.HandleFunc("GET /api/v1/sessions/{sessionID}/lead", s.getLead)
 	mux.HandleFunc("POST /api/v1/sessions/{sessionID}/application", s.saveApplication)
+	mux.HandleFunc("GET /api/v1/sessions/{sessionID}/expert-requests", s.sessionExpertRequests)
+	mux.HandleFunc("GET /api/v1/operator/expert-requests", s.operatorExpertRequests)
+	mux.HandleFunc("GET /api/v1/operator/expert-requests/{requestID}", s.operatorExpertRequest)
+	mux.HandleFunc("POST /api/v1/operator/expert-requests/{requestID}/assign", s.assignExpert)
+	mux.HandleFunc("POST /api/v1/operator/expert-requests/{requestID}/start", s.startExpert)
+	mux.HandleFunc("POST /api/v1/operator/expert-requests/{requestID}/reply", s.replyExpert)
+	mux.HandleFunc("POST /api/v1/operator/expert-requests/{requestID}/cancel", s.cancelExpert)
+	mux.HandleFunc("POST /api/v1/operator/knowledge", s.createKnowledge)
+	mux.HandleFunc("GET /api/v1/operator/knowledge", s.listKnowledge)
+	mux.HandleFunc("GET /api/v1/operator/knowledge/{knowledgeID}", s.getKnowledge)
+	mux.HandleFunc("POST /api/v1/operator/knowledge/{knowledgeID}/approve", s.approveKnowledge)
+	mux.HandleFunc("POST /api/v1/operator/knowledge/{knowledgeID}/revoke", s.revokeKnowledge)
 	return requestID(recoverer(s.logger, mux))
 }
 
@@ -204,6 +233,12 @@ func (s *Server) mapError(w http.ResponseWriter, r *http.Request, err error) {
 		writeError(w, r, http.StatusConflict, "request_id_conflict", "client_request_id was already used with different data")
 	case errors.Is(err, service.ErrRequestNotFound):
 		writeError(w, r, http.StatusNotFound, "request_not_found", "Request result was not found")
+	case errors.Is(err, expert.ErrForbidden):
+		writeError(w, r, http.StatusForbidden, "forbidden", "Operator access required")
+	case errors.Is(err, expert.ErrVersionConflict):
+		writeError(w, r, http.StatusConflict, "version_conflict", "The request has changed; reload it")
+	case errors.Is(err, expert.ErrRequestConflict):
+		writeError(w, r, http.StatusConflict, "command_conflict", "command_id was already used with different data")
 	default:
 		s.internalError(w, r, err)
 	}
@@ -286,4 +321,212 @@ func (s *Server) getRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, result)
+}
+
+func actorFrom(r *http.Request) expert.Actor {
+	role := expert.Role(r.Header.Get("X-Operator-Role"))
+	return expert.Actor{ID: r.Header.Get("X-Operator-ID"), Role: role}
+}
+func (s *Server) trustedActor(r *http.Request) (expert.Actor, bool) {
+	a := actorFrom(r)
+	if a.ID == "" || s.operatorToken == "" || r.Header.Get("X-Operator-Token") != s.operatorToken {
+		return expert.Actor{}, false
+	}
+	switch a.Role {
+	case expert.RoleCoordinator, expert.RoleSpecialist, expert.RoleReviewer:
+		return a, true
+	}
+	return expert.Actor{}, false
+}
+func commandFrom(r *http.Request, body struct {
+	ExpectedVersion int    `json:"expected_version"`
+	CommandID       string `json:"command_id"`
+}) expert.Command {
+	return expert.Command{ExpectedVersion: body.ExpectedVersion, ID: body.CommandID}
+}
+func (s *Server) sessionExpertRequests(w http.ResponseWriter, r *http.Request) {
+	items, err := s.service.ListExpertRequests(expert.RequestFilter{SessionID: r.PathValue("sessionID")})
+	if err != nil {
+		s.mapError(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]interface{}{"requests": items})
+}
+func (s *Server) operatorExpertRequests(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.trustedActor(r); !ok {
+		writeError(w, r, 403, "forbidden", "Operator access required")
+		return
+	}
+	items, err := s.service.ListExpertRequests(expert.RequestFilter{Status: expert.RequestStatus(r.URL.Query().Get("status")), AssigneeID: r.URL.Query().Get("assignee_id")})
+	if err != nil {
+		s.mapError(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]interface{}{"requests": items})
+}
+func (s *Server) operatorExpertRequest(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.trustedActor(r); !ok {
+		writeError(w, r, 403, "forbidden", "Operator access required")
+		return
+	}
+	item, err := s.service.GetExpertRequest(r.PathValue("requestID"))
+	if err != nil {
+		s.mapError(w, r, err)
+		return
+	}
+	writeJSON(w, 200, item)
+}
+func (s *Server) operatorCommand(w http.ResponseWriter, r *http.Request, action func(expert.Actor, expert.Command, map[string]interface{}) (expert.Request, error)) {
+	actor, trusted := s.trustedActor(r)
+	if !trusted {
+		writeError(w, r, 403, "forbidden", "Operator access required")
+		return
+	}
+	var raw map[string]interface{}
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 16<<10)).Decode(&raw); err != nil {
+		writeError(w, r, 400, "invalid_json", "Invalid command")
+		return
+	}
+	version, _ := raw["expected_version"].(float64)
+	id, _ := raw["command_id"].(string)
+	item, err := s.service.GetExpertRequest(r.PathValue("requestID"))
+	if err != nil {
+		s.mapError(w, r, err)
+		return
+	}
+	out, err := action(actor, expert.Command{ExpectedVersion: int(version), ID: id}, raw)
+	if err != nil {
+		s.mapError(w, r, err)
+		return
+	}
+	_ = item
+	writeJSON(w, 200, out)
+}
+
+func (s *Server) createKnowledge(w http.ResponseWriter, r *http.Request) {
+	actor, ok := s.trustedActor(r)
+	if !ok {
+		writeError(w, r, 403, "forbidden", "Operator access required")
+		return
+	}
+	var body struct {
+		SourceRequestID string `json:"source_request_id"`
+		Test            bool   `json:"test"`
+		expert.DraftInput
+	}
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 24<<10)).Decode(&body); err != nil {
+		writeError(w, r, 400, "invalid_json", "Invalid knowledge draft")
+		return
+	}
+	e, err := s.service.CreateKnowledge(actor, body.SourceRequestID, body.DraftInput, body.Test)
+	if err != nil {
+		s.mapError(w, r, err)
+		return
+	}
+	writeJSON(w, 201, expert.PublicEntry(e))
+}
+func (s *Server) listKnowledge(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.trustedActor(r); !ok {
+		writeError(w, r, 403, "forbidden", "Operator access required")
+		return
+	}
+	entries, err := s.service.ListKnowledge()
+	if err != nil {
+		s.mapError(w, r, err)
+		return
+	}
+	out := make([]expert.KnowledgeEntry, 0, len(entries))
+	for _, e := range entries {
+		out = append(out, expert.PublicEntry(e))
+	}
+	writeJSON(w, 200, map[string]interface{}{"entries": out})
+}
+func (s *Server) getKnowledge(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.trustedActor(r); !ok {
+		writeError(w, r, 403, "forbidden", "Operator access required")
+		return
+	}
+	e, err := s.service.GetKnowledge(r.PathValue("knowledgeID"))
+	if err != nil {
+		s.mapError(w, r, err)
+		return
+	}
+	writeJSON(w, 200, expert.PublicEntry(e))
+}
+func readKnowledgeCommand(w http.ResponseWriter, r *http.Request) (expert.Command, map[string]interface{}, bool) {
+	var body map[string]interface{}
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 16<<10)).Decode(&body); err != nil {
+		writeError(w, r, 400, "invalid_json", "Invalid command")
+		return expert.Command{}, nil, false
+	}
+	version, _ := body["expected_version"].(float64)
+	id, _ := body["command_id"].(string)
+	return expert.Command{ExpectedVersion: int(version), ID: id}, body, true
+}
+func (s *Server) approveKnowledge(w http.ResponseWriter, r *http.Request) {
+	actor, ok := s.trustedActor(r)
+	if !ok {
+		writeError(w, r, 403, "forbidden", "Operator access required")
+		return
+	}
+	cmd, b, ok := readKnowledgeCommand(w, r)
+	if !ok {
+		return
+	}
+	revision, _ := b["revision"].(float64)
+	raw, _ := json.Marshal(b["checklist"])
+	var checklist expert.ReviewChecklist
+	if err := json.Unmarshal(raw, &checklist); err != nil {
+		writeError(w, r, 400, "invalid_checklist", "Invalid review checklist")
+		return
+	}
+	e, err := s.service.ApproveKnowledge(r.PathValue("knowledgeID"), actor, cmd, int(revision), checklist)
+	if err != nil {
+		s.mapError(w, r, err)
+		return
+	}
+	writeJSON(w, 200, expert.PublicEntry(e))
+}
+func (s *Server) revokeKnowledge(w http.ResponseWriter, r *http.Request) {
+	actor, ok := s.trustedActor(r)
+	if !ok {
+		writeError(w, r, 403, "forbidden", "Operator access required")
+		return
+	}
+	cmd, b, ok := readKnowledgeCommand(w, r)
+	if !ok {
+		return
+	}
+	reason, _ := b["reason"].(string)
+	e, err := s.service.RevokeKnowledge(r.PathValue("knowledgeID"), actor, cmd, reason)
+	if err != nil {
+		s.mapError(w, r, err)
+		return
+	}
+	writeJSON(w, 200, expert.PublicEntry(e))
+}
+func (s *Server) assignExpert(w http.ResponseWriter, r *http.Request) {
+	s.operatorCommand(w, r, func(a expert.Actor, c expert.Command, b map[string]interface{}) (expert.Request, error) {
+		x, _ := b["assignee_id"].(string)
+		return s.service.AssignExpert(r.PathValue("requestID"), a, c, x)
+	})
+}
+func (s *Server) startExpert(w http.ResponseWriter, r *http.Request) {
+	s.operatorCommand(w, r, func(a expert.Actor, c expert.Command, _ map[string]interface{}) (expert.Request, error) {
+		return s.service.StartExpert(r.PathValue("requestID"), a, c)
+	})
+}
+func (s *Server) replyExpert(w http.ResponseWriter, r *http.Request) {
+	s.operatorCommand(w, r, func(a expert.Actor, c expert.Command, b map[string]interface{}) (expert.Request, error) {
+		id, _ := b["reply_id"].(string)
+		body, _ := b["body"].(string)
+		return s.service.AnswerExpert(r.PathValue("requestID"), a, c, id, body)
+	})
+}
+func (s *Server) cancelExpert(w http.ResponseWriter, r *http.Request) {
+	s.operatorCommand(w, r, func(a expert.Actor, c expert.Command, b map[string]interface{}) (expert.Request, error) {
+		reason, _ := b["reason"].(string)
+		comment, _ := b["comment"].(string)
+		return s.service.CancelExpert(r.PathValue("requestID"), a, c, expert.CancelReason(reason), comment)
+	})
 }

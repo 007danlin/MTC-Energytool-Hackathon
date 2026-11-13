@@ -10,6 +10,9 @@ This is a standalone Go HTTP backend for the final web prototype. It does not re
 - Typed HTTP client for an internal Python consultation service using `POST /respond` and the existing contract.
 - Lead state, sources, response timing and summary pass through to the chat/debug UI.
 - Technical fallback preserves prior lead and summary; no claim is made that a lead was delivered.
+- Operator endpoints for specialist requests and reviewed knowledge require `X-Operator-ID`, `X-Operator-Role`, and `X-Operator-Token`.
+- Approved/revoked knowledge is rendered to an atomic versioned snapshot at `EXPERT_KB_SNAPSHOT`.
+- Set `OPERATOR_TOKEN` in the runtime environment; the default Compose value is only for loopback demo use and must be replaced for any remote presentation.
 - Idempotent message/application writes via `client_request_id` or `Idempotency-Key`; conflicting reuse is rejected.
 - Request result lookup via `GET /api/v1/sessions/{sessionID}/requests/{requestID}` after an uncertain network outcome.
 - Atomic, mode-0600 JSON-file persistence for a local prototype; the store interface can be replaced with PostgreSQL.

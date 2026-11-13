@@ -10,10 +10,10 @@ from retrieval import LexicalRetriever
 from settings import Settings
 
 
-def create_consultant(knowledge_zip: str | Path, *, retriever=None, settings=None):
+def create_consultant(knowledge_zip: str | Path, *, retriever=None, settings=None, expert_snapshot=None):
     settings = settings or Settings.from_env()
     return Consultant(LLMClient(settings), retriever if retriever is not None else
-                      LexicalRetriever.from_zip(knowledge_zip), settings)
+                      LexicalRetriever.from_zip_and_snapshot(knowledge_zip, expert_snapshot), settings)
 
 
 def respond_json(service: Consultant, payload: dict, *, deadline=None) -> dict:

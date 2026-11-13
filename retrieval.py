@@ -5,7 +5,9 @@ No calls to external services and no archive extraction to disk.
 """
 from collections import Counter
 from dataclasses import replace
+import json
 import math
+from pathlib import Path
 from pathlib import PurePosixPath
 import re
 from zipfile import ZipFile
@@ -119,6 +121,87 @@ def load_fragments(archive_path):
     return fragments
 
 
+def load_expert_snapshot(snapshot_path):
+    """Load a complete, validated set of approved web-only knowledge documents.
+
+    The Go operator API writes this versioned JSON atomically. This loader never
+    accepts request/session/contact fields and never replaces the base archive's
+    fragments. Every document is converted through the same Markdown section
+    rules as the supplied knowledge base, so citations remain factual.
+    """
+    path = Path(snapshot_path)
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(raw, dict) or not isinstance(raw.get("kb_version"), str) or not raw["kb_version"].strip():
+        raise ValueError("Expert snapshot must contain a non-empty kb_version")
+    documents = raw.get("documents")
+    if not isinstance(documents, list) or len(documents) > 500:
+        raise ValueError("Expert snapshot documents are invalid")
+    fragments = []
+    seen = set()
+    for document in documents:
+        if not isinstance(document, dict):
+            raise ValueError("Expert snapshot document is invalid")
+        allowed = {"entry_id", "revision", "path", "source_id", "markdown", "test"}
+        if set(document) - allowed:
+            raise ValueError("Expert snapshot contains unsupported fields")
+        entry_id = document.get("entry_id")
+        revision = document.get("revision")
+        name = document.get("path")
+        source_id = document.get("source_id")
+        markdown = document.get("markdown")
+        if (not isinstance(entry_id, str) or not entry_id or not isinstance(revision, int) or revision < 1
+                or not isinstance(name, str) or not name.startswith("90-expert/")
+                or not isinstance(source_id, str) or not isinstance(markdown, str) or not markdown.strip()
+                or len(markdown) > 5000):
+            raise ValueError("Expert snapshot document fields are invalid")
+        if ".." in Path(name).parts or "\\" in name or not source_id.startswith(name + "#"):
+            raise ValueError("Expert snapshot source path is invalid")
+        key = (entry_id, revision, source_id)
+        if key in seen:
+            raise ValueError("Expert snapshot contains duplicate source")
+        seen.add(key)
+        # Keep the source ID from the Go renderer stable; the section loader
+        # itself must produce exactly one section for each approved document.
+        loaded = _load_markdown_fragments(name, markdown)
+        if len(loaded) != 1 or loaded[0].source_id != source_id:
+            raise ValueError("Expert snapshot document must contain one stable section")
+        fragments.extend(loaded)
+    return raw["kb_version"], fragments
+
+
+def _load_markdown_fragments(name, text):
+    fragments = []
+    heading, section, counter = [], [], 0
+
+    def emit():
+        nonlocal counter
+        body = "\n".join(section).strip()
+        if not body:
+            return
+        title = " > ".join(heading)
+        while body:
+            cut = min(len(body), 4800)
+            if cut < len(body):
+                boundary = body.rfind("\n\n", 1800, cut)
+                if boundary > 0:
+                    cut = boundary
+            piece, body = body[:cut].strip(), body[cut:].lstrip()
+            counter += 1
+            fragments.append(Fragment(name, f"s{counter:03d}", title + "\n" + piece))
+
+    for line in text.replace("\\## ", "\n## ").splitlines():
+        match = re.match(r"^(#{1,6})\s+(.+)", line)
+        if match:
+            emit()
+            section = []
+            level = len(match[1])
+            heading = heading[:level - 1] + [match[2]]
+        elif not re.fullmatch(r"\s*-{8,}\s*", line):
+            section.append(line)
+    emit()
+    return fragments
+
+
 class LexicalRetriever:
     """Field-aware BM25 with soft topic routing and relevant companion evidence."""
     def __init__(self, fragments):
@@ -142,6 +225,17 @@ class LexicalRetriever:
     @classmethod
     def from_zip(cls, path):
         return cls(load_fragments(path))
+
+    @classmethod
+    def from_zip_and_snapshot(cls, path, snapshot_path=None):
+        fragments = load_fragments(path)
+        kb_version = "base"
+        if snapshot_path:
+            kb_version, extra = load_expert_snapshot(snapshot_path)
+            fragments.extend(extra)
+        retriever = cls(fragments)
+        retriever.kb_version = kb_version
+        return retriever
 
     def search(self, query, top_k=12):
         if top_k <= 0:

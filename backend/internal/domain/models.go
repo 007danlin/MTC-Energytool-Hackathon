@@ -23,6 +23,7 @@ type Session struct {
 	LastResult          *ConsultationResult                 `json:"last_result,omitempty"`
 	Requests            map[string]RequestRecord            `json:"requests,omitempty"`
 	ApplicationRequests map[string]ApplicationRequestRecord `json:"application_requests,omitempty"`
+	PendingExpertGaps   map[string]bool                     `json:"pending_expert_gaps,omitempty"`
 }
 
 type RequestRecord struct {
@@ -36,6 +37,9 @@ type ApplicationRequestRecord struct {
 }
 
 type ResponseMeta struct {
+	Origin    string                   `json:"origin,omitempty"`
+	ReplyID   string                   `json:"reply_id,omitempty"`
+	RequestID string                   `json:"request_id,omitempty"`
 	Status    string                   `json:"status"`
 	Sources   []map[string]interface{} `json:"sources"`
 	ElapsedMS int64                    `json:"elapsed_ms"`

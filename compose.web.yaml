@@ -21,6 +21,8 @@ services:
     environment:
       ML_SERVICE_URL: http://consultation:8090
       ML_TIMEOUT: 250s
+      OPERATOR_TOKEN: ${OPERATOR_TOKEN:-local-demo-operator}
+      EXPERT_KB_SNAPSHOT: /app/var/expert-kb.json
     volumes:
       - sessions:/app/var
     depends_on:
