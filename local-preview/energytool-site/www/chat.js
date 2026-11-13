@@ -213,9 +213,27 @@
     draft = draft || (current.application ? {...current.application} : {full_name:fields.full_name || '',phone:fields.phone || '',company:fields.company || '',summary:summaryText()});
     stage = 'contacts'; render(); scroll.scrollTop = 0; flow.querySelector('input')?.focus();
   }
+  function moscowParts(value = new Date()) {
+    const parts = new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Moscow',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(value);
+    const p = Object.fromEntries(parts.map(x=>[x.type,x.value]));
+    return {date:`${p.year}-${p.month}-${p.day}`,time:`${p.hour}:${p.minute}`};
+  }
+  function callbackFields(value) {
+    const mode=value.callback_mode || 'asap';
+    const at=value.callback_at ? moscowParts(new Date(value.callback_at)) : {};
+    return `<fieldset class="et-callback"><legend>Когда вам удобно поговорить?</legend><p class="et-callback-caption">Выберите удобный вариант связи по телефону.</p><div class="et-callback-options"><label class="et-call-choice"><input type="radio" name="callback_mode" value="asap" ${mode==='asap'?'checked':''}><span><strong>Как можно скорее</strong><small>Готов поговорить сейчас</small></span></label><label class="et-call-choice"><input type="radio" name="callback_mode" value="scheduled" ${mode==='scheduled'?'checked':''}><span><strong>В удобное время</strong><small>Выбрать дату и время</small></span></label></div><div class="et-callback-date" ${mode==='scheduled'?'':'hidden'}><label class="et-field"><span>Дата звонка</span><input type="date" name="callback_date" aria-label="Дата звонка" min="${moscowParts().date}" value="${escape(value.callback_date || at.date || '')}"></label><label class="et-field"><span>Время звонка · МСК</span><input type="time" name="callback_time" aria-label="Время звонка · МСК" value="${escape(value.callback_time || at.time || '')}"></label></div><p class="et-callback-note">${mode==='scheduled'?'Время московское (UTC+3). Сохраним пожелание; запись на звонок пока не подтверждена.':'Укажем, что вы готовы к звонку сейчас. Немедленное соединение с менеджером не гарантируется.'}</p></fieldset>`;
+  }
+  function callbackLabel(value) {
+    if(value.callback_mode==='asap')return 'Как можно скорее — по возможности менеджера';
+    if(value.callback_mode==='scheduled') {
+      const raw=value.callback_date && value.callback_time ? `${value.callback_date}T${value.callback_time}:00+03:00` : value.callback_at;
+      if(raw && !Number.isNaN(Date.parse(raw)))return new Intl.DateTimeFormat('ru-RU',{timeZone:'Europe/Moscow',dateStyle:'long',timeStyle:'short'}).format(new Date(raw))+' МСК — желаемое время';
+    }
+    return 'Не указано';
+  }
   function contactFields(value, includeSummary = false) {
     const field = (name,label,placeholder,extra='') => `<label class="et-field"><span>${label}</span><input aria-label="${label}" name="${name}" value="${escape(value[name])}" placeholder="${placeholder}" ${extra}></label>`;
-    return `<div class="et-fields">${field('full_name','Имя и фамилия','Как к вам обращаться','autocomplete="name" maxlength="200"')}${field('phone','Телефон','+7 (___) ___-__-__','type="tel" inputmode="tel" autocomplete="tel" maxlength="40" required')}${field('company','Название компании','Ваша компания','autocomplete="organization" maxlength="200"')}${includeSummary ? `<label class="et-field"><span>Кратко о вашей задаче</span><textarea name="summary" maxlength="2000" required>${escape(value.summary)}</textarea></label>` : ''}</div>`;
+    return `<div class="et-fields">${field('full_name','Имя и фамилия','Как к вам обращаться','autocomplete="name" maxlength="200"')}${field('phone','Телефон','+7 (___) ___-__-__','type="tel" inputmode="tel" autocomplete="tel" maxlength="40" required')}${field('company','Название компании','Ваша компания','autocomplete="organization" maxlength="200"')}${includeSummary ? `<label class="et-field"><span>Кратко о вашей задаче</span><textarea name="summary" maxlength="2000" required>${escape(value.summary)}</textarea></label>` : ''}</div>${callbackFields(value)}`;
   }
   function validForm(form) {
     const phone = form.elements.phone;
@@ -227,6 +245,15 @@
     }
     if (summary && !summary.value.trim()) {
       errors.push([summary, 'Кратко опишите, с чем нужна помощь.']);
+    }
+    if(form.elements.callback_mode?.value==='scheduled') {
+      const date=form.elements.callback_date,time=form.elements.callback_time;
+      const at=date.value && time.value ? `${date.value}T${time.value}:00+03:00` : '';
+      const previous=current?.application;
+      const unchanged=previous?.callback_mode==='scheduled' && Date.parse(previous.callback_at)===Date.parse(at);
+      if(!date.value)errors.push([date,'Выберите дату звонка.']);
+      if(!time.value)errors.push([time,'Выберите время звонка по Москве.']);
+      if(at && !unchanged && (!Number.isFinite(Date.parse(at)) || Date.parse(at)<=Date.now()))errors.push([date,'Выберите дату и время в будущем.']);
     }
     for (const [field, message] of errors) {
       clearFieldError(field);
@@ -255,6 +282,14 @@
   }
   function bindForm(form, save) {
     form.noValidate = true;
+    form.addEventListener('change',e=>{
+      if(e.target.name!=='callback_mode')return;
+      const scheduled=e.target.value==='scheduled';
+      form.querySelector('.et-callback-date').hidden=!scheduled;
+      form.querySelector('.et-callback-note').textContent=scheduled?'Время московское (UTC+3). Сохраним пожелание; запись на звонок пока не подтверждена.':'Укажем, что вы готовы к звонку сейчас. Немедленное соединение с менеджером не гарантируется.';
+      for(const field of [form.elements.callback_date,form.elements.callback_time])clearFieldError(field);
+      if(scheduled)form.elements.callback_date.focus();
+    });
     form.addEventListener('input',e=>{if(e.target.hasAttribute('aria-invalid'))clearFieldError(e.target);});
     form.onsubmit = e=>{e.preventDefault();if(busy||!validForm(form))return;save(Object.fromEntries(new FormData(form)));};
   }
@@ -265,14 +300,15 @@
     bindForm(form,fields=>{draft={...draft,...fields};noPhone=false;stage='review';render();scroll.scrollTop=0;});
   }
   function reviewHTML(application) {
-    return `<p class="et-eyebrow">КОНТАКТЫ</p>${[application.full_name,application.phone,application.company].filter(Boolean).map(v=>`<p>${escape(v)}</p>`).join('')}<p class="et-eyebrow">РЕЗЮМЕ</p><p class="et-application-summary">${escape(application.summary)}</p>`;
+    return `${application.id ? `<p class="et-eyebrow">НОМЕР ЗАЯВКИ</p><p class="et-application-summary">${escape(application.id)}</p>` : ''}<p class="et-eyebrow">КОНТАКТЫ</p>${[application.full_name,application.phone,application.company].filter(Boolean).map(v=>`<p>${escape(v)}</p>`).join('')}<p class="et-eyebrow">ВРЕМЯ СВЯЗИ</p><p>${escape(callbackLabel(application))}</p><p class="et-hint">Пожелание сохранено в заявке. Звонок пока не подтверждён.</p><p class="et-eyebrow">РЕЗЮМЕ</p><p class="et-application-summary">${escape(application.summary)}</p>`;
   }
   function renderReview(application,saved) {
     flow.innerHTML = previous() + assistant(saved ? 'Заявка сохранена. Её можно скачать или открыть в истории диалогов.' : 'Собрал контакты и резюме нашей беседы. Всё верно?') + card(saved ? 'Заявка сформирована' : 'Проверьте заявку',`<p class="${saved?'et-success':'et-muted'}">${saved?'Сохранено в диалоге':'Заявка сохранится в этом диалоге'}</p>${reviewHTML(application)}`,saved ? button('Скачать заявку','download',true)+button('Продолжить консультацию','continue')+button('История диалогов','history') : button('Изменить данные','edit')+button('Сформировать заявку','save',true),'et-review');
   }
-  async function saveApplication({ full_name, phone, company, summary }) {
+  async function saveApplication({ full_name, phone, company, summary, callback_mode = 'asap', callback_date, callback_time, callback_at }) {
     const session = await api('/sessions/' + current.id + '/application', {
       full_name: full_name.trim(), phone: phone.trim(), company: company.trim(), summary: summary.trim(),
+      callback_mode, callback_at: callback_mode==='scheduled' ? (callback_date && callback_time ? `${callback_date}T${callback_time}:00+03:00` : callback_at || '') : '',
     });
     if (session?.id !== current.id || !session.application?.saved_at) {
       throw new Error('Сервис не подтвердил сохранение заявки. Введённые данные остались в форме.');
@@ -402,8 +438,8 @@
   }
   function download() {
     const a=current?.application;if(!a)return;
-    const text=['Заявка EnergyTool','Сохранено: '+new Date(a.saved_at).toLocaleString('ru-RU',{timeZone:'Europe/Moscow'}),'Имя: '+(a.full_name||'Не указано'),'Телефон: '+a.phone,'Компания: '+(a.company||'Не указана'),'','Задача:',a.summary,'','Сохранено локально. Передача менеджеру не подключена.'].join('\n');
-    const url=URL.createObjectURL(new Blob([text],{type:'text/plain;charset=utf-8'}));const link=document.createElement('a');link.href=url;link.download='energytool-application.txt';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    const text=['Заявка EnergyTool','Номер заявки: '+(a.id || 'Не присвоен'),'Сохранено: '+new Date(a.saved_at).toLocaleString('ru-RU',{timeZone:'Europe/Moscow'}),'Имя: '+(a.full_name||'Не указано'),'Телефон: '+a.phone,'Компания: '+(a.company||'Не указана'),'Желаемое время связи: '+callbackLabel(a),'Звонок пока не подтверждён.','','Задача:',a.summary,'','Сохранено локально. Передача менеджеру не подключена.'].join('\n');
+    const url=URL.createObjectURL(new Blob([text],{type:'text/plain;charset=utf-8'}));const link=document.createElement('a');link.href=url;link.download='energytool-application-'+(a.id || 'saved')+'.txt';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
   host.addEventListener('click',e=> {
     const el=e.target.closest('button');if(!el||el.disabled)return;

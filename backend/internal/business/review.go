@@ -171,7 +171,7 @@ func clone(r ApplicationRecord) ApplicationRecord {
 }
 
 func sameForm(a, b domain.Application) bool {
-	return a.Phone == b.Phone && a.FullName == b.FullName && a.Company == b.Company && a.Summary == b.Summary
+	return a.CallbackMode == b.CallbackMode && a.CallbackAt == b.CallbackAt && a.Phone == b.Phone && a.FullName == b.FullName && a.Company == b.Company && a.Summary == b.Summary
 }
 
 // SaveApplication creates the record on the first confirmed form and updates it on a resave.
@@ -184,6 +184,9 @@ func SaveApplication(existing *ApplicationRecord, session domain.Session, newID 
 	}
 	form := *session.Application
 	if existing == nil {
+		if form.ID != "" {
+			newID = form.ID
+		}
 		card, err := BuildCard(session, newID, 1, demo, now)
 		if err != nil {
 			return ApplicationRecord{}, nil, err
