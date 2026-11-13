@@ -21,6 +21,8 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	addr := env("BACKEND_ADDR", ":8080")
 	storePath := env("BACKEND_STORE_PATH", "./var/sessions.json")
+	snapshotPath := env("EXPERT_KB_SNAPSHOT", "./var/expert-kb.json")
+	operatorToken := strings.TrimSpace(os.Getenv("OPERATOR_TOKEN"))
 	store, err := store.NewFileStore(storePath)
 	if err != nil {
 		logger.Error("store initialization failed", "error", err)
@@ -46,6 +48,7 @@ func main() {
 	}
 
 	app := service.New(store, ml)
+	app.SetSnapshotPath(snapshotPath)
 	ready := func(ctx context.Context) error {
 		client, ok := ml.(interface{ Ready(context.Context) error })
 		if !ok {
@@ -53,7 +56,7 @@ func main() {
 		}
 		return client.Ready(ctx)
 	}
-	api := httpapi.New(app, ready, logger, 255*time.Second)
+	api := httpapi.New(app, ready, logger, 255*time.Second, operatorToken)
 	server := &http.Server{Addr: addr, Handler: api.Handler(), ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout: 10 * time.Second, WriteTimeout: 270 * time.Second, IdleTimeout: 60 * time.Second}
 
