@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"regexp"
@@ -22,6 +24,8 @@ var (
 	ErrHistoryLimit       = errors.New("session history exceeds supported limit")
 	ErrMessageTooLong     = errors.New("message exceeds 10000 characters")
 	ErrEmptyMessage       = errors.New("message must not be empty")
+	ErrRequestConflict    = errors.New("client request id was already used with different data")
+	ErrRequestNotFound    = errors.New("client request id not found")
 	ErrSessionConflict    = errors.New("session changed while processing")
 )
 
@@ -38,7 +42,7 @@ func (s *Service) CreateSession() (domain.Session, error) {
 	id := newID()
 	session := domain.Session{ID: id, Status: "active", CreatedAt: now, UpdatedAt: now,
 		Messages: []domain.Message{}, Lead: domain.LeadState{SessionID: id,
-			Fields: map[string]string{}, Evidence: map[string]interface{}{}}}
+			Fields: map[string]string{}, Evidence: map[string]interface{}{}}, Requests: map[string]domain.RequestRecord{}, ApplicationRequests: map[string]domain.ApplicationRequestRecord{}}
 	if err := s.store.Create(session); err != nil {
 		return domain.Session{}, err
 	}
@@ -71,6 +75,10 @@ func (s *Service) Lead(id string) (domain.LeadState, error) {
 }
 
 func (s *Service) SendMessage(ctx context.Context, id, content string) (domain.ConsultationResult, error) {
+	return s.SendMessageWithID(ctx, id, "", content)
+}
+
+func (s *Service) SendMessageWithID(ctx context.Context, id, requestID, content string) (domain.ConsultationResult, error) {
 	content = strings.TrimSpace(content)
 	if content == "" {
 		return domain.ConsultationResult{}, ErrEmptyMessage
@@ -86,6 +94,19 @@ func (s *Service) SendMessage(ctx context.Context, id, content string) (domain.C
 	}
 	if session.Status != "active" {
 		return domain.ConsultationResult{}, ErrClosed
+	}
+	if session.Requests == nil {
+		session.Requests = map[string]domain.RequestRecord{}
+	}
+	fingerprint := requestFingerprint("message", content)
+	if requestID != "" {
+		if record, ok := session.Requests[requestID]; ok {
+			if record.Fingerprint != fingerprint {
+				return domain.ConsultationResult{}, ErrRequestConflict
+			}
+			record.Result.RequestID = requestID
+			return record.Result, nil
+		}
 	}
 	if len(session.Messages)+1 > 200 {
 		return domain.ConsultationResult{}, ErrHistoryLimit
@@ -106,7 +127,7 @@ func (s *Service) SendMessage(ctx context.Context, id, content string) (domain.C
 		return domain.ConsultationResult{}, err
 	}
 	if s.ml == nil {
-		return s.recordTechnicalFailure(session, errors.New("consultation service is not configured"))
+		return s.recordTechnicalFailureWithID(session, requestID, fingerprint, errors.New("consultation service is not configured"))
 	}
 	mlRequest := domain.ConsultationRequest{SessionID: session.ID, Messages: make([]domain.MessageInput, 0, len(session.Messages))}
 	if session.LastResult != nil {
@@ -119,11 +140,12 @@ func (s *Service) SendMessage(ctx context.Context, id, content string) (domain.C
 	mlStarted := time.Now()
 	result, err := s.ml.Respond(ctx, mlRequest)
 	if err != nil {
-		return s.recordTechnicalFailure(session, err)
+		return s.recordTechnicalFailureWithID(session, requestID, fingerprint, err)
 	}
 	if result.Debug == nil {
 		result.Debug = map[string]interface{}{}
 	}
+	result.RequestID = requestID
 	result.Debug["ml_elapsed_ms"] = result.ElapsedMS
 	result.ElapsedMS = time.Since(mlStarted).Milliseconds()
 	result.Debug["backend_elapsed_ms"] = result.ElapsedMS
@@ -135,7 +157,7 @@ func (s *Service) SendMessage(ctx context.Context, id, content string) (domain.C
 		}
 	}
 	if result.Lead.SessionID != session.ID {
-		return s.recordTechnicalFailure(session, errors.New("ML returned mismatched session id"))
+		return s.recordTechnicalFailureWithID(session, requestID, fingerprint, errors.New("ML returned mismatched session id"))
 	}
 	assistant := domain.Message{ID: newID(), Role: "assistant", Content: result.Answer, Response: &domain.ResponseMeta{Status: result.Status, Sources: result.Sources, ElapsedMS: result.ElapsedMS},
 		Sequence: len(session.Messages) + 1, CreatedAt: time.Now().UTC()}
@@ -143,17 +165,21 @@ func (s *Service) SendMessage(ctx context.Context, id, content string) (domain.C
 	session.UpdatedAt = assistant.CreatedAt
 	session.Lead = result.Lead
 	session.LastResult = &result
+	if requestID != "" {
+		session.Requests[requestID] = domain.RequestRecord{Fingerprint: fingerprint, Result: result}
+	}
 	if err := s.store.Save(session); err != nil {
 		return domain.ConsultationResult{}, err
 	}
 	return result, nil
 }
 
-func (s *Service) recordTechnicalFailure(session domain.Session, cause error) (domain.ConsultationResult, error) {
+func (s *Service) recordTechnicalFailureWithID(session domain.Session, requestID, fingerprint string, cause error) (domain.ConsultationResult, error) {
 	answer := "Сейчас не удалось получить ответ из-за технического сбоя. История диалога сохранена; попробуйте позже."
 	result := domain.ConsultationResult{Answer: answer, Status: "technical_error", Sources: []map[string]interface{}{},
 		ElapsedMS: 0, Lead: session.Lead, LeadReady: false, Summary: map[string]interface{}{},
 		Debug: map[string]interface{}{"error_code": "consultation_unavailable"}, SchemaVersion: "1.0"}
+	result.RequestID = requestID
 	if session.LastResult != nil {
 		result.Summary = session.LastResult.Summary
 		result.LeadReady = session.LastResult.LeadReady
@@ -163,6 +189,12 @@ func (s *Service) recordTechnicalFailure(session domain.Session, cause error) (d
 	session.Messages = append(session.Messages, assistant)
 	session.UpdatedAt = assistant.CreatedAt
 	session.LastResult = &result
+	if requestID != "" {
+		if session.Requests == nil {
+			session.Requests = map[string]domain.RequestRecord{}
+		}
+		session.Requests[requestID] = domain.RequestRecord{Fingerprint: fingerprint, Result: result}
+	}
 	// Avoid returning or logging the raw upstream error, which could contain private details.
 	_ = cause
 	if err := s.store.Save(session); err != nil {
@@ -191,6 +223,10 @@ func newID() string {
 // SaveApplication stores the user's reviewed form, independently of ML extraction.
 // It is a local handoff artifact, not a delivery acknowledgement from a CRM.
 func (s *Service) SaveApplication(id string, input domain.Application) (domain.Session, error) {
+	return s.SaveApplicationWithID(id, "", input)
+}
+
+func (s *Service) SaveApplicationWithID(id, requestID string, input domain.Application) (domain.Session, error) {
 	unlock := s.lock(id)
 	defer unlock()
 	session, err := s.store.Get(id)
@@ -199,6 +235,20 @@ func (s *Service) SaveApplication(id string, input domain.Application) (domain.S
 	}
 	if session.Status != "active" {
 		return domain.Session{}, ErrClosed
+	}
+	if session.ApplicationRequests == nil {
+		session.ApplicationRequests = map[string]domain.ApplicationRequestRecord{}
+	}
+	input.RequestID = requestID
+	fingerprint := requestFingerprint("application", input.FullName, input.Phone, input.Company, input.Summary)
+	if requestID != "" {
+		if record, ok := session.ApplicationRequests[requestID]; ok {
+			if record.Fingerprint != fingerprint {
+				return domain.Session{}, ErrRequestConflict
+			}
+			session.Application = &record.Application
+			return session, nil
+		}
 	}
 	input.FullName = strings.TrimSpace(input.FullName)
 	input.Phone = strings.TrimSpace(input.Phone)
@@ -210,9 +260,34 @@ func (s *Service) SaveApplication(id string, input domain.Application) (domain.S
 	}
 	input.SavedAt = time.Now().UTC()
 	session.Application = &input
+	if requestID != "" {
+		session.ApplicationRequests[requestID] = domain.ApplicationRequestRecord{Fingerprint: fingerprint, Application: input}
+	}
 	session.UpdatedAt = input.SavedAt
 	if err := s.store.Save(session); err != nil {
 		return domain.Session{}, err
 	}
 	return session, nil
+}
+
+func (s *Service) FindRequest(id, requestID string) (domain.ConsultationResult, error) {
+	session, err := s.store.Get(id)
+	if err != nil {
+		return domain.ConsultationResult{}, err
+	}
+	record, ok := session.Requests[requestID]
+	if !ok {
+		return domain.ConsultationResult{}, ErrRequestNotFound
+	}
+	return record.Result, nil
+}
+
+func requestFingerprint(kind string, values ...string) string {
+	h := sha256.New()
+	h.Write([]byte(kind))
+	for _, value := range values {
+		h.Write([]byte{0})
+		h.Write([]byte(value))
+	}
+	return hex.EncodeToString(h.Sum(nil))
 }

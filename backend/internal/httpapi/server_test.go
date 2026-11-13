@@ -54,6 +54,18 @@ func TestChatHTTPFlowAndErrorShape(t *testing.T) {
 	if result.Answer != "Уточните задачу." || result.Sources == nil {
 		t.Fatalf("result=%+v", result)
 	}
+	request := httptest.NewRequest(http.MethodPost, "/api/v1/sessions/"+session.ID+"/messages", strings.NewReader(`{"content":"Новый текст"}`))
+	request.Header.Set("Idempotency-Key", "same-request")
+	replay := httptest.NewRecorder()
+	server.ServeHTTP(replay, request)
+	if replay.Code != http.StatusOK {
+		t.Fatalf("replay status=%d", replay.Code)
+	}
+	lookup := httptest.NewRecorder()
+	server.ServeHTTP(lookup, httptest.NewRequest(http.MethodGet, "/api/v1/sessions/"+session.ID+"/requests/same-request", nil))
+	if lookup.Code != http.StatusOK {
+		t.Fatalf("lookup status=%d body=%s", lookup.Code, lookup.Body)
+	}
 	missing := httptest.NewRecorder()
 	server.ServeHTTP(missing, httptest.NewRequest(http.MethodGet, "/api/v1/sessions/missing", nil))
 	if missing.Code != http.StatusNotFound {

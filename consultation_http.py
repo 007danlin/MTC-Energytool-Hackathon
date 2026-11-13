@@ -11,6 +11,7 @@ from consultant import parse_payload
 from llm_client import ModelError
 
 MAX_BODY = 1 << 20
+WEB_ADAPTER_VERSION = "1.1.0"
 
 
 class WebCitationClient:
@@ -110,7 +111,15 @@ def make_server(address, consultant, *, workers=3, budget=240):
             if not slots.acquire(blocking=False):
                 return self.reply(503, {'error': 'busy'})
             try:
-                result = respond_json(consultant, payload, deadline=time.monotonic() + budget)
+                started = time.monotonic()
+                result = respond_json(consultant, payload, deadline=started + budget)
+                elapsed_ms = int((time.monotonic() - started) * 1000)
+                debug = result.setdefault('debug', {})
+                debug['adapter_version'] = WEB_ADAPTER_VERSION
+                debug['model'] = consultant.settings.model
+                debug['consultation_elapsed_ms'] = elapsed_ms
+                debug['generation_elapsed_ms'] = result.get('elapsed_ms', elapsed_ms)
+                debug['final_status'] = result.get('status')
             except (ValueError, TypeError):
                 self.reply(400, {'error': 'invalid_request'})
             except Exception:
