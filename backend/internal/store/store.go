@@ -44,6 +44,19 @@ func NewFileStore(path string) (*FileStore, error) {
 			s.data = make(map[string]domain.Session)
 		}
 	}
+	changed := false
+	for id, session := range s.data {
+		if session.Application != nil && session.Application.ID == "" {
+			session.Application.ID = domain.ApplicationID(session.ID)
+			s.data[id] = session
+			changed = true
+		}
+	}
+	if changed {
+		if err := s.persist(); err != nil {
+			return nil, err
+		}
+	}
 	return s, nil
 }
 

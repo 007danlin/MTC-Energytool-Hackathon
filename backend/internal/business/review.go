@@ -184,6 +184,9 @@ func SaveApplication(existing *ApplicationRecord, session domain.Session, newID 
 	}
 	form := *session.Application
 	if existing == nil {
+		if form.ID != "" {
+			newID = form.ID
+		}
 		card, err := BuildCard(session, newID, 1, demo, now)
 		if err != nil {
 			return ApplicationRecord{}, nil, err
