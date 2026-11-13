@@ -89,6 +89,7 @@ type Product struct {
 }
 
 type NeedCard struct {
+	ContactTime   Field     `json:"contact_time"`
 	SchemaVersion string    `json:"schema_version"`
 	ApplicationID string    `json:"application_id"`
 	SessionID     string    `json:"session_id"`
@@ -144,6 +145,7 @@ func BuildCard(session domain.Session, applicationID string, version int, demo b
 	// The form collects only a phone number, so that is the confirmed channel.
 	card.Contact.PreferredChannel = Field{Value: "телефон", Status: Confirmed, Origin: OriginForm}
 	card.Task = formField(app.Summary)
+	card.ContactTime = formField(app.ContactPreference())
 
 	summary := decodeSummary(session.LastResult)
 	card.Object = verifiedFields(summary.Object, session.Messages)

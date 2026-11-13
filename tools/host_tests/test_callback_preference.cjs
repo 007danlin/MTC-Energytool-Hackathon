@@ -1,0 +1,46 @@
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const assert=require('node:assert/strict');
+(async()=>{
+const browser=await chromium.launch({headless:true});
+const p=await browser.newPage({viewport:{width:1440,height:1000},locale:'ru-RU'});const errors=[];p.on('pageerror',e=>errors.push(e.message));
+let session={id:'callback-ui-test',status:'active',messages:[],lead:{fields:{}},created_at:new Date().toISOString(),updated_at:new Date().toISOString()};
+await p.route('**/api/v1/**',async route=>{
+ const req=route.request(),url=new URL(req.url());
+ if(url.pathname.endsWith('/application')){session.application={...req.postDataJSON(),id:'ET-callback-ui-test',saved_at:new Date().toISOString()};return route.fulfill({json:session});}
+ if(url.pathname.endsWith('/sessions') && req.method()==='GET')return route.fulfill({json:[session]});
+ return route.fulfill({json:session});
+});
+await p.goto((process.env.CHAT_URL || 'http://127.0.0.1:8768/consultation.html'));
+await p.getByRole('button',{name:'Оставить заявку специалисту',exact:true}).click();
+await p.getByLabel('Телефон',{exact:true}).fill('+7 999 000 00 00');
+await p.getByLabel('Кратко о вашей задаче').fill('Тест: учёт по арендаторам.');
+assert(await p.locator('input[value="asap"]').isChecked());
+await p.locator('input[value="scheduled"]').check();
+await p.getByLabel('Дата звонка',{exact:true}).fill('2020-01-01');
+await p.getByLabel('Время звонка · МСК',{exact:true}).fill('14:30');
+await p.getByRole('button',{name:'Проверить заявку',exact:true}).click();
+assert(await p.getByText('Выберите дату и время в будущем.',{exact:true}).isVisible());
+await p.getByLabel('Дата звонка',{exact:true}).fill('2030-11-14');
+await p.locator('.et-callback').screenshot({path:require('node:path').join(require('node:os').tmpdir(),'mts-callback-desktop.png')});
+await p.setViewportSize({width:390,height:1000});
+assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+await p.locator('.et-callback').screenshot({path:require('node:path').join(require('node:os').tmpdir(),'mts-callback-mobile.png')});
+await p.getByRole('button',{name:'Проверить заявку',exact:true}).click();
+assert((await p.locator('.et-review').innerText()).includes('14:30 МСК'));
+await p.getByRole('button',{name:'Сформировать заявку',exact:true}).click();
+await p.getByRole('heading',{name:'Заявка сформирована',exact:true}).waitFor();
+assert.equal(session.application.callback_at,'2030-11-14T14:30:00+03:00');
+await p.reload();
+await p.getByRole('button',{name:'Меню',exact:true}).click();
+await p.getByRole('button',{name:'Сохранённая заявка',exact:true}).click();
+assert((await p.locator('.et-review').innerText()).includes('14:30 МСК'));
+await p.getByRole('button',{name:'Меню',exact:true}).click();
+await p.getByRole('button',{name:'Изменить контакты',exact:true}).click();
+await p.locator('input[value="asap"]').check();
+await p.getByRole('button',{name:'Сохранить',exact:true}).click();
+await p.waitForFunction(()=>!document.querySelector('.et-modal').open);
+assert.equal(session.application.callback_mode,'asap');assert.equal(session.application.callback_at,'');
+assert.equal(errors.length,0,errors.join('\n'));
+console.log('Browser checks passed: past time validation, desktop/mobile layout, scheduled save, reload, switch to ASAP. API mocked.');
+await browser.close();
+})().catch(e=>{console.error(e);process.exit(1)});
