@@ -208,6 +208,10 @@ func (s *Service) SaveApplication(id string, input domain.Application) (domain.S
 	if !regexp.MustCompile(`^\+?[0-9 ()-]+$`).MatchString(input.Phone) || len(digits) < 10 || len(digits) > 15 || len(input.Phone) > 40 || input.Summary == "" || len([]rune(input.Summary)) > 2000 || len([]rune(input.FullName)) > 200 || len([]rune(input.Company)) > 200 {
 		return domain.Session{}, ErrInvalidApplication
 	}
+	input.ID = domain.ApplicationID(session.ID)
+	if session.Application != nil && session.Application.ID != "" {
+		input.ID = session.Application.ID
+	}
 	input.SavedAt = time.Now().UTC()
 	session.Application = &input
 	session.UpdatedAt = input.SavedAt

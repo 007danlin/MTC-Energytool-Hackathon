@@ -265,7 +265,7 @@
     bindForm(form,fields=>{draft={...draft,...fields};noPhone=false;stage='review';render();scroll.scrollTop=0;});
   }
   function reviewHTML(application) {
-    return `<p class="et-eyebrow">КОНТАКТЫ</p>${[application.full_name,application.phone,application.company].filter(Boolean).map(v=>`<p>${escape(v)}</p>`).join('')}<p class="et-eyebrow">РЕЗЮМЕ</p><p class="et-application-summary">${escape(application.summary)}</p>`;
+    return `${application.id ? `<p class="et-eyebrow">НОМЕР ЗАЯВКИ</p><p class="et-application-summary">${escape(application.id)}</p>` : ''}<p class="et-eyebrow">КОНТАКТЫ</p>${[application.full_name,application.phone,application.company].filter(Boolean).map(v=>`<p>${escape(v)}</p>`).join('')}<p class="et-eyebrow">РЕЗЮМЕ</p><p class="et-application-summary">${escape(application.summary)}</p>`;
   }
   function renderReview(application,saved) {
     flow.innerHTML = previous() + assistant(saved ? 'Заявка сохранена. Её можно скачать или открыть в истории диалогов.' : 'Собрал контакты и резюме нашей беседы. Всё верно?') + card(saved ? 'Заявка сформирована' : 'Проверьте заявку',`<p class="${saved?'et-success':'et-muted'}">${saved?'Сохранено в диалоге':'Заявка сохранится в этом диалоге'}</p>${reviewHTML(application)}`,saved ? button('Скачать заявку','download',true)+button('Продолжить консультацию','continue')+button('История диалогов','history') : button('Изменить данные','edit')+button('Сформировать заявку','save',true),'et-review');
@@ -402,8 +402,8 @@
   }
   function download() {
     const a=current?.application;if(!a)return;
-    const text=['Заявка EnergyTool','Сохранено: '+new Date(a.saved_at).toLocaleString('ru-RU',{timeZone:'Europe/Moscow'}),'Имя: '+(a.full_name||'Не указано'),'Телефон: '+a.phone,'Компания: '+(a.company||'Не указана'),'','Задача:',a.summary,'','Сохранено локально. Передача менеджеру не подключена.'].join('\n');
-    const url=URL.createObjectURL(new Blob([text],{type:'text/plain;charset=utf-8'}));const link=document.createElement('a');link.href=url;link.download='energytool-application.txt';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    const text=['Заявка EnergyTool','Номер заявки: '+(a.id || 'Не присвоен'),'Сохранено: '+new Date(a.saved_at).toLocaleString('ru-RU',{timeZone:'Europe/Moscow'}),'Имя: '+(a.full_name||'Не указано'),'Телефон: '+a.phone,'Компания: '+(a.company||'Не указана'),'','Задача:',a.summary,'','Сохранено локально. Передача менеджеру не подключена.'].join('\n');
+    const url=URL.createObjectURL(new Blob([text],{type:'text/plain;charset=utf-8'}));const link=document.createElement('a');link.href=url;link.download='energytool-application-'+(a.id || 'saved')+'.txt';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
   host.addEventListener('click',e=> {
     const el=e.target.closest('button');if(!el||el.disabled)return;

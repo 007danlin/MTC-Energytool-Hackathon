@@ -3,6 +3,7 @@ package domain
 import "time"
 
 type Application struct {
+	ID       string    `json:"id"`
 	FullName string    `json:"full_name"`
 	Phone    string    `json:"phone"`
 	Company  string    `json:"company"`
@@ -73,3 +74,6 @@ type APIError struct {
 	Message   string `json:"message"`
 	RequestID string `json:"request_id"`
 }
+
+// ApplicationID identifies the single reviewed application belonging to a session.
+func ApplicationID(sessionID string) string { return "ET-" + sessionID }
