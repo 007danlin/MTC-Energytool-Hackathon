@@ -284,12 +284,12 @@ func (s *Server) saveApplication(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, 16<<10)
 	var payload struct {
 		ClientRequestID string `json:"client_request_id"`
-		CallbackMode string `json:"callback_mode"`
-		CallbackAt   string `json:"callback_at"`
-		FullName     string `json:"full_name"`
-		Phone        string `json:"phone"`
-		Company      string `json:"company"`
-		Summary      string `json:"summary"`
+		CallbackMode    string `json:"callback_mode"`
+		CallbackAt      string `json:"callback_at"`
+		FullName        string `json:"full_name"`
+		Phone           string `json:"phone"`
+		Company         string `json:"company"`
+		Summary         string `json:"summary"`
 	}
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
