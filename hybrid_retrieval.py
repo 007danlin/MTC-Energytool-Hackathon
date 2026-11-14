@@ -41,10 +41,16 @@ CALC = re.compile(r"оценк|расчет|невыгод|стоим|эконо
 
 
 def _split_query(query):
+    """Return the whole current message and the history of a dialogue.retrieval_query string.
+
+    retrieval_query repeats the current message twice ("X<newline>X") and X may span several lines
+    (a greeting, then the question). The dense part needs the whole message, not its first line.
+    """
     current, _, history = query.partition("\nКонтекст разговора:\n")
-    lines = [line for line in current.split("\n") if line.strip()]
-    latest = lines[0] if lines else current
-    return latest.strip(), history.strip()
+    mid = (len(current) - 1) // 2
+    if len(current) % 2 == 1 and current[mid] == "\n" and current[:mid] == current[mid + 1:]:
+        current = current[:mid]
+    return current.strip(), history.strip()
 
 
 def _normalize(vector):
