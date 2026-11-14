@@ -3,6 +3,7 @@ package domain
 import "time"
 
 type Application struct {
+	RequestID    string    `json:"request_id,omitempty"`
 	CallbackMode string    `json:"callback_mode,omitempty"`
 	CallbackAt   string    `json:"callback_at,omitempty"`
 	ID           string    `json:"id"`
@@ -14,18 +15,34 @@ type Application struct {
 }
 
 type Session struct {
-	Application *Application        `json:"application,omitempty"`
-	ID          string              `json:"id"`
-	Status      string              `json:"status"`
-	CreatedAt   time.Time           `json:"created_at"`
-	UpdatedAt   time.Time           `json:"updated_at"`
-	ClosedAt    *time.Time          `json:"closed_at,omitempty"`
-	Messages    []Message           `json:"messages"`
-	Lead        LeadState           `json:"lead"`
-	LastResult  *ConsultationResult `json:"last_result,omitempty"`
+	Application         *Application                        `json:"application,omitempty"`
+	ID                  string                              `json:"id"`
+	Status              string                              `json:"status"`
+	CreatedAt           time.Time                           `json:"created_at"`
+	UpdatedAt           time.Time                           `json:"updated_at"`
+	ClosedAt            *time.Time                          `json:"closed_at,omitempty"`
+	Messages            []Message                           `json:"messages"`
+	Lead                LeadState                           `json:"lead"`
+	LastResult          *ConsultationResult                 `json:"last_result,omitempty"`
+	Requests            map[string]RequestRecord            `json:"requests,omitempty"`
+	ApplicationRequests map[string]ApplicationRequestRecord `json:"application_requests,omitempty"`
+	PendingExpertGaps   map[string]bool                     `json:"pending_expert_gaps,omitempty"`
+}
+
+type RequestRecord struct {
+	Fingerprint string             `json:"fingerprint"`
+	Result      ConsultationResult `json:"result"`
+}
+
+type ApplicationRequestRecord struct {
+	Fingerprint string      `json:"fingerprint"`
+	Application Application `json:"application"`
 }
 
 type ResponseMeta struct {
+	Origin    string                   `json:"origin,omitempty"`
+	ReplyID   string                   `json:"reply_id,omitempty"`
+	RequestID string                   `json:"request_id,omitempty"`
 	Status    string                   `json:"status"`
 	Sources   []map[string]interface{} `json:"sources"`
 	ElapsedMS int64                    `json:"elapsed_ms"`
@@ -60,6 +77,7 @@ type MessageInput struct {
 }
 
 type ConsultationResult struct {
+	RequestID     string                   `json:"request_id,omitempty"`
 	Answer        string                   `json:"answer"`
 	Status        string                   `json:"status"`
 	Sources       []map[string]interface{} `json:"sources"`
