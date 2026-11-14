@@ -3,6 +3,6 @@
 {"event": "checkpoint", "completed": 2, "total": 2}
 {"event": "checkpoint", "completed": 2, "total": 2}
 ----------------------------------------------------------------------
-Ran 114 tests in 2.611s
+Ran 116 tests in 2.623s
 
 OK

@@ -214,6 +214,24 @@ def validate_sources(payload, fragments):
     return sources
 
 
+def unconfirmed_integration_target(question, fragments):
+    """An explicit named integration needs evidence about that exact target.
+
+    This deliberately covers proper Latin identifiers and quoted names, not
+    generic classes such as «с системой учёта» or names inferred by the model.
+    Missing retrieval evidence means unconfirmed, never unsupported.
+    """
+    if not re.search(r'интегр|совместим', question, re.I):
+        return None
+    pattern = r'\b(?:с|со)\s+(?:системой|платформой|сервисом)\s+(?:[«"]([^»"\n]{2,80})[»"]|([A-Z][A-Za-z0-9_.-]{2,79}))'
+    targets = [a or b for a,b in re.findall(pattern,question)]
+    for target in targets:
+        target=target.rstrip('.?')
+        if not any(normalized(target) in normalized(f.text) for f in fragments):
+            return target
+    return None
+
+
 def make_summary(payload, request, lead, fragments):
     raw = payload.get("summary", {})
     summary = build_facts(request.messages, request.summary_so_far, raw)
@@ -304,6 +322,19 @@ class Consultant:
         context["requested_output"] = "action_plan" if asks_for_plan(request.messages[-1].content) else "continue_consultation"
         model_messages = [{"role": "system", "content": SYSTEM_PROMPT},
                           {"role": "user", "content": json.dumps(context, ensure_ascii=False)}]
+        target = unconfirmed_integration_target(request.messages[-1].content, fragments)
+        if target:
+            # Never let generic protocol support establish a named integration.
+            # Retain the normal client-fact provenance and handoff contract.
+            answer = (f"В найденных материалах нет подтверждения интеграции с системой «{target}». "
+                      "Это не означает, что интеграция невозможна. Для проверки нужна документация "
+                      "этой системы и её интерфейсов. Можно передать вопрос специалисту.")
+            summary = make_summary({}, request, lead, fragments)
+            return ConsultationResult(answer, "knowledge_gap", [], round((time.monotonic()-started)*1000),
+                                      lead, lead_is_ready(lead), summary,
+                                      {"retrieved_sources":[f.source_id for f in fragments],
+                                       "context_chars":used_chars,"repairs":0,"error_code":None,
+                                       "routing":"unconfirmed_named_integration"})
         repairs = 0
         suppressed_questions = 0
         try:

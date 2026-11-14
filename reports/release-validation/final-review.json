@@ -1,0 +1,9 @@
+{
+  "passed": true,
+  "pdf_pages": 10,
+  "visual_review": "all rendered pages checked; desktop/mobile UI screenshots checked",
+  "recording": "real local model and synthetic session, no mocked responses",
+  "bundle_crc": "passed",
+  "organizer_real_api_tested": false,
+  "speed_target_met": false
+}
