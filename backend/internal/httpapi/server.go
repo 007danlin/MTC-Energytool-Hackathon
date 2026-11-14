@@ -66,6 +66,14 @@ func New(service SessionService, ready Readiness, logger *slog.Logger, requestTi
 
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
+	mux.HandleFunc("GET /api/v1/applications", s.listApplications)
+	mux.HandleFunc("GET /api/v1/applications/reasons", s.applicationReasons)
+	mux.HandleFunc("GET /api/v1/applications/{applicationID}", s.getApplication)
+	mux.HandleFunc("PATCH /api/v1/applications/{applicationID}/card", s.editApplication)
+	mux.HandleFunc("POST /api/v1/applications/{applicationID}/transitions", s.transitionApplication)
+	mux.HandleFunc("GET /api/v1/applications/{applicationID}/export", s.exportApplication)
+	mux.HandleFunc("GET /api/v1/metrics/pilot", s.pilotMetrics)
+
 	mux.HandleFunc("GET /health/live", s.live)
 	mux.HandleFunc("GET /health/ready", s.readiness)
 	mux.HandleFunc("POST /api/v1/sessions", s.createSession)
@@ -218,7 +226,7 @@ func (s *Server) getLead(w http.ResponseWriter, r *http.Request) {
 func (s *Server) mapError(w http.ResponseWriter, r *http.Request, err error) {
 	switch {
 	case errors.Is(err, service.ErrInvalidApplication):
-		writeError(w, r, http.StatusBadRequest, "invalid_application", "Укажите корректный телефон и краткое описание задачи.")
+		writeError(w, r, http.StatusBadRequest, "invalid_application", "Укажите корректный телефон или email и краткое описание задачи.")
 	case errors.Is(err, store.ErrNotFound):
 		writeError(w, r, http.StatusNotFound, "not_found", "Session was not found")
 	case errors.Is(err, service.ErrClosed):
@@ -284,6 +292,7 @@ func (s *Server) saveApplication(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, 16<<10)
 	var payload struct {
 		ClientRequestID string `json:"client_request_id"`
+		Email           string `json:"email"`
 		CallbackMode    string `json:"callback_mode"`
 		CallbackAt      string `json:"callback_at"`
 		FullName        string `json:"full_name"`
@@ -308,7 +317,7 @@ func (s *Server) saveApplication(w http.ResponseWriter, r *http.Request) {
 	if requestID == "" {
 		requestID = r.URL.Query().Get("client_request_id")
 	}
-	session, err := s.service.SaveApplicationWithID(r.PathValue("sessionID"), requestID, domain.Application{CallbackMode: payload.CallbackMode, CallbackAt: payload.CallbackAt, FullName: payload.FullName, Phone: payload.Phone, Company: payload.Company, Summary: payload.Summary})
+	session, err := s.service.SaveApplicationWithID(r.PathValue("sessionID"), requestID, domain.Application{CallbackMode: payload.CallbackMode, CallbackAt: payload.CallbackAt, FullName: payload.FullName, Phone: payload.Phone, Email: payload.Email, Company: payload.Company, Summary: payload.Summary})
 	if err != nil {
 		s.mapError(w, r, err)
 		return

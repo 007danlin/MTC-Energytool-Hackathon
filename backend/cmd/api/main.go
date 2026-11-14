@@ -49,6 +49,7 @@ func main() {
 
 	app := service.New(store, ml)
 	app.SetSnapshotPath(snapshotPath)
+	app.SetDemoMode(os.Getenv("DEMO_MODE") == "true")
 	ready := func(ctx context.Context) error {
 		client, ok := ml.(interface{ Ready(context.Context) error })
 		if !ok {
@@ -62,6 +63,18 @@ func main() {
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+	go func() {
+		ticker := time.NewTicker(5 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				_ = app.RetryPendingExpertGaps()
+			}
+		}
+	}()
 	go func() {
 		<-ctx.Done()
 		shutdown, cancel := context.WithTimeout(context.Background(), 10*time.Second)

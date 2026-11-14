@@ -47,12 +47,17 @@ func ExportTXT(card NeedCard) string {
 	if card.Demo {
 		w("ДЕМО-ДАННЫЕ: не реальное обращение клиента")
 	}
-	w("Заявка: %s | версия %d | %s МСК", card.ApplicationID, card.Version, card.BuiltAt.In(moscow).Format("02.01.2006 15:04"))
+	number := card.ApplicationNumber
+	if number == "" {
+		number = card.ApplicationID
+	}
+	w("Заявка: %s | версия %d | %s МСК", number, card.Version, card.BuiltAt.In(moscow).Format("02.01.2006 15:04"))
 	w("Сессия: %s", card.SessionID)
 	w("Статус передачи: сохранено в прототипе, в CRM не отправлялось")
 	w("")
 	w("КОНТАКТ")
 	w("%s", fieldLine("Телефон", card.Contact.Phone))
+	w("%s", fieldLine("Email", card.Contact.Email))
 	w("%s", fieldLine("Имя", card.Contact.FullName))
 	w("%s", fieldLine("Компания", card.Contact.Company))
 	w("%s", fieldLine("Способ связи", card.Contact.PreferredChannel))

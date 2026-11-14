@@ -54,7 +54,7 @@ Routes:
 - `POST /api/v1/sessions/{sessionID}/close`, `GET /api/v1/sessions/{sessionID}/lead`
 - `POST /api/v1/sessions/{sessionID}/application` — persist the reviewed contact form and summary independently of ML state; see `../docs/consultation-ui.md`.
 
-All user and assistant messages are saved. Close marks a session read-only without deleting it. The debug UI can use `elapsed_ms`, `sources`, and `debug` fields in the consultation result; sources may be empty when the knowledge base returns no relevant passage.
+All user and assistant messages are saved. Close marks a session read-only without deleting it. Each assistant message preserves its own `response` with `elapsed_ms`, `sources`, and `debug`, including after restart. `elapsed_ms` measures the call to the consultation service even when it fails; it excludes browser network time. The original ML processing time is retained in `debug.ml_elapsed_ms` only when available. `sources` contains validated citations selected for the answer; `debug.retrieved_sources` is the supplied context and does not imply every fragment was cited. Empty citations do not by themselves prove that retrieval found nothing.
 
 For application retries, send `client_request_id` in JSON, `Idempotency-Key` as a header, or `client_request_id` as a query parameter. Reusing an ID with an identical payload replays the stored result; reusing it with different data returns `409 request_id_conflict`.
 

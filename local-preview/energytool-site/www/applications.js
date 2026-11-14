@@ -27,7 +27,7 @@ const availableActions = {
   in_review: ['accept', 'needs_info', 'reject'], accepted: ['reopen'], rejected: ['reopen'],
 };
 const contactFields = [
-  ['full_name', 'Имя и фамилия'], ['phone', 'Телефон'], ['company', 'Компания'],
+  ['full_name', 'Имя и фамилия'], ['phone', 'Телефон'], ['email', 'Email'], ['company', 'Компания'],
 ];
 const dateTime = new Intl.DateTimeFormat('ru-RU', {
   dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Moscow',
@@ -116,7 +116,7 @@ async function loadQueue() {
       const customer = [item.company, item.contact_name].filter(Boolean).join(' · ');
       return `<li><a class="queue-item" href="${escape(urlFor(item.id))}" data-id="${escape(item.id)}">
         <div class="item-meta">${badge(statuses, item.status, 'Статус неизвестен')}${item.demo === true ? '<span class="badge demo">Демо</span>' : ''}<time datetime="${escape(item.updated_at)}">${dateLabel(item.updated_at)}</time></div>
-        <strong>${escape(item.task || 'Задача не указана')}</strong>
+        <strong>${item.number ? `№ ${escape(item.number)} · ` : ''}${escape(item.task || 'Задача не указана')}</strong>
         ${customer ? `<p class="muted">${escape(customer)}</p>` : ''}
         ${items(item.products).length ? `<p class="muted">${escape(item.products.join(' · '))}</p>` : ''}
         ${item.next_step ? `<p class="muted">${escape(item.next_step)}</p>` : ''}
@@ -211,8 +211,8 @@ function renderCard(notice = '') {
   const allowed = label(availableActions, status, []);
   const task = card.task?.value || 'Задача не указана';
   const reviewActions = allowed.map((name, index) => actionButton(actions[name].label, 'transition', { value: name, primary: index === 0 }));
-  const contacts = contactFields.map(([name, title]) => fact(card.contact?.[name], title));
-  if (card.contact_time?.value) contacts.push(fact(card.contact_time, 'Желаемое время звонка'));
+  const contacts = contactFields.filter(([name]) => !['phone','email'].includes(name) || card.contact?.[name]?.value).map(([name, title]) => fact(card.contact?.[name], title));
+  if (card.contact_time?.value) contacts.push(fact(card.contact_time, card.contact?.phone?.value ? 'Желаемое время звонка' : 'Желаемое время связи'));
   const power = items(card.power).map(value => `<li class="fact">
     <p><strong>${escape(value.amount)} ${escape(value.unit)}</strong>${value.kind?.value ? ' · ' + escape(value.kind.value) : ''}</p>
     <div class="fact-meta">${badge(powerStates, value.state, 'Состояние неизвестно')}${evidenceLinks(value.evidence)}</div>
@@ -224,7 +224,7 @@ function renderCard(notice = '') {
     <div class="item-meta">${badge(statuses, status, 'Статус неизвестен')}${record.demo === true ? '<span class="badge demo">Демо</span>' : ''}</div>
     <h2 id="card-title" tabindex="-1">${escape(task)}</h2>
     <div class="fact-meta">${taskStatus}${evidenceLinks(card.task?.evidence)}</div>
-    <p class="muted">Заявка № ${escape(record.id)} · версия ${escape(record.version)} · ${dateLabel(record.updated_at)}</p>
+    <p class="muted">Заявка № ${escape(record.card?.application_number || record.form?.number || record.id)} · версия ${escape(record.version)} · ${dateLabel(record.updated_at)}</p>
     ${record.reason ? `<p class="muted">Причина: <span data-reason>${escape(reasons?.[record.reason] || 'Загружаем…')}</span></p>` : ''}
     ${record.comment ? `<p class="muted">${escape(record.comment)}</p>` : ''}
   </div>
@@ -329,12 +329,20 @@ function editChoices(title, values, format, options, group) {
     `<label>${escape(format(value))}<select name="${group}.${index}"><option value="">Оставить как есть</option>${options}</select></label>`).join('');
 }
 
+function validEmail(value) {
+  if (value.length > 254 || value.split('@').length !== 2) return false;
+  const [local, domain] = value.split('@');
+  return local.length > 0 && local.length <= 64 && /^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+$/.test(local) &&
+    !local.startsWith('.') && !local.endsWith('.') && !local.includes('..') &&
+    domain.split('.').length >= 2 && domain.split('.').every(label => /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$/.test(label));
+}
+
 function openEditor() {
   const card = record.card;
   const textFields = [
     { path: 'task', title: 'Задача', value: card.task?.value || '', required: true, multiline: true },
     ...contactFields.map(([name, title]) => ({
-      path: 'contact.' + name, title, value: card.contact?.[name]?.value || '', required: name === 'phone',
+      path: 'contact.' + name, title, value: card.contact?.[name]?.value || '', required: false,
     })),
     { path: 'next_step', title: 'Следующий шаг', value: card.next_step?.value || '', multiline: true },
   ];
@@ -342,7 +350,7 @@ function openEditor() {
     const attrs = `name="${path}" ${required ? 'required ' : ''}`;
     const field = multiline
       ? `<textarea ${attrs}maxlength="2000">${escape(value)}</textarea>`
-      : `<input ${attrs}${path === 'contact.phone' ? 'type="tel" maxlength="40"' : 'maxlength="200"'} value="${escape(value)}">`;
+      : `<input ${attrs}${path === 'contact.phone' ? 'type="tel" maxlength="40"' : path === 'contact.email' ? 'type="text" inputmode="email" maxlength="254"' : 'maxlength="200"'} value="${escape(value)}">`;
     return `<label>${title}${field}</label>`;
   }).join('');
   const confirmRemove = '<option value="confirm">Подтвердить</option><option value="remove">Убрать из карточки</option>';
@@ -365,13 +373,27 @@ function openEditor() {
     <div class="actions"><button class="primary" type="submit">Сохранить изменения</button></div>
   </form>`);
   const form = dialogContent.querySelector('form');
-  form.elements.namedItem('contact.phone').addEventListener('input', event => event.target.setCustomValidity(''));
+  for (const name of ['contact.phone', 'contact.email']) form.elements.namedItem(name).addEventListener('input', () => {
+    for (const field of ['contact.phone','contact.email']) form.elements.namedItem(field).setCustomValidity('');
+  });
   form.onsubmit = event => {
     event.preventDefault();
     const values = new FormData(form);
     const phone = form.elements.namedItem('contact.phone');
-    const digits = phone.value.replace(/\D/g, '').length;
-    if (!/^\+?[0-9 ()-]+$/.test(phone.value.trim()) || digits < 10 || digits > 15) {
+    const email = form.elements.namedItem('contact.email');
+    const phoneValue = phone.value.trim(), emailValue = email.value.trim();
+    const digits = phoneValue.replace(/\D/g, '').length;
+    if (!phoneValue && !emailValue) {
+      phone.setCustomValidity('Оставьте хотя бы один контакт: телефон или email.');
+      phone.reportValidity();
+      return;
+    }
+    if (emailValue && !validEmail(emailValue)) {
+      email.setCustomValidity('Укажите корректный email, например name@example.ru.');
+      email.reportValidity();
+      return;
+    }
+    if (phoneValue && (!/^\+?[0-9 ()-]+$/.test(phoneValue) || digits < 10 || digits > 15 || phoneValue.length > 40)) {
       phone.setCustomValidity('Укажите номер телефона из 10–15 цифр.');
       phone.reportValidity();
       return;
@@ -381,7 +403,7 @@ function openEditor() {
       const value = values.get(field.path).trim();
       if (value === field.value.trim()) continue;
       if (value) edits.push({ path: field.path, action: 'set', value });
-      else if (['contact.company','contact.full_name'].includes(field.path)) edits.push({ path: field.path, action: 'remove' });
+      else if (['contact.company','contact.full_name','contact.phone','contact.email'].includes(field.path)) edits.push({ path: field.path, action: 'remove' });
       else {
         setDialogError(`Заполните поле «${field.title}».`);
         form.elements.namedItem(field.path).focus();

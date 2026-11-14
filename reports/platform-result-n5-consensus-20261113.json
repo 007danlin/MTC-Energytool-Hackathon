@@ -1,0 +1,16 @@
+{
+  "version": "n5-consensus",
+  "filename_reported": "mts-energytool-n5-consensus.zip",
+  "dashboard_score": "60.575",
+  "upload_time_moscow_reported": "12:50",
+  "ui_duration_seconds": 821.9,
+  "status_reported": "Успешно",
+  "local_artifact": "/Users/daniellineckij/Downloads/mts-energytool-n5-consensus.zip",
+  "date_moscow": "2026-11-13",
+  "source": "User-provided table in main chat,2026-11-13; not independently fetched",
+  "uploaded_bytes_independently_verified": false,
+  "score_is_accuracy_percent": false,
+  "duration_semantics": "UI duration; components unknown",
+  "delta_vs_n2_points": "-9.337",
+  "local_artifact_sha256": "9b2ad6b45e8c62698a07d536cf63539d3a384e9b58b5d872716eaf4e394c4d6d"
+}

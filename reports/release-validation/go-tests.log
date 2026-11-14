@@ -1,0 +1,8 @@
+?   	energytool/backend/cmd/api	[no test files]
+ok  	energytool/backend/internal/business	1.611s
+ok  	energytool/backend/internal/consultation	(cached)
+ok  	energytool/backend/internal/domain	(cached)
+ok  	energytool/backend/internal/expert	(cached)
+ok  	energytool/backend/internal/httpapi	1.898s
+ok  	energytool/backend/internal/service	2.016s
+ok  	energytool/backend/internal/store	1.826s

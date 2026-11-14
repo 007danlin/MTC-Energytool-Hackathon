@@ -12,7 +12,7 @@ await p.route('**/api/v1/**',async route=>{
 });
 await p.goto((process.env.CHAT_URL || 'http://127.0.0.1:8768/consultation.html'));
 await p.getByRole('button',{name:'Оставить заявку специалисту',exact:true}).click();
-await p.getByLabel('Телефон',{exact:true}).fill('+7 999 000 00 00');
+await p.getByLabel('Телефон или email',{exact:true}).fill('+7 999 000 00 00');
 await p.getByLabel('Кратко о вашей задаче').fill('Тест: учёт по арендаторам.');
 assert(await p.locator('input[value="asap"]').isChecked());
 await p.locator('input[value="scheduled"]').check();

@@ -24,6 +24,7 @@ class Handler(SimpleHTTPRequestHandler):
         pass
 
     def end_headers(self):
+        self.send_header("Cache-Control", "no-store")
         self.send_header('Content-Security-Policy', "default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://api-maps.yandex.ru https://yastatic.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://*.yandex.ru https://*.yandex.net; frame-src 'none'; form-action 'self'")
         super().end_headers()
 
@@ -53,7 +54,11 @@ class Handler(SimpleHTTPRequestHandler):
         connection = http.client.HTTPConnection(target.hostname, target.port or 80, timeout=260)
         try:
             body = self.rfile.read(size) if size else None
-            connection.request(self.command, self.path, body=body, headers={'Content-Type': 'application/json'})
+            headers = {'Content-Type': 'application/json'}
+            for key in ('Idempotency-Key', 'X-Operator-ID', 'X-Operator-Role', 'X-Operator-Token'):
+                if value := self.headers.get(key):
+                    headers[key] = value
+            connection.request(self.command, self.path, body=body, headers=headers)
             response = connection.getresponse()
             data = response.read()
             self.send_response(response.status)

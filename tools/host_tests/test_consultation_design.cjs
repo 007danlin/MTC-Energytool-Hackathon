@@ -20,7 +20,7 @@ const shots=process.env.WEB_TEST_SHOTS||'/tmp/mts-design-review';fs.mkdirSync(sh
   else if(path[4]==='close'){s.status='closed';result=s;}else result=s;}
   await route.fulfill({json:result});
  });
- const ready=()=>p.waitForFunction(()=>!document.querySelector('#et-question').disabled);
+ const ready=()=>p.waitForFunction(()=>document.querySelector('#energytool-chat').dataset.screen!=='waiting'&&!document.querySelector('#et-question').disabled);
  const snap=async name=>{await p.evaluate(()=>document.fonts.ready);await p.screenshot({path:shots+'/'+name+'.png'});};
  const fresh=async()=>{await p.goto(base+'/consultation.html?start=new');await ready();};
  const send=async text=>{await p.locator('#et-question').fill(text);await p.getByRole('button',{name:'Отправить',exact:true}).click();await ready();};
@@ -32,18 +32,18 @@ const shots=process.env.WEB_TEST_SHOTS||'/tmp/mts-design-review';fs.mkdirSync(sh
  await p.getByRole('button',{name:'Меню',exact:true}).click();await p.getByRole('button',{name:'Включить режим отладки',exact:true}).click();assert.equal(await p.locator('[data-source-message]').count(),2);await snap('12-debug');
  await p.locator('[data-source-message="3"]').click();await snap('sources');await p.locator('[data-fragment="0"]').click();await snap('fragment');assert.match(await p.locator('dialog').innerText(),/Раздельный учёт/);await p.getByRole('button',{name:'Закрыть',exact:true}).click();
  await p.getByRole('button',{name:'Подготовить заявку',exact:true}).click();await snap('06-contacts');
- for(const label of ['Имя и фамилия','Телефон','Название компании'])assert.ok(await p.getByLabel(label,{exact:true}).isVisible());
- await p.getByRole('button',{name:'Продолжить без телефона',exact:true}).click();await snap('15-no-phone');assert.equal(await p.getByRole('button',{name:'Подготовить заявку',exact:true}).count(),0);
+ for(const label of ['Имя и фамилия','Телефон или email','Название компании'])assert.ok(await p.getByLabel(label,{exact:true}).isVisible());
+ await p.getByRole('button',{name:'Продолжить без контакта',exact:true}).click();await snap('15-no-phone');assert.equal(await p.getByRole('button',{name:'Подготовить заявку',exact:true}).count(),0);
  queue.push(['answered','Для каждой точки запишите показания за начало и конец одного периода, даты замеров и режим работы.']);await p.getByRole('button',{name:'Какие данные собрать?',exact:true}).click();await ready();await snap('15r-continue');await p.getByRole('button',{name:'Вернуться к заявке',exact:true}).click();
- await p.getByLabel('Имя и фамилия',{exact:true}).fill('Анна Миронова');await p.getByLabel('Телефон',{exact:true}).fill('+7 999 123 45 67');await p.getByLabel('Название компании',{exact:true}).fill('Тестовая компания');await p.getByRole('button',{name:'Проверить заявку',exact:true}).click();await snap('07-review');
- await p.getByRole('button',{name:'Изменить данные',exact:true}).click();await snap('edit');await p.getByLabel('Телефон',{exact:true}).fill('123');await p.getByRole('button',{name:'Сохранить',exact:true}).click();await snap('edit-error');assert.equal(await p.locator('.et-phone-error').count(),1);await p.getByLabel('Телефон',{exact:true}).fill('+7 999 765 43 21');await p.getByRole('button',{name:'Сохранить',exact:true}).click();assert.equal(await p.locator('dialog').isVisible(),false);await snap('07-updated');
+ await p.getByLabel('Имя и фамилия',{exact:true}).fill('Анна Миронова');await p.getByLabel('Телефон или email',{exact:true}).fill('+7 999 123 45 67');await p.getByLabel('Название компании',{exact:true}).fill('Тестовая компания');await p.getByRole('button',{name:'Проверить заявку',exact:true}).click();await snap('07-review');
+ await p.getByRole('button',{name:'Изменить данные',exact:true}).click();await snap('edit');await p.getByLabel('Телефон или email',{exact:true}).fill('123');await p.getByRole('button',{name:'Сохранить',exact:true}).click();await snap('edit-error');assert.equal(await p.locator('.et-phone-error').count(),1);await p.getByLabel('Телефон или email',{exact:true}).fill('+7 999 765 43 21');await p.getByRole('button',{name:'Сохранить',exact:true}).click();assert.equal(await p.locator('dialog').isVisible(),false);await snap('07-updated');
  await p.getByRole('button',{name:'Сформировать заявку',exact:true}).click();await p.getByRole('heading',{name:'Заявка сформирована',exact:true}).waitFor();await snap('09-saved');
  await p.setViewportSize({width:390,height:844});await snap('09-mobile');await p.setViewportSize({width:1440,height:960});
  await p.locator('.et-flow').getByRole('button',{name:'История диалогов',exact:true}).click();await snap('history');await p.locator('[data-session]').first().click();await snap('archive');assert.match(await p.locator('dialog').innerText(),/765 43 21/);await p.getByRole('button',{name:'Закрыть',exact:true}).click();
  const oldId=await p.evaluate(()=>localStorage.getItem('energytool-session'));await fresh();assert.equal(await p.locator('.et-welcome').isVisible(),true);assert.notEqual(await p.evaluate(()=>localStorage.getItem('energytool-session')),oldId);
  for(const [state,text,title] of [['knowledge_gap','В базе EnergyTool нет данных для точного ответа на этот вопрос.','16-gap'],['out_of_scope','Я консультирую по учёту электроэнергии и решениям EnergyTool.','16b-scope'],['technical_error','Технический сбой.','14-error']]){
   await fresh();queue.push([state,text]);await send('Тестовый вопрос');await snap(title);
-  assert.equal(await p.getByRole('heading',{name:'Разобраться вместе со специалистом',exact:true}).count(),0);
+  assert.equal(await p.getByRole('heading',{name:'Что дальше',exact:true}).count(),0);
   if(state==='technical_error'){assert.equal(await p.locator('.et-error').count(),1);assert.equal(await p.locator('.et-assistant').count(),0);}
   if(state==='out_of_scope')assert.equal(await p.getByRole('button',{name:'Подготовить заявку',exact:true}).count(),0);
  }

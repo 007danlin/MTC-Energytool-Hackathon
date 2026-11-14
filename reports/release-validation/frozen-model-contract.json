@@ -1,0 +1,9 @@
+{
+  "passed": true,
+  "sha256": "a22d786f895257e14fb89e747a674cd419be0d711ed43b834fb9442ef3b6ac9b",
+  "zip_root_layout": true,
+  "environment_variants": 3,
+  "http_requests": 6,
+  "model": "organizer-model-id (fixture)",
+  "real_organizer_api_called": false
+}

@@ -47,6 +47,7 @@ class ConsultationRequest:
     session_id: str
     messages: list[Message]
     lead: LeadState | None = None
+    summary_so_far: dict = field(default_factory=dict)
 
     def __post_init__(self):
         if not isinstance(self.session_id, str) or not self.session_id.strip():
@@ -57,6 +58,8 @@ class ConsultationRequest:
             raise ValueError("Session history exceeds supported limit; do not silently truncate")
         if self.lead and self.lead.session_id != self.session_id:
             raise ValueError("Lead belongs to a different session")
+        if not isinstance(self.summary_so_far, dict):
+            raise ValueError("summary_so_far must be an object")
 
 
 @dataclass

@@ -112,6 +112,28 @@ paths:
                 $ref: '#/components/schemas/Lead'
         '404':
           $ref: '#/components/responses/NotFound'
+  /sessions/{session_id}/application:
+    parameters:
+      - $ref: '#/components/parameters/SessionID'
+    post:
+      summary: Save the reviewed contact and summary without sending externally
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicationInput'
+      responses:
+        '200':
+          description: Session containing the saved application
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Session is closed
 components:
   parameters:
     SessionID:
@@ -135,10 +157,47 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
   schemas:
+    ApplicationInput:
+      type: object
+      additionalProperties: false
+      required: [summary]
+      description: At least one nonempty valid phone or email is required. Every supplied nonempty contact is validated. Name and company are optional. This saves locally; no mail, call or CRM delivery is performed.
+      anyOf:
+        - required: [phone]
+          properties:
+            phone: { minLength: 1 }
+        - required: [email]
+          properties:
+            email: { minLength: 1 }
+      properties:
+        full_name: { type: string, maxLength: 200 }
+        phone: { type: string, maxLength: 40, description: "10–15 digits; optional +, spaces, parentheses and hyphens." }
+        email: { type: string, maxLength: 254, description: "Single ASCII mailbox; local part ≤64, domain labels ≤63 and at least two labels; syntax only." }
+        company: { type: string, maxLength: 200 }
+        summary: { type: string, minLength: 1, maxLength: 2000 }
+        callback_mode: { type: string, enum: ['', asap, scheduled] }
+        callback_at: { type: string, description: "RFC3339 time for scheduled; empty otherwise." }
+    Application:
+      type: object
+      required: [id, saved_at, summary, phone]
+      # number is assigned by the server; id remains the stable internal identifier.
+      properties:
+        id: { type: string }
+        number: { type: string, pattern: '^[1-9][0-9]{5}$', example: '738498', readOnly: true }
+        saved_at: { type: string, format: date-time }
+        full_name: { type: string }
+        phone: { type: string }
+        email: { type: string }
+        company: { type: string }
+        summary: { type: string }
+        callback_mode: { type: string }
+        callback_at: { type: string }
     Session:
       type: object
       required: [id, status, created_at, updated_at]
       properties:
+        application:
+          $ref: '#/components/schemas/Application'
         id:
           type: string
           format: uuid
@@ -169,6 +228,25 @@ components:
         created_at:
           type: string
           format: date-time
+        response:
+          $ref: '#/components/schemas/ResponseMetadata'
+    ResponseMetadata:
+      type: object
+      description: Per-assistant-answer metadata, retained in session history after later turns and restarts.
+      required: [status, sources, elapsed_ms]
+      properties:
+        status:
+          $ref: '#/components/schemas/ConsultationResult/properties/status'
+        sources:
+          $ref: '#/components/schemas/ConsultationResult/properties/sources'
+        elapsed_ms:
+          type: integer
+          minimum: 0
+          description: Backend time waiting for the consultation service, including failed calls; excludes browser network time.
+        debug:
+          type: object
+          additionalProperties: true
+          description: Optional retrieval, validation and timing metadata. Absent on older saved messages.
     ConsultationResult:
       type: object
       required: [answer, status, sources, elapsed_ms, lead, lead_ready, summary, schema_version]
@@ -191,6 +269,10 @@ components:
         elapsed_ms:
           type: integer
           minimum: 0
+          description: Backend time waiting for the consultation service. The original ML elapsed time is retained in debug.ml_elapsed_ms when available.
+        debug:
+          type: object
+          additionalProperties: true
         lead:
           $ref: '#/components/schemas/Lead'
         lead_ready:
@@ -212,6 +294,7 @@ components:
           properties:
             full_name: { type: string }
             phone: { type: string }
+            email: { type: string, maxLength: 254, description: "Optional ASCII mailbox; phone or email is sufficient." }
             company: { type: string }
           additionalProperties: false
         evidence:

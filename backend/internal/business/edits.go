@@ -3,11 +3,12 @@ package business
 import (
 	"errors"
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
+
+	"energytool/backend/internal/domain"
 )
 
 var (
@@ -25,7 +26,7 @@ const (
 // Edit is one change to the card. Supported paths and actions:
 //
 //	task, next_step                         set
-//	contact.phone|full_name|company         set, remove (full_name/company only)
+//	contact.phone|email|full_name|company   set, remove (retain at least one contact)
 //	power                                   add (value like "600 кВт")
 //	power.N                                 confirm (becomes actual), remove
 //	power.N.kind                            set ("присоединённая" | "потребление")
@@ -46,8 +47,6 @@ type Change struct {
 	Actor   Actor     `json:"actor"`
 	Paths   []string  `json:"paths"`
 }
-
-var phoneChars = regexp.MustCompile(`^\+?[0-9 ()-]+$`)
 
 // ApplyEdits validates all edits first and applies them atomically: either every
 // edit is applied and the version grows by one, or the card is returned unchanged.
@@ -101,17 +100,17 @@ func ApplyEdits(card NeedCard, expectedVersion int, actor Actor, edits []Edit, n
 		case e.Path == "next_step":
 			err = set(&next.NextStep)
 			nextStepSet = true
-		case e.Path == "contact.phone":
-			digits := strings.Map(func(r rune) rune {
-				if r >= '0' && r <= '9' {
-					return r
-				}
-				return -1
-			}, value)
-			if !phoneChars.MatchString(value) || len(digits) < 10 || len(digits) > 15 {
-				err = fmt.Errorf("%w: phone must contain 10..15 digits", ErrInvalidEdit)
+		case e.Path == "contact.phone" || e.Path == "contact.email":
+			f, valid := &next.Contact.Phone, domain.ValidPhone
+			if e.Path == "contact.email" {
+				f, valid = &next.Contact.Email, domain.ValidEmail
+			}
+			if e.Action == "remove" {
+				*f = Field{Status: Unknown, Origin: origin}
+			} else if !valid(value) {
+				err = fmt.Errorf("%w: invalid %s", ErrInvalidEdit, e.Path)
 			} else {
-				err = set(&next.Contact.Phone)
+				err = set(f)
 			}
 		case e.Path == "contact.full_name" || e.Path == "contact.company":
 			f := &next.Contact.FullName
@@ -168,6 +167,11 @@ func ApplyEdits(card NeedCard, expectedVersion int, actor Actor, edits []Edit, n
 		}
 		paths = append(paths, e.Path)
 	}
+	if !domain.ValidContacts(next.Contact.Phone.Value, next.Contact.Email.Value) {
+		return card, Change{}, fmt.Errorf("%w: at least one valid contact is required", ErrInvalidEdit)
+	}
+	next.Contact.PreferredChannel = preferredChannel(next.Contact)
+
 	next.Power = removeIndexes(next.Power, removals["power"])
 	resolvePower(next.Power)
 	next.Products = removeIndexes(next.Products, removals["products"])

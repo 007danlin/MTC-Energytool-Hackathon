@@ -1,17 +1,19 @@
 (()=>{
- const badge=document.createElement('div');badge.id='local-preview-notice';badge.textContent='Демо EnergyTool · кабинет и формы сайта недоступны';badge.style.cssText='position:fixed;bottom:8px;left:8px;max-width:calc(100% - 16px);box-sizing:border-box;z-index:2147483647;background:#fff;color:#555;padding:6px 10px;border:1px solid #ddd;border-radius:8px;font:11px Arial;box-shadow:0 2px 8px #0001;pointer-events:none';document.body.append(badge);
- const root = document.getElementById('root');
- const demoActions = new Set(['Войти', 'Войти в кабинет', 'Заказать консультацию']);
- function disableDemoActions() {
-   for (const button of root.querySelectorAll('button')) {
-     if (!demoActions.has(button.textContent.trim())) continue;
-     button.disabled = true;
-     button.classList.add('et-demo-disabled');
-     button.setAttribute('aria-describedby', badge.id);
+ document.addEventListener('click', e => {
+   const button = e.target.closest('button');
+   if (button && /^(Войти|Войти в кабинет)$/.test(button.textContent.trim())) {
+     e.preventDefault();
+     e.stopImmediatePropagation();
+     location.href = 'https://energytool.mts.ru/api/auth/login?return_uri=https%3A%2F%2Flk.energytool.mts.ru%2Fselect-lk';
+     return;
    }
- }
- disableDemoActions();
- new MutationObserver(disableDemoActions).observe(root, {childList:true,subtree:true});
- document.addEventListener('click',e=>{const btn=e.target.closest('button,a,[role=button]');if(btn&&/^(Войти|Войти в кабинет)$/.test(btn.textContent.trim())){e.preventDefault();e.stopImmediatePropagation();alert('Это локальная копия. Авторизация МТС не подключена.');return;}const a=e.target.closest('a[href]');if(!a)return;const u=new URL(a.href,location.href);if(u.hostname==='energytool.mts.ru'){e.preventDefault();location.href=u.pathname+u.search+u.hash;}else if(u.hostname.startsWith('lk.')||u.pathname.startsWith('/api/auth')){e.preventDefault();alert('Это локальная копия сайта. Вход в МТС и отправка заявок здесь не подключены.');}},true);
+   const a = e.target.closest('a[href]');
+   if (!a) return;
+   const url = new URL(a.href, location.href);
+   if (url.hostname === 'energytool.mts.ru') {
+     e.preventDefault();
+     location.href = url.pathname + url.search + url.hash;
+   }
+ }, true);
  document.addEventListener('submit',e=>{if(e.target.closest('#energytool-chat'))return;e.preventDefault();e.stopImmediatePropagation();alert('Локальная демонстрация: заявка не отправлена.');},true);
 })();

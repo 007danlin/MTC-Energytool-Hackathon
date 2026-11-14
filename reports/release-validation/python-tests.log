@@ -1,0 +1,8 @@
+{"event": "case_error", "row_number": 1, "error_code": "api_error", "http_status": 503}
+{"event": "case_error", "row_number": 2, "error_code": "api_error", "http_status": 503}
+{"event": "checkpoint", "completed": 2, "total": 2}
+{"event": "checkpoint", "completed": 2, "total": 2}
+----------------------------------------------------------------------
+Ran 114 tests in 2.611s
+
+OK

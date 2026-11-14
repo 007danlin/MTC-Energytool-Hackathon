@@ -7,14 +7,17 @@ type Application struct {
 	CallbackMode string    `json:"callback_mode,omitempty"`
 	CallbackAt   string    `json:"callback_at,omitempty"`
 	ID           string    `json:"id"`
+	Number       string    `json:"number,omitempty"`
 	FullName     string    `json:"full_name"`
 	Phone        string    `json:"phone"`
+	Email        string    `json:"email,omitempty"`
 	Company      string    `json:"company"`
 	Summary      string    `json:"summary"`
 	SavedAt      time.Time `json:"saved_at"`
 }
 
 type Session struct {
+	Demo                bool                                `json:"demo,omitempty"`
 	Application         *Application                        `json:"application,omitempty"`
 	ID                  string                              `json:"id"`
 	Status              string                              `json:"status"`
@@ -46,6 +49,8 @@ type ResponseMeta struct {
 	Status    string                   `json:"status"`
 	Sources   []map[string]interface{} `json:"sources"`
 	ElapsedMS int64                    `json:"elapsed_ms"`
+	Debug     map[string]interface{}   `json:"debug,omitempty"`
+	Summary   map[string]interface{}   `json:"summary,omitempty"`
 }
 
 type Message struct {
@@ -66,9 +71,10 @@ type LeadState struct {
 }
 
 type ConsultationRequest struct {
-	SessionID string         `json:"session_id"`
-	Messages  []MessageInput `json:"messages"`
-	Lead      *LeadState     `json:"lead"`
+	SessionID    string                 `json:"session_id"`
+	Messages     []MessageInput         `json:"messages"`
+	Lead         *LeadState             `json:"lead"`
+	SummarySoFar map[string]interface{} `json:"summary_so_far,omitempty"`
 }
 
 type MessageInput struct {

@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "source": "unpacked release package",
+  "model": "local HTTP fixture, not real organizer model",
+  "model_calls": 1,
+  "containers_uid": {
+    "web": "10001",
+    "backend": "100",
+    "consultation": "10001"
+  },
+  "scenario": "new session → answer → email application → queue → backend restart → restored application"
+}

@@ -55,6 +55,7 @@ type Field struct {
 
 type Contact struct {
 	Phone            Field `json:"phone"`
+	Email            Field `json:"email"`
 	FullName         Field `json:"full_name"`
 	Company          Field `json:"company"`
 	PreferredChannel Field `json:"preferred_channel"`
@@ -89,22 +90,23 @@ type Product struct {
 }
 
 type NeedCard struct {
-	ContactTime   Field     `json:"contact_time"`
-	SchemaVersion string    `json:"schema_version"`
-	ApplicationID string    `json:"application_id"`
-	SessionID     string    `json:"session_id"`
-	Version       int       `json:"version"`
-	BuiltAt       time.Time `json:"built_at"`
-	Demo          bool      `json:"demo"`
-	Contact       Contact   `json:"contact"`
-	Task          Field     `json:"task"`
-	Object        []Field   `json:"object"`
-	Parameters    []Field   `json:"parameters"`
-	Constraints   []Field   `json:"constraints"`
-	Power         []Power   `json:"power"`
-	Products      []Product `json:"products"`
-	Unknowns      []Field   `json:"unknowns"`
-	NextStep      Field     `json:"next_step"`
+	ContactTime       Field     `json:"contact_time"`
+	SchemaVersion     string    `json:"schema_version"`
+	ApplicationID     string    `json:"application_id"`
+	ApplicationNumber string    `json:"application_number,omitempty"`
+	SessionID         string    `json:"session_id"`
+	Version           int       `json:"version"`
+	BuiltAt           time.Time `json:"built_at"`
+	Demo              bool      `json:"demo"`
+	Contact           Contact   `json:"contact"`
+	Task              Field     `json:"task"`
+	Object            []Field   `json:"object"`
+	Parameters        []Field   `json:"parameters"`
+	Constraints       []Field   `json:"constraints"`
+	Power             []Power   `json:"power"`
+	Products          []Product `json:"products"`
+	Unknowns          []Field   `json:"unknowns"`
+	NextStep          Field     `json:"next_step"`
 }
 
 // consultantSummary mirrors consultant.make_summary (docs/ml-integration.md).
@@ -132,19 +134,19 @@ func BuildCard(session domain.Session, applicationID string, version int, demo b
 	if app == nil {
 		return NeedCard{}, fmt.Errorf("session %s has no saved application", session.ID)
 	}
-	card := NeedCard{SchemaVersion: CardSchemaVersion, ApplicationID: applicationID, SessionID: session.ID,
+	card := NeedCard{SchemaVersion: CardSchemaVersion, ApplicationID: applicationID, ApplicationNumber: app.Number, SessionID: session.ID,
 		Version: version, BuiltAt: now.UTC(), Demo: demo,
 		Object: []Field{}, Parameters: []Field{}, Constraints: []Field{}, Power: []Power{},
 		Products: []Product{}, Unknowns: []Field{}}
 
 	card.Contact = Contact{
 		Phone:    formField(app.Phone),
+		Email:    formField(app.Email),
 		FullName: formField(app.FullName),
 		Company:  formField(app.Company),
 	}
-	// The form collects only a phone number, so that is the confirmed channel.
-	card.Contact.PreferredChannel = Field{Value: "телефон", Status: Confirmed, Origin: OriginForm}
-	card.Task = formField(app.Summary)
+	card.Contact.PreferredChannel = preferredChannel(card.Contact)
+	card.Task = formField(FormTask(app.Summary))
 	card.ContactTime = formField(app.ContactPreference())
 
 	summary := decodeSummary(session.LastResult)
@@ -287,17 +289,56 @@ func unknowns(card NeedCard, managerQuestions []string) []Field {
 	return out
 }
 
+// Prefer the supplied phone when both contact methods are available.
+func preferredChannel(contact Contact) Field {
+	if contact.Phone.Value != "" {
+		return Field{Value: "телефон", Status: Confirmed, Origin: contact.Phone.Origin}
+	}
+	if contact.Email.Value != "" {
+		return Field{Value: "email", Status: Confirmed, Origin: contact.Email.Origin}
+	}
+	return Field{Status: Unknown, Origin: OriginRule}
+}
+
 func nextStep(card NeedCard) Field {
+	action := "Позвонить"
+	if card.Contact.Phone.Value == "" {
+		action = "Связаться"
+		if card.Contact.Email.Value != "" {
+			action = "Написать по электронной почте"
+		}
+	}
 	for _, u := range card.Unknowns {
 		if u.Origin == OriginConsultant {
-			return Field{Value: "Позвонить и уточнить: " + u.Value, Status: Assumed, Origin: OriginRule}
+			return Field{Value: action + " и уточнить: " + u.Value, Status: Assumed, Origin: OriginRule}
 		}
 	}
 	if len(card.Products) == 0 {
-		return Field{Value: "Позвонить, уточнить задачу и подобрать направление", Status: Assumed, Origin: OriginRule}
+		return Field{Value: action + ", уточнить задачу и подобрать направление", Status: Assumed, Origin: OriginRule}
 	}
 	if len(card.Unknowns) > 0 {
-		return Field{Value: "Позвонить и уточнить: " + card.Unknowns[0].Value, Status: Assumed, Origin: OriginRule}
+		return Field{Value: action + " и уточнить: " + card.Unknowns[0].Value, Status: Assumed, Origin: OriginRule}
 	}
-	return Field{Value: "Позвонить, подтвердить задачу и параметры, обсудить предварительную оценку", Status: Assumed, Origin: OriginRule}
+	return Field{Value: action + ", подтвердить задачу и параметры, обсудить предварительную оценку", Status: Assumed, Origin: OriginRule}
+}
+
+// FormTask keeps the client's complete review text in Application.Summary while
+// extracting the task section from the chat's explicitly labelled review format.
+// Free-form client edits remain unchanged.
+func FormTask(summary string) string {
+	value := strings.TrimSpace(strings.ReplaceAll(summary, "\r\n", "\n"))
+	rest, ok := strings.CutPrefix(value, "Задача клиента:\n")
+	if !ok {
+		return value
+	}
+	task, _, _ := strings.Cut(rest, "\n\n")
+	lines := strings.Split(task, "\n")
+	for i, line := range lines {
+		lines[i] = strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(line), "•"))
+	}
+	task = strings.TrimSpace(strings.Join(lines, "\n"))
+	if task == "" {
+		return value
+	}
+	return task
 }

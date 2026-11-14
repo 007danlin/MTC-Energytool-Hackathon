@@ -1,0 +1,20 @@
+// Real application flow on an isolated local stack. No route mocks or generated UI.
+const fs=require('node:fs'),assert=require('node:assert/strict');const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
+const base=process.env.WEB_TEST_URL||'http://127.0.0.1:8782';
+(async()=>{const browser=await chromium.launch({headless:true});const ctx=await browser.newContext({viewport:{width:1440,height:960},recordVideo:{dir:'reports/release-validation/video',size:{width:1440,height:960}}});const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));try{
+ await page.goto(base+'/consultation.html?start=new');await page.locator('#et-question').waitFor();
+ const question='Уточнение — объект: Склад\nУточнение — задача: Автоматизировать сбор показаний\nУточнение — известные сведения: Счётчики есть, показания снимаем вручную раз в месяц. Работаем днём.';
+ await page.locator('#et-question').fill(question);await page.waitForTimeout(1200);
+ const pending=page.waitForResponse(r=>r.url().endsWith('/messages')&&r.request().method()==='POST',{timeout:270000});await page.locator('.et-send').click();await page.locator('.et-pending').waitFor();await page.waitForTimeout(1200);await page.screenshot({path:'reports/release-validation/screens/consultation-waiting.png'});
+ const response=await pending;assert.equal(response.status(),200);const answer=await response.json();fs.writeFileSync('reports/release-validation/demo-response.json',JSON.stringify({question,result:answer},null,2));assert.notEqual(answer.status,'technical_error');
+ await page.waitForFunction(()=>document.querySelector('#energytool-chat').dataset.screen!=='waiting');await page.waitForTimeout(2000);
+ await page.screenshot({path:'reports/release-validation/screens/consultation-desktop.png'});
+ if(!await page.getByRole('button',{name:'Подготовить заявку',exact:true}).count())await page.locator('.et-header [data-action=menu]').click();
+ await page.getByRole('button',{name:'Подготовить заявку',exact:true}).click();await page.getByLabel('Телефон или email',{exact:true}).fill('jury@example.test');await page.getByRole('button',{name:'Проверить заявку',exact:true}).click();await page.waitForTimeout(2000);
+ await page.getByRole('button',{name:'Сформировать заявку',exact:true}).click();await page.waitForFunction(()=>document.body.innerText.includes('Заявка сохранена'));await page.waitForTimeout(2000);
+ const session=await page.evaluate(()=>localStorage.getItem('energytool-session'));const record=await(await fetch(base+'/api/v1/sessions/'+session)).json();assert.ok(record.application.id);fs.writeFileSync('reports/release-validation/demo-session.json',JSON.stringify({session_id:session,application_id:record.application.id,number:record.application.number},null,2));
+ await page.goto(base+'/applications.html');await page.locator('[data-id="'+record.application.id+'"]').click();await page.getByRole('button',{name:'Взять в работу',exact:true}).click();await page.waitForTimeout(500);await page.getByRole('button',{name:'Принять в работу',exact:true}).click();await page.waitForTimeout(1500);
+ await page.screenshot({path:'reports/release-validation/screens/applications-desktop.png'});await page.reload();await page.waitForTimeout(1000);assert.ok((await page.locator('body').innerText()).includes('Принята'));
+ await page.setViewportSize({width:390,height:844});await page.screenshot({path:'reports/release-validation/screens/applications-mobile.png',fullPage:true});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+ await page.goto(base+'/consultation.html');await page.waitForTimeout(1000);await page.screenshot({path:'reports/release-validation/screens/consultation-mobile.png',fullPage:true});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);console.log('Real model → task → application → accepted queue → reload/mobile OK');
+}finally{const video=page.video();await ctx.close();console.log('VIDEO '+await video.path());await browser.close()}})().catch(e=>{console.error(e);process.exitCode=1});

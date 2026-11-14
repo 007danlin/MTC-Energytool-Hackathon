@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -38,6 +37,8 @@ type Service struct {
 	ml           consultation.Client
 	expertStore  store.ExpertStore
 	snapshotPath string
+	snapshotMu   sync.Mutex
+	demo         bool
 	locks        sync.Map
 }
 
@@ -47,11 +48,12 @@ func New(s store.Store, ml consultation.Client) *Service {
 }
 
 func (s *Service) SetSnapshotPath(path string) { s.snapshotPath = path }
+func (s *Service) SetDemoMode(demo bool)       { s.demo = demo }
 
 func (s *Service) CreateSession() (domain.Session, error) {
 	now := time.Now().UTC()
 	id := newID()
-	session := domain.Session{ID: id, Status: "active", CreatedAt: now, UpdatedAt: now,
+	session := domain.Session{Demo: s.demo, ID: id, Status: "active", CreatedAt: now, UpdatedAt: now,
 		Messages: []domain.Message{}, Lead: domain.LeadState{SessionID: id,
 			Fields: map[string]string{}, Evidence: map[string]interface{}{}}, Requests: map[string]domain.RequestRecord{}, ApplicationRequests: map[string]domain.ApplicationRequestRecord{}}
 	if err := s.store.Create(session); err != nil {
@@ -138,12 +140,13 @@ func (s *Service) SendMessageWithID(ctx context.Context, id, requestID, content 
 		return domain.ConsultationResult{}, err
 	}
 	if s.ml == nil {
-		return s.recordTechnicalFailureWithID(session, requestID, fingerprint, errors.New("consultation service is not configured"))
+		return s.recordTechnicalFailureWithID(session, requestID, fingerprint, errors.New("consultation service is not configured"), 0)
 	}
 	mlRequest := domain.ConsultationRequest{SessionID: session.ID, Messages: make([]domain.MessageInput, 0, len(session.Messages))}
 	if session.LastResult != nil {
 		lead := session.Lead
 		mlRequest.Lead = &lead
+		mlRequest.SummarySoFar = session.LastResult.Summary
 	}
 	for _, message := range session.Messages {
 		mlRequest.Messages = append(mlRequest.Messages, domain.MessageInput{Role: message.Role, Content: message.Content})
@@ -151,7 +154,7 @@ func (s *Service) SendMessageWithID(ctx context.Context, id, requestID, content 
 	mlStarted := time.Now()
 	result, err := s.ml.Respond(ctx, mlRequest)
 	if err != nil {
-		return s.recordTechnicalFailureWithID(session, requestID, fingerprint, err)
+		return s.recordTechnicalFailureWithID(session, requestID, fingerprint, err, time.Since(mlStarted))
 	}
 	if result.Debug == nil {
 		result.Debug = map[string]interface{}{}
@@ -161,16 +164,18 @@ func (s *Service) SendMessageWithID(ctx context.Context, id, requestID, content 
 	result.ElapsedMS = time.Since(mlStarted).Milliseconds()
 	result.Debug["backend_elapsed_ms"] = result.ElapsedMS
 	if result.Status == "technical_error" {
-		// Keep prior successful lead and summary; the ML call must not erase state on failure.
+		// The v2 adapter builds an evidence-backed snapshot even if generation
+		// fails. Keep its new user facts; legacy/empty errors retain prior state.
 		result.Lead = session.Lead
-		if session.LastResult != nil {
+		version := result.Summary["state_version"]
+		if session.LastResult != nil && version != 2 && version != float64(2) {
 			result.Summary = session.LastResult.Summary
 		}
 	}
 	if result.Lead.SessionID != session.ID {
-		return s.recordTechnicalFailureWithID(session, requestID, fingerprint, errors.New("ML returned mismatched session id"))
+		return s.recordTechnicalFailureWithID(session, requestID, fingerprint, errors.New("ML returned mismatched session id"), time.Since(mlStarted))
 	}
-	assistant := domain.Message{ID: newID(), Role: "assistant", Content: result.Answer, Response: &domain.ResponseMeta{Status: result.Status, Sources: result.Sources, ElapsedMS: result.ElapsedMS},
+	assistant := domain.Message{ID: newID(), Role: "assistant", Content: result.Answer, Response: &domain.ResponseMeta{Status: result.Status, Sources: result.Sources, ElapsedMS: result.ElapsedMS, Debug: result.Debug, Summary: result.Summary},
 		Sequence: len(session.Messages) + 1, CreatedAt: time.Now().UTC()}
 	session.Messages = append(session.Messages, assistant)
 	session.UpdatedAt = assistant.CreatedAt
@@ -207,7 +212,7 @@ func (s *Service) registerKnowledgeGap(session domain.Session, originID string, 
 	for _, m := range session.Messages {
 		messages = append(messages, expert.ClientMessage{ID: m.ID, Role: m.Role, Content: m.Content, Sequence: m.Sequence})
 	}
-	r, created, err := expert.RegisterGap(nil, expert.GapSignal{SessionID: session.ID, OriginMessageID: originID, ResultStatus: result.Status, At: time.Now().UTC()}, messages, newID(), time.Now().UTC())
+	r, created, err := expert.RegisterGap(nil, expert.GapSignal{SessionID: session.ID, OriginMessageID: originID, ResultStatus: result.Status, Demo: session.Demo, At: time.Now().UTC()}, messages, newID(), time.Now().UTC())
 	if err != nil || !created {
 		return err
 	}
@@ -221,10 +226,9 @@ func (s *Service) RetryPendingExpertGaps() error {
 	}
 	for _, session := range sessions {
 		for originID := range session.PendingExpertGaps {
-			if session.LastResult == nil || session.LastResult.Status != "knowledge_gap" {
-				continue
-			}
-			if err := s.registerKnowledgeGap(session, originID, *session.LastResult); err != nil {
+			// The durable pending entry belongs to an earlier gap; a newer answer
+			// must not prevent its registration after a transient store failure.
+			if err := s.registerKnowledgeGap(session, originID, domain.ConsultationResult{Status: "knowledge_gap"}); err != nil {
 				continue
 			}
 			unlock := s.lock(session.ID)
@@ -347,6 +351,8 @@ func (s *Service) RevokeKnowledge(id string, actor expert.Actor, cmd expert.Comm
 	return s.GetKnowledge(id)
 }
 func (s *Service) writeSnapshot() error {
+	s.snapshotMu.Lock()
+	defer s.snapshotMu.Unlock()
 	if s.snapshotPath == "" {
 		return nil
 	}
@@ -372,7 +378,7 @@ func (s *Service) writeSnapshot() error {
 	}
 	name := tmp.Name()
 	defer os.Remove(name)
-	if err := tmp.Chmod(0600); err != nil {
+	if err := tmp.Chmod(0644); err != nil {
 		tmp.Close()
 		return err
 	}
@@ -431,10 +437,10 @@ func (s *Service) deliverExpert(r expert.Request, replyID string) (expert.Reques
 	return s.expertStore.DeliverExpertReply(r, replyID, session.ID)
 }
 
-func (s *Service) recordTechnicalFailureWithID(session domain.Session, requestID, fingerprint string, cause error) (domain.ConsultationResult, error) {
+func (s *Service) recordTechnicalFailureWithID(session domain.Session, requestID, fingerprint string, cause error, elapsed time.Duration) (domain.ConsultationResult, error) {
 	answer := "Сейчас не удалось получить ответ из-за технического сбоя. История диалога сохранена; попробуйте позже."
 	result := domain.ConsultationResult{Answer: answer, Status: "technical_error", Sources: []map[string]interface{}{},
-		ElapsedMS: 0, Lead: session.Lead, LeadReady: false, Summary: map[string]interface{}{},
+		ElapsedMS: elapsed.Milliseconds(), Lead: session.Lead, LeadReady: false, Summary: map[string]interface{}{},
 		Debug: map[string]interface{}{"error_code": "consultation_unavailable"}, SchemaVersion: "1.0"}
 	result.RequestID = requestID
 	if session.LastResult != nil {
@@ -442,7 +448,7 @@ func (s *Service) recordTechnicalFailureWithID(session domain.Session, requestID
 		result.LeadReady = session.LastResult.LeadReady
 	}
 	result.Debug["backend_elapsed_ms"] = result.ElapsedMS
-	assistant := domain.Message{ID: newID(), Role: "assistant", Content: answer, Response: &domain.ResponseMeta{Status: result.Status, Sources: result.Sources, ElapsedMS: result.ElapsedMS}, Sequence: len(session.Messages) + 1, CreatedAt: time.Now().UTC()}
+	assistant := domain.Message{ID: newID(), Role: "assistant", Content: answer, Response: &domain.ResponseMeta{Status: result.Status, Sources: result.Sources, ElapsedMS: result.ElapsedMS, Debug: result.Debug, Summary: result.Summary}, Sequence: len(session.Messages) + 1, CreatedAt: time.Now().UTC()}
 	session.Messages = append(session.Messages, assistant)
 	session.UpdatedAt = assistant.CreatedAt
 	session.LastResult = &result
@@ -497,7 +503,7 @@ func (s *Service) SaveApplicationWithID(id, requestID string, input domain.Appli
 		session.ApplicationRequests = map[string]domain.ApplicationRequestRecord{}
 	}
 	input.RequestID = requestID
-	fingerprint := requestFingerprint("application", input.FullName, input.Phone, input.Company, input.Summary, input.CallbackMode, input.CallbackAt)
+	fingerprint := requestFingerprint("application", input.FullName, input.Phone, input.Email, input.Company, input.Summary, input.CallbackMode, input.CallbackAt)
 	if requestID != "" {
 		if record, ok := session.ApplicationRequests[requestID]; ok {
 			if record.Fingerprint != fingerprint {
@@ -509,10 +515,10 @@ func (s *Service) SaveApplicationWithID(id, requestID string, input domain.Appli
 	}
 	input.FullName = strings.TrimSpace(input.FullName)
 	input.Phone = strings.TrimSpace(input.Phone)
+	input.Email = strings.TrimSpace(input.Email)
 	input.Company = strings.TrimSpace(input.Company)
 	input.Summary = strings.TrimSpace(input.Summary)
-	digits := regexp.MustCompile(`[^0-9]`).ReplaceAllString(input.Phone, "")
-	if !regexp.MustCompile(`^\+?[0-9 ()-]+$`).MatchString(input.Phone) || len(digits) < 10 || len(digits) > 15 || len(input.Phone) > 40 || input.Summary == "" || len([]rune(input.Summary)) > 2000 || len([]rune(input.FullName)) > 200 || len([]rune(input.Company)) > 200 {
+	if !domain.ValidContacts(input.Phone, input.Email) || input.Summary == "" || len([]rune(input.Summary)) > 2000 || len([]rune(input.FullName)) > 200 || len([]rune(input.Company)) > 200 {
 		return domain.Session{}, ErrInvalidApplication
 	}
 

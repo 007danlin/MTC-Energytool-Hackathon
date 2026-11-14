@@ -192,6 +192,59 @@
         "model_generation": "not run",
         "author_acceptance": "47/47 on mock API according to REPORT-N3.md; not rerun this turn"
       }
+    },
+    {
+      "version": "newtask",
+      "filename_reported": "newtask.zip",
+      "dashboard_score": "6.904",
+      "upload_time_moscow_reported": "11:36",
+      "ui_duration_seconds": 264.6,
+      "status_reported": "Успешно",
+      "local_artifact": "artifacts/newtask.zip",
+      "date_moscow": null,
+      "interpretation": "A2 with per-answer instruction aimed at the evaluator; historical negative example, not ordinary RAG candidate.",
+      "source": "User-provided table in main chat,2026-11-13; not independently fetched",
+      "uploaded_bytes_independently_verified": false,
+      "score_is_accuracy_percent": false,
+      "duration_semantics": "UI duration; components unknown",
+      "delta_vs_n2_points": "-63.008",
+      "local_artifact_sha256": "07b79d5a73978bb657f7756e65021bbf252c26df1db4fd977fb985d3b66decc8"
+    },
+    {
+      "version": "n5-consensus",
+      "filename_reported": "mts-energytool-n5-consensus.zip",
+      "dashboard_score": "60.575",
+      "upload_time_moscow_reported": "12:50",
+      "ui_duration_seconds": 821.9,
+      "status_reported": "Успешно",
+      "local_artifact": "/Users/daniellineckij/Downloads/mts-energytool-n5-consensus.zip",
+      "date_moscow": "2026-11-13",
+      "source": "User-provided table in main chat,2026-11-13; not independently fetched",
+      "uploaded_bytes_independently_verified": false,
+      "score_is_accuracy_percent": false,
+      "duration_semantics": "UI duration; components unknown",
+      "delta_vs_n2_points": "-9.337",
+      "local_artifact_sha256": "9b2ad6b45e8c62698a07d536cf63539d3a384e9b58b5d872716eaf4e394c4d6d"
+    },
+    {
+      "version": "n7-focus-order",
+      "filename_reported": "mts-energytool-n7-focus-order-20261113.zip",
+      "dashboard_score": "63.333",
+      "upload_time_moscow_reported": "19:31",
+      "upload_date_inferred_from_chat": "2026-11-13",
+      "ui_duration_seconds": 342.5,
+      "status_reported": "Успешно",
+      "source": "User-provided platform table in this chat; not independently fetched",
+      "local_artifact": "artifacts/mts-energytool-n7-focus-order-20261113.zip",
+      "local_artifact_sha256": "ed04950717ce270d8fb41ef5e60b99ddd130b427488beb6812d89596fe868cc1",
+      "local_artifact_bytes": 42695,
+      "uploaded_bytes_independently_verified": false,
+      "delta_vs_n2_points": "-6.579",
+      "score_is_accuracy_percent": false,
+      "duration_semantics": "UI displayed duration; pipeline components unknown; not generation latency",
+      "repeatability": "One reported N7 attempt and one reported N2 attempt; causal effect and run-to-run variance unknown",
+      "source_report": "reports/platform-result-n7-focus-order-20261113.json",
+      "conclusion": "No observed improvement over N2; N2 remains best observed 69.912"
     }
   ],
   "comparison": {
@@ -199,14 +252,17 @@
     "v3_divided_by_v2": "8.642563399588759424263193968",
     "best_reported_version": "n2-docs",
     "next_promotion_threshold_strictly_above": "69.912",
-    "remaining_attempts_today": "Unknown; verify team counter",
+    "remaining_attempts_today": "Unknown shared counter; N5 and N7 reported on 2026-11-13",
     "a2_minus_v3_points": "5.531",
     "all_observed_later_candidates_below_a2": false,
     "b2_minus_a2_points": "-10.092",
     "best_reported_score": "69.912",
     "n2_minus_n1_points": "11.154",
     "n2_minus_a2_points": "13.943",
-    "n3_minus_n2_points": "-7.954"
+    "n3_minus_n2_points": "-7.954",
+    "n5_minus_n2_points": "-9.337",
+    "gap_from_best_to_75_points": "5.088",
+    "n7_minus_n2_points": "-6.579"
   },
-  "last_updated_at": "2026-11-12 (after user-reported 21:23 MSK upload; exact update time not recorded)"
+  "last_updated_at": "2026-11-13 after user reported N7 63.333 at 19:31 Moscow; upload date inferred from chat"
 }

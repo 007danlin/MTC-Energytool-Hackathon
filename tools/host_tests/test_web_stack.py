@@ -43,6 +43,14 @@ class WebStackTests(unittest.TestCase):
                 answer = {'answer': 'Тестовый ответ по базе.', 'status': 'answered',
                           'citations': [{'source_id': source['source_id'], 'quote': source['text']}],
                           'contacts': [], 'intent': {}, 'summary': {}}
+                if context['messages'][-1]['content'] == 'Неизвестная интеграция':
+                    answer.update(status='knowledge_gap',answer='В базе нет подтверждения совместимости. Вопрос можно уточнить у специалиста.')
+                if context['messages'][-1]['content'] == 'Свяжите со специалистом: User+site@Example.COM':
+                    answer.update(answer='Заявка сформирована.',
+                                  contacts=[{'field':'email', 'value':'User+site@Example.COM', 'message_index':0,
+                                             'quote':context['messages'][0]['content']}],
+                                  intent={'requested':True, 'declined':False, 'message_index':0,
+                                          'quote':'Свяжите со специалистом'})
                 body = json.dumps({'choices': [{'message': {'content': json.dumps(answer)}, 'finish_reason': 'stop'}]}).encode()
                 self.send_response(200); self.send_header('Content-Length', str(len(body)))
                 self.end_headers(); self.wfile.write(body)
@@ -63,7 +71,8 @@ class WebStackTests(unittest.TestCase):
                 backend_port = port()
                 backend_url = 'http://127.0.0.1:%d' % backend_port
                 env = dict(os.environ, BACKEND_ADDR='127.0.0.1:%d' % backend_port,
-                           BACKEND_STORE_PATH=str(Path(tmp) / 'sessions.json'), ML_SERVICE_URL=ml_url)
+                           BACKEND_STORE_PATH=str(Path(tmp) / 'sessions.json'), ML_SERVICE_URL=ml_url,
+                           OPERATOR_TOKEN='fixture-token', EXPERT_KB_SNAPSHOT=str(Path(tmp)/'expert-kb.json'))
                 def start():
                     process = subprocess.Popen([binary], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                     processes.append(process)
@@ -78,9 +87,11 @@ class WebStackTests(unittest.TestCase):
                 web = importlib.util.module_from_spec(spec); spec.loader.exec_module(web)
                 class Proxy(web.Handler): backend_url = 'http://127.0.0.1:%d' % backend_port
                 web_url = serve(ThreadingHTTPServer(('127.0.0.1', 0), Proxy))
-                def api(path, payload=None, post=False):
+                def api(path, payload=None, post=False, actor=None, role=None):
                     data = json.dumps(payload).encode() if payload is not None else (b'' if post else None)
-                    request = Request(web_url + path, data=data, headers={'Content-Type': 'application/json'})
+                    headers={'Content-Type': 'application/json'}
+                    if actor: headers.update({'X-Operator-ID':actor,'X-Operator-Role':role,'X-Operator-Token':'fixture-token'})
+                    request = Request(web_url + path, data=data, headers=headers)
                     with urlopen(request, timeout=5) as response: return json.load(response)
                 with urlopen(web_url) as response: self.assertIn(b'/chat.js', response.read())
                 self.assertEqual(api('/health/ready')['status'], 'ready')
@@ -93,7 +104,20 @@ class WebStackTests(unittest.TestCase):
                     self.assertEqual(result['sources'][0]['quote'], 'Тестовая база.')
                     self.assertFalse(result['summary']['sent'])
                 self.assertEqual([len(c['messages']) for c in calls], [1, 3, 1])
+                email_session = api('/api/v1/sessions', post=True)['id']
+                email_result = api('/api/v1/sessions/' + email_session + '/messages',
+                                   {'content':'Свяжите со специалистом: User+site@Example.COM'})
+                self.assertTrue(email_result['lead_ready'])
+                self.assertEqual(email_result['lead']['fields'], {'email':'User+site@Example.COM'})
+                self.assertEqual(email_result['summary']['missing_fields'], [])
+                saved_email = api('/api/v1/sessions/' + email_session + '/application',
+                                  {'email':'User+site@Example.COM', 'summary':'Учёт по арендаторам.'})
+                self.assertEqual(saved_email['application']['email'], 'User+site@Example.COM')
+                self.assertEqual(saved_email['application']['phone'], '')
                 process.terminate(); process.wait(timeout=5); start()
+                restored_email = api('/api/v1/sessions/' + email_session)
+                self.assertEqual(restored_email['application']['email'], 'User+site@Example.COM')
+                self.assertEqual(restored_email['lead']['fields'], {'email':'User+site@Example.COM'})
                 history = api('/api/v1/sessions/' + first + '/messages')['messages']
                 self.assertEqual(len(history), 4)
                 api('/api/v1/sessions/' + first + '/close', post=True)
@@ -101,6 +125,25 @@ class WebStackTests(unittest.TestCase):
                     api('/api/v1/sessions/' + first + '/messages', {'content': 'После закрытия'})
                 self.assertEqual(error.exception.code, 409)
                 error.exception.close()
+                # Real proxy headers, queue, assignment, reply delivery and idempotency.
+                gap_sid = api('/api/v1/sessions', post=True)['id']
+                gap = api('/api/v1/sessions/'+gap_sid+'/messages', {'content':'Неизвестная интеграция'})
+                self.assertEqual(gap['status'], 'knowledge_gap')
+                prefix='/api/v1/operator/expert-requests'
+                requests=api(prefix, actor='dispatcher', role='coordinator')['requests']
+                record=next(r for r in requests if r['session_id']==gap_sid)
+                self.assertEqual(record['status'],'queued')
+                url=prefix+'/'+record['id']
+                record=api(url+'/assign', {'expected_version':record['version'],'command_id':'assign','assignee_id':'expert'},actor='dispatcher',role='coordinator')
+                record=api(url+'/start', {'expected_version':record['version'],'command_id':'start'},actor='expert',role='specialist')
+                body={'expected_version':record['version'],'command_id':'reply','reply_id':'reply1','body':'Ответ специалиста для теста.'}
+                record=api(url+'/reply',body,actor='expert',role='specialist')
+                self.assertEqual(record['reply']['delivery_status'],'delivered')
+                api(url+'/reply',body,actor='expert',role='specialist')
+                delivered=api('/api/v1/sessions/'+gap_sid)['messages']
+                specialist=[m for m in delivered if m.get('response',{}).get('origin')=='specialist']
+                self.assertEqual(len(specialist),1)
+                self.assertEqual(specialist[0]['content'],'Ответ специалиста для теста.')
                 ml.shutdown(); ml.server_close(); servers.remove(ml)
                 result = api('/api/v1/sessions/' + second + '/messages', {'content': 'Сбой'})
                 self.assertEqual(result['status'], 'technical_error')

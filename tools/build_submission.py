@@ -9,7 +9,7 @@ from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 ROOT = Path(__file__).resolve().parents[1]
 FILES = ("solution.py", "settings.py", "llm_client.py", "contracts.py", "dialogue.py",
-         "retrieval.py", "hybrid_retrieval.py", "prompts.py", "consultant.py",
+         "retrieval.py", "hybrid_retrieval.py", "prompts.py", "consultant.py", "consultation_state.py",
          "requirements.txt")
 
 

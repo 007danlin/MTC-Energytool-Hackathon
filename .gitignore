@@ -3,6 +3,7 @@
 .env.*
 !.env.example
 !.env.web.example
+!.env.local.example
 
 # Python
 __pycache__/
@@ -56,3 +57,14 @@ knowledge-base/
 /handoffs/ТЗ-команде-N2-69.912.zip
 /handoffs/team-n2-69912-20261112/sources/
 /handoffs/team-n2-69912-20261112/prototype-source-snapshot.zip
+
+# Generated delivery assets and private recordings
+/output/
+/tmp/
+/reports/release-validation/benchmark*/case-*.json
+/reports/release-validation/*.webm
+/reports/release-validation/*.mp4
+
+/reports/release-validation/**/case-*.json
+/reports/release-validation/demo-response.json
+/reports/release-validation/video/

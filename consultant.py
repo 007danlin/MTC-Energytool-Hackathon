@@ -8,12 +8,14 @@ from contracts import ConsultationRequest, ConsultationResult, LeadState
 from dialogue import retrieval_query
 from llm_client import ModelError
 from prompts import ANSWER_PROMPT, SYSTEM_PROMPT
+from consultation_state import build_facts, answered_topics, extract_actions, asks_for_plan, without_answered_questions
 
 TECHNICAL_ANSWER = ("Сейчас не удалось получить ответ модели из-за технического сбоя. "
                     "Это не означает, что информации нет в базе знаний. "
                     "Попробуйте повторить вопрос позже; заявку пока не отправляли.")
-FIELDS = ("full_name", "phone", "company")
-FIELD_LABELS = {"full_name": "ФИО", "phone": "телефон", "company": "название компании"}
+FIELDS = ("full_name", "phone", "email", "company")
+CONTACT_FIELDS = ("phone", "email")
+FIELD_LABELS = {"full_name": "ФИО", "phone": "телефон", "company": "название компании", "contact": "телефон или email"}
 
 
 def sanitize_delivery(answer):
@@ -27,6 +29,33 @@ def sanitize_delivery(answer):
 
 def normalized(text):
     return " ".join(text.casefold().replace("ё", "е").split())
+
+
+def repeats_previous_answer(answer, messages):
+    """Reject stalled substantial replies, while allowing an explicit repeat request.
+
+    This checks progression, not semantic correctness: short acknowledgements and
+    newly worded answers still need the normal model/source checks.
+    """
+    if len(messages) < 3:
+        return False
+    latest = normalized(messages[-1].content)
+    if re.search(r"\b(?:повтори(?:те|ть)?|напомни(?:те|ть)?|повтор\w*\s+(?:ответ|объяснен)|"
+                 r"(?:скажи(?:те)?|объясни(?:те)?)\s+(?:это\s+)?(?:еще|ещё)\s+раз)\b", latest):
+        return False
+    assistant_index = next((i for i in range(len(messages) - 2, -1, -1)
+                            if messages[i].role == "assistant"), None)
+    if assistant_index is None:
+        return False
+    earlier_user = next((m.content for m in reversed(messages[:assistant_index])
+                         if m.role == "user"), "")
+    if latest == normalized(earlier_user):
+        return False  # A deliberate resubmission of the same question may have the same answer.
+    words = lambda text: re.findall(r"\w+", normalized(text))
+    previous_words = words(messages[assistant_index].content)
+    previous = messages[assistant_index].content
+    substantial = len(previous_words) >= 12 or ("?" in previous and len(previous_words) >= 4)
+    return substantial and words(answer) == previous_words
 
 
 def phone_digits(value):
@@ -45,8 +74,20 @@ def user_evidence(item, messages):
             and normalized(quote) in normalized(message.content))
 
 
-def contact_value(field, value, quote):
-    if not isinstance(value, str) or not value.strip() or len(value) > 200:
+def valid_email(value):
+    """One bounded ASCII mailbox; syntax only, no claim of deliverability."""
+    if not isinstance(value, str) or len(value) > 254 or value.count("@") != 1:
+        return False
+    local, host = value.split("@")
+    if (not 1 <= len(local) <= 64 or not re.fullmatch(r"[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+", local)
+            or local.startswith(".") or local.endswith(".") or ".." in local):
+        return False
+    labels = host.split(".")
+    return len(labels) >= 2 and all(re.fullmatch(r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?", label) for label in labels)
+
+
+def contact_value(field, value, quote, message_text=None):
+    if not isinstance(value, str) or not value.strip() or len(value) > (254 if field == "email" else 200):
         return None
     value = value.strip()
     if field == "phone":
@@ -55,6 +96,21 @@ def contact_value(field, value, quote):
         if 10 <= len(digits) <= 15 and any(phone_digits(c) == digits for c in candidates):
             return "+" + digits if len(digits) > 10 else digits
         return None
+    if field == "email":
+        # Exact whole mailbox evidence prevents a substring of another address
+        # from being accepted; retain the spelling supplied by the user.
+        if not valid_email(value):
+            return None
+        pattern = r"(?<![\w.!#$%&'*+/=?^_`{|}~@-])[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9.-]+(?![\w.@-])"
+        quoted = [c.rstrip(".") for c in re.findall(pattern, quote)
+                  if c.rstrip(".").casefold() == value.casefold()]
+        if not quoted:
+            return None
+        # A model quote may be a substring of a larger mailbox. Recheck the
+        # original user message, then keep its spelling rather than model case.
+        candidates = [c.rstrip(".") for c in re.findall(pattern, message_text if message_text is not None else quote)
+                      if c.rstrip(".").casefold() == value.casefold()]
+        return next((c for c in candidates if c in quoted), candidates[0] if candidates else None)
     if normalized(value) not in normalized(quote):
         return None
     return value
@@ -67,7 +123,8 @@ def seed_lead(request):
         for field in FIELDS:
             evidence = old.evidence.get(field, {})
             if user_evidence(evidence, request.messages):
-                value = contact_value(field, old.fields.get(field), evidence["quote"])
+                value = contact_value(field, old.fields.get(field), evidence["quote"],
+                                      request.messages[evidence["message_index"]].content)
                 if value:
                     lead.fields[field] = value
                     lead.evidence[field] = dict(evidence)
@@ -99,7 +156,8 @@ def extract_lead(payload, request):
                 lead.fields.pop(field, None)
                 lead.evidence[field] = evidence
             continue
-        value = contact_value(field, item.get("value"), item["quote"])
+        value = contact_value(field, item.get("value"), item["quote"],
+                              request.messages[item["message_index"]].content)
         if value:
             lead.fields[field], lead.evidence[field] = value, evidence
     intent = payload.get("intent", {})
@@ -113,8 +171,8 @@ def extract_lead(payload, request):
 
 
 def lead_is_ready(lead):
-    return bool(lead.requested and not lead.declined and all(lead.fields.get(f) for f in FIELDS)
-                and len(lead.fields["full_name"].split()) >= 2)
+    # Organizer Q&A 14–15: one contact is enough; name/company are optional.
+    return bool(lead.requested and not lead.declined and any(lead.fields.get(f) for f in CONTACT_FIELDS))
 
 
 def parse_payload(raw):
@@ -158,15 +216,8 @@ def validate_sources(payload, fragments):
 
 def make_summary(payload, request, lead, fragments):
     raw = payload.get("summary", {})
-    summary = {}
-    for field in ("task", "object", "parameters", "constraints"):
-        items = raw.get(field, [])
-        summary[field] = []
-        if isinstance(items, list):
-            for item in items[:30]:
-                if isinstance(item, dict) and user_evidence(item, request.messages):
-                    # Store the client's actual words, not an unchecked model paraphrase.
-                    summary[field].append({"value": item["quote"], "message_index": item["message_index"]})
+    summary = build_facts(request.messages, request.summary_so_far, raw)
+    summary["state_version"] = 2
     source_ids = {f.source_id: f for f in fragments}
     products = raw.get("products", [])
     summary["products"] = []
@@ -179,11 +230,10 @@ def make_summary(payload, request, lead, fragments):
                 if normalized(name) in normalized(source_ids[sid].text):
                     summary["products"].append({"name": name, "source_id": sid})
     questions = raw.get("manager_questions", [])
-    summary["manager_questions"] = [q[:500] for q in questions[:10] if isinstance(q, str)] if isinstance(questions, list) else []
+    summary["manager_questions"] = [q[:500] for q in questions[:10] if isinstance(q, str) and not answered_topics(q, summary)] if isinstance(questions, list) else []
+    summary["action_plan"] = extract_actions(payload.get("answer", "")) if payload.get("status") in ('answered', 'clarification') else []
     summary["contacts"] = dict(lead.fields)
-    summary["missing_fields"] = [f for f in FIELDS if not lead.fields.get(f)]
-    if lead.fields.get("full_name") and len(lead.fields["full_name"].split()) < 2:
-        summary["missing_fields"].insert(0, "full_name")
+    summary["missing_fields"] = [] if any(lead.fields.get(f) for f in CONTACT_FIELDS) else ["contact"]
     summary["delivery_status"] = "prepared" if lead_is_ready(lead) else "draft"
     summary["sent"] = False
     return summary
@@ -245,25 +295,74 @@ class Consultant:
                      "mode": "answer_only", "evidence_validation": "not_performed"})
             except ModelError as exc:
                 return self._failure(request, lead, started, exc.code, fragments, http_status=exc.status)
+        # Keep the current turn explicit even when it is a short answer embedded
+        # in a long transcript. The global message index/evidence contract is unchanged.
+        context["latest_user_message"] = {
+            "index": len(request.messages) - 1, "content": request.messages[-1].content}
+        confirmed_facts = build_facts(request.messages, request.summary_so_far)
+        context["confirmed_facts"] = confirmed_facts
+        context["requested_output"] = "action_plan" if asks_for_plan(request.messages[-1].content) else "continue_consultation"
         model_messages = [{"role": "system", "content": SYSTEM_PROMPT},
                           {"role": "user", "content": json.dumps(context, ensure_ascii=False)}]
         repairs = 0
+        suppressed_questions = 0
         try:
             while True:
-                raw = self.client.complete(model_messages, deadline=deadline)
                 try:
+                    raw = self.client.complete(model_messages, deadline=deadline)
                     payload = parse_payload(raw)
                     sources = validate_sources(payload, fragments)
+                    if repeats_previous_answer(payload["answer"], request.messages):
+                        raise ModelError("repeated_answer", retryable=True)
+                    questions = re.findall(r'[^.!?\n]*\?', payload['answer'])
+                    # Also catch an imperative requesting facts already provided.
+                    questions += [s for s in re.split(r'(?<=[.!?])\s+|\n+', payload['answer'])
+                                  if re.search(r'нужно уточнить|уточните|сообщите', s, re.I)]
+                    if any(answered_topics(q, confirmed_facts) for q in questions):
+                        # After the bounded repair, retain useful sourced advice
+                        # while omitting the redundant request. Never show a
+                        # technical error solely for an already-answered question.
+                        cleaned, omitted = without_answered_questions(payload['answer'], confirmed_facts)
+                        if repairs and sources and len(cleaned) >= 40:
+                            payload['answer'] = cleaned
+                            suppressed_questions = omitted
+                            if '?' not in cleaned:
+                                payload['status'] = 'answered'
+                        else:
+                            raise ModelError('answered_question', retryable=True)
+                    if (context['requested_output'] == 'action_plan' and payload['status'] in ('answered', 'clarification')
+                            and not extract_actions(payload['answer'])):
+                        raise ModelError('missing_action_plan', retryable=True)
                     break
                 except ModelError as exc:
-                    if repairs >= 1:
+                    if repairs >= 1 or not exc.retryable:
                         raise
                     repairs += 1
                     # Do not echo untrusted output back as a new instruction.
-                    model_messages.append({"role": "user", "content":
-                        "Предыдущий результат отклонён валидатором: " + exc.code +
-                        ". Повтори ответ в заданном JSON. Используй точные source_id и дословные цитаты. "
-                        "Если подтверждения нет, status=knowledge_gap. Не добавляй рассуждения."})
+                    if exc.code in ("repeated_answer", "answered_question", "missing_action_plan"):
+                        repair = ("Предыдущий результат отклонён: он дословно повторяет прошлый ответ "
+                                  "ассистента, хотя клиент добавил новую реплику latest_user_message. "
+                                  "Продолжи разговор с учётом этой реплики. Если клиент ответил на часть "
+                                  "составного вопроса, считай эту часть известной; уточни только оставшееся "
+                                  "или дай следующий полезный шаг. Не возвращай прежнее объяснение целиком. "
+                                  "Верни JSON прежней схемы, сохрани проверяемые источники и факты клиента.")
+                        if exc.code == 'answered_question':
+                            repair = ("Предыдущий ответ снова запрашивает сведения, уже имеющиеся в confirmed_facts. "
+                                      "Не спрашивай повторно известную схему снятия показаний, наличие счётчиков, режим "
+                                      "или оборудование. Если составной вопрос частично закрыт, спроси только неизвестную часть. "
+                                      "Ответь на latest_user_message и верни JSON прежней схемы с проверяемыми citations.")
+                        elif exc.code == 'missing_action_plan':
+                            repair = ("Клиент явно попросил конкретные следующие действия, но ответ их не содержит. "
+                                      "Дай краткий нумерованный план по sources и confirmed_facts; каждый пункт начни "
+                                      "глаголом действия. Не заменяй план очередным предложением расчёта или заявки. "
+                                      "Не придумывай рекомендаций при нехватке sources: тогда status=knowledge_gap. "
+                                      "Верни JSON прежней схемы с проверяемыми citations.")
+                    else:
+                        repair = ("Предыдущий результат отклонён валидатором: " + exc.code +
+                                  ". Повтори ответ в заданном JSON. Следуй формату citations из системных правил; "
+                                  "выбирай идентификаторы только из sources, не придумывай их. "
+                                  "Если подтверждения нет, status=knowledge_gap. Не добавляй рассуждения.")
+                    model_messages.append({"role": "user", "content": repair})
             lead = extract_lead(payload, request)
             summary = make_summary(payload, request, lead, fragments)
             answer = payload["answer"].strip()
@@ -283,6 +382,7 @@ class Consultant:
                                       lead_is_ready(lead), summary,
                                       {"retrieved_sources": [f.source_id for f in fragments],
                                        "context_chars": used_chars, "repairs": repairs,
+                                       "suppressed_known_questions": suppressed_questions,
                                        "error_code": None})
         except ModelError as exc:
             return self._failure(request, lead, started, exc.code, fragments, repairs, http_status=exc.status)

@@ -13,6 +13,7 @@ var statusLabels = map[ReviewStatus]string{
 // ListItem is the queue row. It carries no phone: contacts are shown only in the card.
 type ListItem struct {
 	ID            string       `json:"id"`
+	Number        string       `json:"number,omitempty"`
 	SessionID     string       `json:"session_id"`
 	Version       int          `json:"version"`
 	Status        ReviewStatus `json:"status"`
@@ -46,7 +47,7 @@ func truncate(s string, n int) string {
 }
 
 func NewListItem(rec ApplicationRecord) ListItem {
-	item := ListItem{ID: rec.ID, SessionID: rec.SessionID, Version: rec.Version, Status: rec.Status,
+	item := ListItem{ID: rec.ID, Number: rec.Card.ApplicationNumber, SessionID: rec.SessionID, Version: rec.Version, Status: rec.Status,
 		StatusLabel: statusLabels[rec.Status], Reason: rec.Reason, Demo: rec.Demo,
 		CreatedAt: rec.CreatedAt, UpdatedAt: rec.UpdatedAt,
 		ContactName: optional(rec.Card.Contact.FullName), Company: optional(rec.Card.Contact.Company),

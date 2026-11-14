@@ -35,7 +35,7 @@ def smoke_docker(*, image="energytool-ml:validation", skip_build=False):
         subprocess.run(["docker", "build", "--tag", image, "."], cwd=ROOT, check=True, timeout=600)
     project = "energytool-smoke-" + uuid.uuid4().hex[:12]
     app_container, unit_container = project + "-run", project + "-unit"
-    config = json.loads(command(["docker", "compose", "--env-file", str(ROOT / ".env.example"),
+    config = json.loads(command(["docker", "compose", "-f", "compose.submit.yaml", "--env-file", str(ROOT / ".env.example"),
                                  "--project-name", project, "config", "--no-env-resolution",
                                  "--no-interpolate", "--format", "json"]).stdout)
     config["name"] = project

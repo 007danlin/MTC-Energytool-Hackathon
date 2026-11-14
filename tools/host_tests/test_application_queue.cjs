@@ -91,8 +91,11 @@ async function handle(request, response) {
     return json(response, {}, 503);
   }
   if (isEdit) {
-    const company = command.edits.find(edit => edit.path === 'contact.company');
-    if (company) record.card.contact.company = field(company.value);
+    for (const edit of command.edits) {
+      if (['contact.company','contact.phone','contact.email'].includes(edit.path)) {
+        record.card.contact[edit.path.slice(8)] = field(edit.action === 'remove' ? '' : edit.value);
+      }
+    }
   } else {
     record.status = {
       start_review: 'in_review', accept: 'accepted', needs_info: 'needs_info', reject: 'rejected', reopen: 'in_review',
@@ -202,6 +205,28 @@ async function main() {
     await card.getByText('ООО После правки', { exact: true }).waitFor();
     assert.deepEqual(commands.at(-1).edits, [{ path: 'contact.company', action: 'set', value: 'ООО После правки' }]);
 
+    // Existing manager editor accepts an email-only contact without demanding phone.
+    await button('Редактировать').click();
+    await modal.getByLabel('Телефон', {exact:true}).fill('');
+    await modal.getByLabel('Email', {exact:true}).fill('manager+test@example.com');
+    await button('Сохранить изменения', modal).click();
+    await card.getByText('manager+test@example.com', {exact:true}).waitFor();
+    assert.deepEqual(commands.at(-1).edits, [
+      {path:'contact.phone',action:'remove'},
+      {path:'contact.email',action:'set',value:'manager+test@example.com'},
+    ]);
+    await button('Редактировать').click();
+    await modal.getByLabel('Email', {exact:true}).fill('');
+    const beforeEmpty = commands.length;
+    await button('Сохранить изменения', modal).click();
+    assert.equal(commands.length, beforeEmpty, 'cannot remove the final contact');
+    await modal.getByLabel('Телефон', {exact:true}).fill('+7 999 123 45 67');
+    await button('Сохранить изменения', modal).click();
+    await card.getByText('+7 999 123 45 67', {exact:true}).waitFor();
+    assert.deepEqual(commands.at(-1).edits, [
+      {path:'contact.phone',action:'set',value:'+7 999 123 45 67'},
+      {path:'contact.email',action:'remove'},
+    ]);
     await button('Взять в работу').click();
     await verifyStatus('На разборе');
     await button('Отклонить').click();

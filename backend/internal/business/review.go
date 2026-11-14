@@ -171,7 +171,7 @@ func clone(r ApplicationRecord) ApplicationRecord {
 }
 
 func sameForm(a, b domain.Application) bool {
-	return a.CallbackMode == b.CallbackMode && a.CallbackAt == b.CallbackAt && a.Phone == b.Phone && a.FullName == b.FullName && a.Company == b.Company && a.Summary == b.Summary
+	return a.CallbackMode == b.CallbackMode && a.CallbackAt == b.CallbackAt && a.Phone == b.Phone && a.Email == b.Email && a.FullName == b.FullName && a.Company == b.Company && a.Summary == b.Summary
 }
 
 // SaveApplication creates the record on the first confirmed form and updates it on a resave.
@@ -236,7 +236,7 @@ func EditCard(rec ApplicationRecord, expectedVersion int, actor Actor, edits []E
 	out := clone(rec)
 	out.PrevCards = append(out.PrevCards, rec.Card)
 	out.Card, out.Version, out.UpdatedAt = card, card.Version, now.UTC()
-	out.Form.Phone, out.Form.FullName, out.Form.Company, out.Form.Summary = card.Contact.Phone.Value, card.Contact.FullName.Value, card.Contact.Company.Value, card.Task.Value
+	out.Form.Phone, out.Form.Email, out.Form.FullName, out.Form.Company, out.Form.Summary = card.Contact.Phone.Value, card.Contact.Email.Value, card.Contact.FullName.Value, card.Contact.Company.Value, card.Task.Value
 	if !sameForm(rec.Form, out.Form) {
 		out.Form.SavedAt = now.UTC()
 	}

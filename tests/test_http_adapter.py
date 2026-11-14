@@ -58,6 +58,32 @@ class HTTPAdapterTests(unittest.TestCase):
 
 
 class WebCitationTests(unittest.TestCase):
+    def test_internal_source_links_are_labels_not_broken_client_links(self):
+        result = payload()
+        result['answer'] = 'Продукт [Учёт](20-products/22-askue.md). [Сайт](https://example.com).'
+        result['citations'] = [{'evidence_id':'E1'}]
+        client = WebCitationClient(ScriptedClient(result))
+        messages = [{'role':'system','content':'Rules'}, {'role':'user','content':json.dumps({'sources':[{'source_id':'doc#s1','text':'Exact evidence text.'}]})}]
+        answer=json.loads(client.complete(messages))['answer']
+        self.assertEqual(answer,'Продукт Учёт. [Сайт](https://example.com).')
+
+    def test_legacy_source_selection_uses_exact_retrieved_text(self):
+        for selected in ('doc#s1','E1'):
+            result = payload()
+            result['citations'] = [{'source_id':selected,'quote':'Model paraphrase is never displayed as a quote.'}]
+            client = WebCitationClient(ScriptedClient(result))
+            messages = [{'role':'system','content':'Rules'}, {'role':'user','content':json.dumps({'sources':[{'source_id':'doc#s1','text':'Exact evidence text.'}]})}]
+            resolved = json.loads(client.complete(messages))
+            self.assertEqual(resolved['citations'], [{'source_id':'doc#s1','quote':'Exact evidence text.'}])
+
+    def test_single_evidence_id_resolves_source_and_quote(self):
+        result = payload()
+        result['citations'] = [{'evidence_id':'E1'}]
+        client = WebCitationClient(ScriptedClient(result))
+        messages = [{'role':'system','content':'Rules'}, {'role':'user','content':json.dumps({'sources':[{'source_id':'doc#s1','text':'Exact evidence text.'}]})}]
+        resolved = json.loads(client.complete(messages))
+        self.assertEqual(resolved['citations'], [{'source_id':'doc#s1','quote':'Exact evidence text.'}])
+
     def test_selected_evidence_is_exact_and_request_local(self):
         class Client:
             def complete(self, messages, **kwargs):
@@ -74,7 +100,7 @@ class WebCitationTests(unittest.TestCase):
             self.assertNotIn('evidence_id', messages[1]['content'])
 
     def test_unknown_or_mismatched_evidence_is_rejected(self):
-        for citation in ({'source_id':'doc#s1','evidence_id':'E999'}, {'source_id':'wrong','evidence_id':'E1'}, {'source_id':'doc#s1','evidence_id':[]}):
+        for citation in ({'source_id':'doc#s1','evidence_id':'E999'}, {'source_id':'wrong','evidence_id':'E1'}, {'source_id':'doc#s1','evidence_id':[]}, {'source_id':'unknown','quote':'Exact evidence text.'}):
             result = payload()
             result['citations'] = [citation]
             client = WebCitationClient(ScriptedClient(result))

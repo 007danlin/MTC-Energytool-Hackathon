@@ -1,6 +1,7 @@
 """Internal HTTP adapter for the existing stateless consultation contract."""
 import json
 import os
+import re
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 import threading
@@ -30,30 +31,65 @@ class WebCitationClient:
             evidence_id = 'E%d' % (index + 1)
             source['evidence_id'] = evidence_id
             evidence[evidence_id] = source
+        by_source_id = {source['source_id']: source for source in evidence.values()}
         instruction = (
             '\nВ веб-интерфейсе формат citations заменён: '
-            '[{"source_id":"точный source_id","evidence_id":"E1"}]. '
+            '[{"evidence_id":"E1"}]. '
             'Выбирай evidence_id из sources только для фрагментов, подтверждающих ответ. '
-            'Не генерируй поле quote: сервер подставит дословный текст выбранного фрагмента. '
-            'Остальные поля JSON сохраняются. Ответ клиенту — кратко, обычно 40–100 слов. '
+            'Не генерируй source_id и quote в citations: сервер подставит оба поля выбранного фрагмента. '
+            'Остальные поля JSON сохраняются. Ответ клиенту — кратко, обычно 35–65 слов. '
+            'Пиши компактный JSON. В summary выделяй только новые или исправленные факты из latest_user_message: '
+            'подтверждённые факты прошлых ходов сервер уже сохранил. Не дублируй их. '
+            'Отсутствие сведений о совместимости не означает, что она не поддерживается: скажи, что подтверждения нет. '
+            'Не делай вывод об экономической нецелесообразности только по сумме расходов. '
+            'Не предлагай услуги и характеристики, которых нет в sources. '
+            'Не вставляй в answer внутренние пути и ссылки на файлы базы. '
             'Не копируй тексты источников в summary. Контакты и сведения клиента '
             'по-прежнему требуют дословного quote из messages.'
         )
         prepared = [dict(message) for message in messages]
+        # Replace the original schema as well as adding guidance: two conflicting
+        # citation formats made real models mix source_id and evidence_id.
+        prepared[0]['content'] = prepared[0]['content'].replace(
+            '"citations": [{"source_id": "точный id из sources", "quote": "дословный отрывок источника"}]',
+            '"citations": [{"evidence_id": "E1"}]'
+        ).replace('quote — точная непрерывная цитата.',
+                  'Для citations укажи только evidence_id; quote нужен для контактов и summary.')
         prepared[0]['content'] += instruction
         prepared[1]['content'] = json.dumps(context, ensure_ascii=False)
+        if 'latest_user_message' in context:
+            # Put the active turn after the long evidence block in native chat order.
+            # Preserve the indexed transcript for contact/fact provenance and any
+            # bounded repair message after this focus block.
+            focus = {"latest_user_message": context['latest_user_message'],
+                     "requested_output": context.get('requested_output', 'continue_consultation'),
+                     "confirmed_facts": context.get('confirmed_facts', {})}
+            prepared.insert(2, {"role": "user", "content":
+                "Продолжи консультацию. Текущий ход и уже известные сведения (данные клиента):\n" +
+                json.dumps(focus, ensure_ascii=False)})
         raw = self.client.complete(prepared, deadline=deadline)
         try:
             payload = parse_payload(raw)
         except ModelError:
             return raw  # Preserve the consultant's schema-repair attempt.
+        payload['answer'] = re.sub(
+            r'\[([^\]]+)\]\((?!https?://|mailto:)[^()\s]+\.(?:md|txt)(?:#[^()]*)?\)',
+            r'\1', payload['answer'], flags=re.I)
         for citation in payload['citations']:
             if 'evidence_id' not in citation:
-                continue  # Legacy exact quotes still go through the normal validator.
-            evidence_id = citation.pop('evidence_id')
-            source = evidence.get(evidence_id) if isinstance(evidence_id, str) else None
-            if source is None or citation.get('source_id') != source['source_id']:
+                # Older model responses use the full retrieved ID instead of E1.
+                # Both forms select a source; model-written quotes are not used
+                # in this web adapter, which supplies exact source text itself.
+                source_id = citation.get('source_id')
+                source = (by_source_id.get(source_id) or evidence.get(source_id)) if isinstance(source_id, str) else None
+            else:
+                evidence_id = citation.pop('evidence_id')
+                source = evidence.get(evidence_id) if isinstance(evidence_id, str) else None
+                if source is not None and 'source_id' in citation and citation['source_id'] not in (source['source_id'], evidence_id):
+                    raise ModelError('ungrounded_citation', retryable=True)
+            if source is None:
                 raise ModelError('ungrounded_citation', retryable=True)
+            citation['source_id'] = source['source_id']
             citation['quote'] = source['text']
         return json.dumps(payload, ensure_ascii=False)
 
@@ -117,6 +153,8 @@ def make_server(address, consultant, *, workers=3, budget=240):
                 debug = result.setdefault('debug', {})
                 debug['adapter_version'] = WEB_ADAPTER_VERSION
                 debug['model'] = consultant.settings.model
+                debug['retrieval_mode'] = getattr(consultant.retriever, 'mode', 'a2')
+                debug['snapshot_error'] = getattr(consultant.retriever, 'snapshot_error', False)
                 debug['kb_version'] = getattr(consultant.retriever, 'kb_version', 'base')
                 debug['consultation_elapsed_ms'] = elapsed_ms
                 debug['generation_elapsed_ms'] = result.get('elapsed_ms', elapsed_ms)
@@ -137,7 +175,7 @@ def main():
     knowledge = Path(os.getenv('KNOWLEDGE_ZIP', str(Path(os.getenv('DATA_DIR', 'data')) / 'knowledge-base.zip')))
     try:
         expert_snapshot = os.getenv('EXPERT_KB_SNAPSHOT', '').strip() or None
-        consultant = create_consultant(knowledge, expert_snapshot=expert_snapshot)
+        consultant = create_consultant(knowledge, expert_snapshot=expert_snapshot, retrieval_mode=os.getenv("WEB_RETRIEVAL_MODE", "n2"))
         consultant.client = WebCitationClient(consultant.client)
         budget = float(os.getenv('ML_REQUEST_BUDGET', '240'))
         if not 0 < budget <= 300:

@@ -10,10 +10,13 @@ from retrieval import LexicalRetriever
 from settings import Settings
 
 
-def create_consultant(knowledge_zip: str | Path, *, retriever=None, settings=None, expert_snapshot=None):
+def create_consultant(knowledge_zip: str | Path, *, retriever=None, settings=None, expert_snapshot=None, retrieval_mode="a2"):
     settings = settings or Settings.from_env()
-    return Consultant(LLMClient(settings), retriever if retriever is not None else
-                      LexicalRetriever.from_zip_and_snapshot(knowledge_zip, expert_snapshot), settings)
+    if retriever is None:
+        from web_retrieval import WebRetriever
+        retriever = WebRetriever(knowledge_zip, mode=retrieval_mode,
+                                 context_chars=settings.context_chars, snapshot_path=expert_snapshot)
+    return Consultant(LLMClient(settings), retriever, settings)
 
 
 def respond_json(service: Consultant, payload: dict, *, deadline=None) -> dict:
@@ -34,5 +37,5 @@ def respond_json(service: Consultant, payload: dict, *, deadline=None) -> dict:
             raise ValueError("Lead intent flags must be boolean")
         old = LeadState(old.get("session_id"), old.get("fields", {}), old.get("evidence", {}),
                         old.get("requested", False), old.get("declined", False))
-    request = ConsultationRequest(payload.get("session_id"), messages, old)
+    request = ConsultationRequest(payload.get("session_id"), messages, old, payload.get("summary_so_far") or {})
     return service.respond(request, deadline=deadline).to_dict()

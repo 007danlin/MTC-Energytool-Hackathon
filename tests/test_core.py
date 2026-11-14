@@ -269,9 +269,38 @@ class ConsultationTests(unittest.TestCase):
         lead = extract_lead(stale, ConsultationRequest("s", messages, old))
         self.assertEqual(lead.fields["phone"], "+79990000002")
 
-    def test_incomplete_lead_never_ready(self):
-        self.assertFalse(lead_is_ready(LeadState("s", {"full_name": "Иван", "phone": "+79990000001", "company": "Тест"}, requested=True)))
+    def test_one_phone_is_enough_and_optional_name_never_blocks(self):
+        self.assertTrue(lead_is_ready(LeadState("s", {"phone": "+79990000001"}, requested=True)))
+        self.assertTrue(lead_is_ready(LeadState("s", {"full_name": "Иван", "phone": "+79990000001"}, requested=True)))
         self.assertFalse(lead_is_ready(LeadState("s", {"full_name": "Иван Примеров", "company": "Тест"}, requested=True)))
+        self.assertFalse(lead_is_ready(LeadState("s", {"phone": "+79990000001"}, requested=False)))
+        self.assertFalse(lead_is_ready(LeadState("s", {"phone": "+79990000001"}, requested=True, declined=True)))
+
+    def test_phone_only_request_is_prepared_without_optional_field_demands(self):
+        text = "Свяжите со специалистом. Телефон +7 999 000 00 01. Имя и компанию не укажу."
+        data = payload(answer="Заявка сформирована.",
+                       contacts=[{"field": "phone", "value": "+7 999 000 00 01", "message_index": 0, "quote": text}],
+                       intent={"requested": True, "declined": False, "message_index": 0, "quote": "Свяжите со специалистом."})
+        service, _ = self.service(data)
+        result = service.respond(self.request(text))
+        self.assertTrue(result.lead_ready)
+        self.assertEqual(result.summary["missing_fields"], [])
+        self.assertEqual(result.summary["delivery_status"], "prepared")
+        self.assertFalse(result.summary["sent"])
+        self.assertEqual(result.answer, "Заявка сформирована.")
+        self.assertEqual(result.lead.fields, {"phone": "+79990000001"})
+
+    def test_requested_lead_without_contact_requires_phone_or_email(self):
+        text = "Подготовьте заявку. Имя Иван, компания Тест."
+        service, _ = self.service(payload(answer="Заявка сформирована.",
+            contacts=[{"field": "full_name", "value": "Иван", "message_index": 0, "quote": text},
+                      {"field": "company", "value": "Тест", "message_index": 0, "quote": text}],
+            intent={"requested": True, "declined": False, "message_index": 0, "quote": "Подготовьте заявку."}))
+        result = service.respond(self.request(text))
+        self.assertFalse(result.lead_ready)
+        self.assertEqual(result.summary["missing_fields"], ["contact"])
+        self.assertIn("осталось уточнить: телефон или email", result.answer)
+        self.assertNotIn("ФИО", result.answer)
 
     def test_no_session_state_leak(self):
         service, client = self.service(payload())

@@ -1,13 +1,17 @@
 package store
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"math/big"
 	"os"
 	"path/filepath"
 	"sync"
 	"time"
 
+	"energytool/backend/internal/business"
 	"energytool/backend/internal/domain"
 	"energytool/backend/internal/expert"
 )
@@ -35,6 +39,8 @@ type ExpertStore interface {
 }
 
 type FileStore struct {
+	applications   map[string]business.ApplicationRecord
+	events         map[string]business.Event
 	mu             sync.RWMutex
 	path           string
 	data           map[string]domain.Session
@@ -43,7 +49,7 @@ type FileStore struct {
 }
 
 func NewFileStore(path string) (*FileStore, error) {
-	s := &FileStore{path: path, data: make(map[string]domain.Session), expertRequests: make(map[string]expert.Request), knowledge: make(map[string]expert.KnowledgeEntry)}
+	s := &FileStore{applications: map[string]business.ApplicationRecord{}, events: map[string]business.Event{}, path: path, data: make(map[string]domain.Session), expertRequests: make(map[string]expert.Request), knowledge: make(map[string]expert.KnowledgeEntry)}
 	if path == "" {
 		return nil, errors.New("store path is required")
 	}
@@ -53,9 +59,11 @@ func NewFileStore(path string) (*FileStore, error) {
 	}
 	if len(contents) > 0 {
 		var envelope struct {
-			Sessions       map[string]domain.Session        `json:"sessions"`
-			ExpertRequests map[string]expert.Request        `json:"expert_requests"`
-			Knowledge      map[string]expert.KnowledgeEntry `json:"knowledge_entries"`
+			Sessions       map[string]domain.Session             `json:"sessions"`
+			ExpertRequests map[string]expert.Request             `json:"expert_requests"`
+			Knowledge      map[string]expert.KnowledgeEntry      `json:"knowledge_entries"`
+			Applications   map[string]business.ApplicationRecord `json:"applications"`
+			Events         map[string]business.Event             `json:"events"`
 		}
 		if err := json.Unmarshal(contents, &envelope); err != nil {
 			return nil, errors.New("decode session store")
@@ -67,6 +75,12 @@ func NewFileStore(path string) (*FileStore, error) {
 			}
 		} else {
 			s.data, s.expertRequests, s.knowledge = envelope.Sessions, envelope.ExpertRequests, envelope.Knowledge
+			if envelope.Applications != nil {
+				s.applications = envelope.Applications
+			}
+			if envelope.Events != nil {
+				s.events = envelope.Events
+			}
 		}
 		if s.data == nil {
 			s.data = make(map[string]domain.Session)
@@ -78,12 +92,37 @@ func NewFileStore(path string) (*FileStore, error) {
 			s.knowledge = make(map[string]expert.KnowledgeEntry)
 		}
 	}
-	changed := false
+	changed := len(contents) > 0
 	for id, session := range s.data {
 		if session.Application != nil && session.Application.ID == "" {
 			session.Application.ID = domain.ApplicationID(session.ID)
 			s.data[id] = session
 			changed = true
+		}
+		if session.Application != nil && session.Application.Number == "" {
+			number, err := s.nextApplicationNumber()
+			if err != nil {
+				return nil, err
+			}
+			session.Application.Number = number
+			s.data[id] = session
+			changed = true
+		}
+	}
+	for _, session := range s.data {
+		if err := s.syncBusiness(session); err != nil {
+			return nil, err
+		}
+	}
+	// Display-format migration: keep the full saved form and audit history intact.
+	for id, record := range s.applications {
+		if record.Card.Task.Origin == business.OriginForm && record.Card.Task.Value == record.Form.Summary {
+			compact := business.FormTask(record.Form.Summary)
+			if compact != record.Card.Task.Value {
+				record.Card.Task.Value = compact
+				s.applications[id] = record
+				changed = true
+			}
 		}
 	}
 	if changed {
@@ -100,8 +139,13 @@ func (s *FileStore) Create(session domain.Session) error {
 	if _, exists := s.data[session.ID]; exists {
 		return errors.New("session already exists")
 	}
+	oldApps, oldEvents := copyMap(s.applications), copyMap(s.events)
+	if err := s.syncBusiness(session); err != nil {
+		return err
+	}
 	s.data[session.ID] = session
 	if err := s.persist(); err != nil {
+		s.applications, s.events = oldApps, oldEvents
 		delete(s.data, session.ID)
 		return err
 	}
@@ -125,12 +169,51 @@ func (s *FileStore) Save(session domain.Session) error {
 	if !ok {
 		return ErrNotFound
 	}
+	if session.Application != nil {
+		if previous.Application != nil && previous.Application.Number != "" {
+			session.Application.Number = previous.Application.Number
+		} else {
+			number, err := s.nextApplicationNumber()
+			if err != nil {
+				return err
+			}
+			session.Application.Number = number
+		}
+	}
+	oldApps, oldEvents := copyMap(s.applications), copyMap(s.events)
+	if err := s.syncBusiness(session); err != nil {
+		s.applications, s.events = oldApps, oldEvents
+		return err
+	}
 	s.data[session.ID] = session
 	if err := s.persist(); err != nil {
+		s.applications, s.events = oldApps, oldEvents
 		s.data[session.ID] = previous
 		return err
 	}
 	return nil
+}
+
+// Called only under the store write lock (or during construction). Numbers are
+// allocated and saved in the same critical section, including concurrent saves.
+func (s *FileStore) nextApplicationNumber() (string, error) {
+	used := make(map[string]bool)
+	for _, session := range s.data {
+		if session.Application != nil {
+			used[session.Application.Number] = true
+		}
+	}
+	start, err := rand.Int(rand.Reader, big.NewInt(900000))
+	if err != nil {
+		return "", err
+	}
+	for offset := int64(0); offset < 900000; offset++ {
+		number := fmt.Sprintf("%06d", 100000+(start.Int64()+offset)%900000)
+		if !used[number] {
+			return number, nil
+		}
+	}
+	return "", errors.New("application number space exhausted")
 }
 
 func (s *FileStore) List() ([]domain.Session, error) {
@@ -152,10 +235,12 @@ func (s *FileStore) persist() error {
 		return err
 	}
 	data, err := json.Marshal(struct {
-		Sessions       map[string]domain.Session        `json:"sessions"`
-		ExpertRequests map[string]expert.Request        `json:"expert_requests"`
-		Knowledge      map[string]expert.KnowledgeEntry `json:"knowledge_entries"`
-	}{s.data, s.expertRequests, s.knowledge})
+		Sessions       map[string]domain.Session             `json:"sessions"`
+		ExpertRequests map[string]expert.Request             `json:"expert_requests"`
+		Knowledge      map[string]expert.KnowledgeEntry      `json:"knowledge_entries"`
+		Applications   map[string]business.ApplicationRecord `json:"applications"`
+		Events         map[string]business.Event             `json:"events"`
+	}{s.data, s.expertRequests, s.knowledge, s.applications, s.events})
 	if err != nil {
 		return err
 	}
