@@ -1,5 +1,6 @@
 """Reproducible final defense deck; uses local ReportLab only at authoring time."""
 import json
+from html import escape
 from pathlib import Path
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase import pdfmetrics
@@ -17,6 +18,7 @@ c=canvas.Canvas(str(OUT),pagesize=(W,H));c.setTitle('МТС EnergyTool — ИИ-
 number=0
 
 def text(s,x,y,w,size=20,color=INK,bold=False):
+ s=escape(s).replace('—','-').replace('–','-')
  p=Paragraph(s.replace('\n','<br/>'),ParagraphStyle('p',fontName='ArialB' if bold else 'Arial',fontSize=size,leading=size*1.3,textColor=color,spaceAfter=0))
  pw,ph=p.wrap(w,H);p.drawOn(c,x,H-y-ph);return ph
 
