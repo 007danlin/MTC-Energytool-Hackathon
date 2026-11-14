@@ -1,0 +1,29 @@
+{
+  "base": "http://127.0.0.1:8768",
+  "started_at": "2026-11-14T14:50:16.245Z",
+  "elapsed_ms": 33997,
+  "session_id": "bb17cc8e-4ea6-427d-bfe1-fdef861fc4de",
+  "model_status": "answered",
+  "model_elapsed_ms": 33894,
+  "source_count": 4,
+  "summary_fields": [
+    "constraints",
+    "contacts",
+    "delivery_status",
+    "manager_questions",
+    "missing_fields",
+    "object",
+    "parameters",
+    "products",
+    "sent",
+    "task"
+  ],
+  "card_text": "Объект\nПока не уточнили\nЗадача\nХотим раздельно учитывать их потребление электроэнергии.\nИз резюме консультации\nЧто известно\nПока только вопрос\nЧто уточнить\nЕсть ли у вас существующая схема сбора данных?\nСколько приборов учёта на объекте?\nВопросы консультанта\nОбсуждаемые решения\nОблачная платформа учёта электроэнергии\nВыбор нужно подтвердить",
+  "mobile_card_rows": 5,
+  "draft_survives_reload": true,
+  "errors": [],
+  "result": "passed",
+  "all_returned_summary_values_visible": true,
+  "exact_live_source_quote": true,
+  "source_modal_mobile_no_overflow": true
+}

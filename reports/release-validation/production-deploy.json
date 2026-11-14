@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "base_url": "http://127.0.0.1:8768",
+  "preserved_sessions": 71,
+  "preserved_messages": 112,
+  "preserved_applications": 14,
+  "http_checks": {
+    "/consultation.html": 200,
+    "/applications.html": 200,
+    "/specialist.html": 200,
+    "/api/v1/applications/reasons": 200,
+    "/api/v1/metrics/pilot": 200
+  },
+  "deployed_chat_js_matches_source": true,
+  "private_backup_in_release": false
+}

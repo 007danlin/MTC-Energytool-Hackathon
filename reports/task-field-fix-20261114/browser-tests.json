@@ -1,0 +1,22 @@
+[
+  {
+    "test": "test_task_field_mapping.cjs",
+    "code": 0,
+    "output": "PASS: typed field separation pending/answer/reload; incorrect same-message summary ignored; corrections replace; newer grounded model evidence updates; unsent draft isolation; explicit add-fact field; legacy notes; review summary field parity; plain fallback; XSS escaping.\n"
+  },
+  {
+    "test": "test_live_task_ui.cjs",
+    "code": 0,
+    "output": "PASS: live task summary, untrusted text, pending draft preservation, next-message edits, reload/reconciliation of failed sends, long wait/abort/reduced motion, long sidebar/mobile sheet, sources, contact/review/save/history.\n"
+  },
+  {
+    "test": "test_consultation_design.cjs",
+    "code": 0,
+    "output": "PASS: design states, correct cards and order, per-answer sources, editable modal, no-phone branch, archive, fresh entry, five viewports.\n"
+  },
+  {
+    "test": "test_consultation_states.cjs",
+    "code": 0,
+    "output": "PASS: ambiguous network failure, no automatic duplicate POST, refresh recovery, model/source text escaping, technical retry, five viewport sizes.\n"
+  }
+]

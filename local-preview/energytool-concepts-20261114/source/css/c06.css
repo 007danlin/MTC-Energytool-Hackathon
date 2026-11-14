@@ -1,0 +1,61 @@
+/* 06 «Старт с характером» */
+.c06 .f-block{margin-top:16px}
+.c06 .f-block .cap{display:block}
+.c06 .f-quote{font-size:14px;line-height:20px;font-weight:500;margin-top:4px;color:var(--ink)}
+.c06 .f-topic{display:flex;align-items:center;gap:12px;margin-top:16px;padding:10px 12px;border-radius:14px;background:var(--bg)}
+.c06 .f-topic b{display:block;font-size:14px;line-height:20px;font-weight:600}
+.c06 .f-topic .cap{display:block}
+
+.c06 .tcards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:28px}
+.c06 .tcard{position:relative;display:flex;flex-direction:column;align-items:flex-start;text-align:left;background:#fff;border:1px solid var(--border);border-radius:20px;padding:16px 20px 16px;min-height:228px;box-shadow:0 1px 0 #e3e5ea;cursor:pointer}
+.c06 .till{display:grid;place-items:center;align-self:stretch;height:96px;border-radius:14px;background:var(--bg)}
+.c06 .tcard b{font-size:20px;line-height:28px;font-weight:600;margin-top:14px}
+.c06 .tcard p{font-size:14px;line-height:20px;color:var(--muted);margin-top:4px}
+.c06 .tgo{display:inline-flex;align-items:center;gap:6px;margin-top:auto;padding-top:12px;font-size:12px;line-height:18px;font-weight:500;color:var(--muted)}
+.c06 .tcard.on{border-color:var(--ink);box-shadow:0 0 0 .5px var(--ink),0 18px 36px -18px #17181c40;transform:translateY(-4px)}
+.c06 .tcard.on .till{background:var(--accent-soft)}
+.c06 .tcard.on .tgo{color:var(--ink)}
+.c06 .tcard.on::after{content:"";position:absolute;left:50%;top:100%;height:28px;border-left:1.5px solid var(--ink);margin-top:1px}
+.c06 .et-composer.up{margin-top:24px}
+.c06 .under{margin-top:12px}
+
+.c06 .ttag{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;font-size:12px;line-height:18px;font-weight:500;color:var(--muted)}
+.c06 .pend6{background:#fff;border:1px solid var(--border);border-radius:20px;padding:20px 24px 22px}
+.c06 .p6-top{display:flex;gap:20px;align-items:center}
+.c06 .p6-ill{position:relative;display:grid;place-items:center;width:136px;height:92px;border-radius:14px;background:var(--accent-soft);flex-shrink:0;overflow:hidden}
+.c06 .p6-ill .scan{position:absolute;top:10px;bottom:10px;left:58%;width:1.5px;background:var(--accent);opacity:.55;border-radius:1px}
+@keyframes c06-scan{0%{left:14%}50%{left:84%}100%{left:14%}}
+body.live.c06 .p6-ill .scan{animation:c06-scan 2.4s cubic-bezier(.45,0,.55,1) infinite}
+.c06 .p6-main{gap:12px;margin-top:8px}
+.c06 .pend6 .et-hint{margin-top:8px}
+.c06 .p6-more{margin-top:20px;padding-top:18px;border-top:1px solid var(--border)}
+.c06 .p6-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px}
+.c06 .p6-tiles>div{background:var(--bg);border-radius:14px;padding:14px 16px}
+.c06 .p6-tiles b{display:block;font-size:14px;line-height:20px;font-weight:600}
+.c06 .p6-tiles p{font-size:12px;line-height:18px;color:var(--muted);margin-top:2px}
+
+.c06 .nlabel{margin-bottom:-12px}
+.c06 .ncards{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.c06 .ncard{display:flex;gap:16px;background:#fff;border:1px solid var(--border);border-radius:20px;padding:16px;box-shadow:0 1px 0 #e3e5ea}
+.c06 .ncard .till{width:96px;height:auto;align-self:stretch;flex-shrink:0}
+.c06 .ncard b{display:block;font-size:16px;line-height:24px;font-weight:600}
+.c06 .ncard p{font-size:12px;line-height:18px;color:var(--muted);margin-top:4px}
+.c06 .ncard .btn{margin-top:12px}
+
+/* mobile */
+.c06.m .et-intro{margin-top:12px}
+.c06.m .tcards{grid-template-columns:1fr;gap:10px;margin-top:20px}
+.c06.m .tcard{display:grid;grid-template-columns:92px 1fr;column-gap:14px;min-height:0;padding:12px 14px 12px 12px;align-items:center;border-radius:18px}
+.c06.m .tcard .till{grid-row:1 / span 3;width:92px;height:76px;align-self:center}
+.c06.m .tcard .till svg{width:84px;height:56px}
+.c06.m .tcard b{font-size:16px;line-height:24px;margin-top:0}
+.c06.m .tcard p{font-size:12px;line-height:18px;margin-top:0}
+.c06.m .tcard .tgo{padding-top:4px;margin-top:0}
+.c06.m .tcard.on{transform:none}
+.c06.m .tcard.on::after{display:none}
+.c06.m .pend6{padding:16px}
+.c06.m .p6-top{flex-direction:column;align-items:stretch;gap:14px}
+.c06.m .p6-ill{width:auto;height:84px}
+.c06.m .p6-tiles{grid-template-columns:1fr;gap:8px}
+.c06.m .p6-tiles>div{padding:10px 14px}
+.c06.m .et-messages{gap:16px}

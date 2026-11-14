@@ -1,0 +1,17 @@
+{
+  "services_rebuilt": [
+    "web",
+    "consultation"
+  ],
+  "backend_recreated": false,
+  "files": {
+    "chat.js": "5995ab667665876c42477b43436c8dfe2311cdf4e7b3ddae11cb77dffd286217",
+    "chat.css": "8ba66a18ac2c1b7c151525039640e938e8dfa7efd972497414b78a0ce755a45e",
+    "consultation.html": "e4883c439e1a68b11507f331d3171e17e0c4df6f3338fadb02f4fd4645fd8046",
+    "consultant.py": "2f6da7f7d8b671e6550dcc36da52e6dcc6c148ce7d0908f3a0b9c7f518f76902",
+    "prompts.py": "b66023611ab54a4f5143d3795d5abd0ac5901b75fb584b8534c63b0bac651ac1"
+  },
+  "health": {
+    "status": "ready"
+  }
+}

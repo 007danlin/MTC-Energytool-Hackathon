@@ -1,0 +1,82 @@
+/* 02 «Живая задача» */
+.c02 .et-sidebar{width:352px}
+.c02 .task{margin:16px 0;padding:24px 24px 20px}
+.c02 .tstatus{display:flex;align-items:flex-start;gap:8px;margin-top:12px;font-size:12px;line-height:18px;color:var(--muted)}
+.c02 .tstatus .dot{margin-top:5px}
+.c02 .trows{margin-top:16px}
+.c02 .trow{display:flex;gap:12px;align-items:flex-start;padding:12px 8px 12px 12px;margin:0 -12px;border-radius:12px;position:relative}
+.c02 .trow+.trow::before{content:"";position:absolute;left:12px;right:12px;top:0;height:1px;background:var(--border)}
+.c02 .trow .ti{color:var(--muted);margin-top:1px}
+.c02 .trow .tb{flex:1;min-width:0}
+.c02 .tk{display:block;font-size:12px;line-height:18px;color:var(--muted)}
+.c02 .tv{font-size:14px;line-height:20px;font-weight:500;margin-top:2px}
+.c02 .tv.ph{color:var(--faint);font-weight:400}
+.c02 .tm{display:block;font-size:12px;line-height:18px;color:var(--faint);margin-top:4px}
+.c02 .trow.empty .ti{color:var(--line)}
+.c02 .trow.new .ti{color:var(--accent)}
+.c02 .trow.hover{background:var(--wash)}
+.c02 .trow.hover::before,.c02 .trow.hover+.trow::before{display:none}
+.c02 .tedit{width:32px;height:32px;border:1px solid var(--border);background:#fff;border-radius:10px;display:grid;place-items:center;color:var(--ink);flex-shrink:0;padding:0}
+.c02 .trow:not(.hover):not(.new) .tedit{border-color:transparent;background:transparent;color:var(--faint)}
+.c02 .tl{margin-top:2px;font-size:14px;line-height:20px;font-weight:500}
+.c02 .tl li{position:relative;padding-left:14px}
+.c02 .tl li+li{margin-top:8px}
+.c02 .tl li::before{content:"";position:absolute;left:0;top:8px;width:5px;height:5px;border-radius:50%;background:var(--ink)}
+.c02 .tl.q li::before{background:transparent;box-shadow:inset 0 0 0 1.5px var(--muted);width:7px;height:7px;top:7px;left:-1px}
+.c02 .tl .chip{min-height:20px;padding:0 6px;font-size:11px;line-height:18px;border-radius:6px;vertical-align:1px;margin-left:2px}
+.c02 .tfoot{margin-top:12px;padding-top:14px;border-top:1px solid var(--border)}
+.c02 .tactions{display:flex;align-items:center;gap:12px;margin-top:10px;padding-top:14px;border-top:1px solid var(--border)}
+
+.c02 .et-scroll.center{display:flex;flex-direction:column;justify-content:center;padding-bottom:168px}
+.c02 .et-composer.up{margin-top:24px}
+.c02 .under{margin-top:12px}
+
+.c02 .et-user mark{background:#fff;color:inherit;border-radius:6px;padding:2px 5px;margin:0 -3px;box-shadow:inset 0 0 0 1px var(--accent-line)}
+.c02 .pend{background:#fff;border:1px solid var(--border);border-radius:16px;padding:16px 24px}
+.c02 .pend-main{display:flex;align-items:center;gap:12px;margin-top:8px}
+.c02 .pend .et-hint{margin-top:8px}
+.c02 .et-scroll.hug{flex:0 0 auto;padding-bottom:0;overflow:visible}
+.c02 .et-composer.hug{margin-top:20px}
+.c02 .below{flex:1;min-height:0}
+.c02 .supp{margin-top:32px}
+.c02 .supp .cap{margin-top:4px}
+.c02 .supp-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+
+.c02 .upd{display:flex;align-items:center;gap:8px;font-size:12px;line-height:18px;color:var(--muted);margin-top:-8px}
+.c02 .upd svg{color:var(--accent)}
+.c02 .next h3{margin-bottom:16px}
+.c02 .next-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.c02 .next-grid p{margin-top:8px}
+
+/* mobile */
+.c02.m .m-task{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:10px 14px;border:1px solid var(--border);background:#fff;border-radius:14px;font-size:14px;line-height:20px;font-weight:500;text-align:left;margin-bottom:16px;flex-shrink:0}
+.c02.m .m-task .grow{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c02.m .m-task>svg:last-child{color:var(--muted)}
+.c02.m .next-grid{grid-template-columns:1fr}
+.c02.m .next h3{margin-bottom:12px}
+.c02.m .et-messages{gap:16px}
+.c02.m .et-flow{margin-top:16px}
+.c02.m .upd{align-items:flex-start;margin-top:-4px}
+.c02.m .upd svg{margin-top:1px}
+.c02 .task.in-sheet h3{font-size:20px;line-height:28px}
+.c02 .task.in-sheet .trows{margin-top:8px}
+.c02 .tinput{display:flex;align-items:center;border:1px solid var(--ink);border-radius:12px;padding:11px 12px;margin-top:6px;font-size:16px;line-height:24px}
+.c02 .tsave{margin-top:10px}
+.c02 .trow.editing .ti{color:var(--ink)}
+
+.c02 .tl li.n::before{background:var(--accent)}
+.c02 .tm .nw{font-style:normal;color:var(--accent-ink);font-weight:500}
+
+.c02 .pend.lw{padding:18px 24px 18px}
+.c02 .supp-chips .chip{background:transparent}
+
+/* широкая карточка: центр не заезжает на неё на 1280 px */
+.c02.d .et-workspace{margin-left:max(calc(50% - 280px),416px);width:min(720px,calc(100vw - 456px))}
+
+.c02 .tmore{display:inline-flex;align-items:center;gap:4px;border:0;background:transparent;padding:0;margin-top:8px;font-size:12px;line-height:18px;font-weight:500;color:var(--ink);text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+.c02 .tmore svg{color:var(--muted)}
+
+.c02 .tactions .link.tall{font-size:13px}
+
+.c02 .tactions .link.tall{white-space:nowrap}
+.c02 .tactions{gap:10px}

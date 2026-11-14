@@ -1,0 +1,59 @@
+/* 05 «Ответ как рабочий материал» */
+.c05 .f-block{margin-top:16px}
+.c05 .f-block .cap{display:block}
+.c05 .f-quote{font-size:14px;line-height:20px;font-weight:500;margin-top:4px;color:var(--ink)}
+.c05 .f-out{padding-top:14px;border-top:1px solid var(--border)}
+.c05 .f-out ul{margin-top:8px;font-size:14px;line-height:20px;font-weight:500}
+.c05 .f-out li{display:flex;align-items:center;gap:8px;padding:3px 0}
+.c05 .f-out svg{color:var(--muted)}
+
+.c05 .et-composer.up{margin-top:24px}
+.c05 .under{margin-top:12px}
+.c05 .fi{display:grid;place-items:center;width:32px;height:32px;border-radius:10px;background:var(--wash);color:var(--ink)}
+
+.c05 .fmt{margin-top:40px;background:#fff;border:1px solid var(--border);border-radius:20px;padding:20px 24px 22px}
+.c05 .fmt-head{display:flex;align-items:baseline;justify-content:space-between}
+.c05 .fmt-grid{display:grid;grid-template-columns:repeat(3,1fr);margin-top:16px}
+.c05 .fmt-grid>div{padding:0 20px;border-left:1px solid var(--border)}
+.c05 .fmt-grid>div:first-child{padding-left:0;border-left:0}
+.c05 .fmt-grid b{display:block;font-size:14px;line-height:20px;font-weight:600;margin-top:10px}
+.c05 .fmt-grid p{font-size:12px;line-height:18px;color:var(--muted);margin-top:2px}
+
+/* лист ответа */
+.c05 .sheet-a{position:relative;background:#fff;border:1px solid var(--border);border-radius:20px;padding:22px 24px 22px;overflow:hidden}
+.c05 .sheet-a .st{gap:10px}
+.c05 .sheet-a .st>span:nth-child(2){font-size:14px;line-height:20px}
+.c05 .sheet-a .et-hint{margin-top:6px}
+.c05 .runline{position:absolute;left:0;right:0;top:0;height:2px;background:var(--border)}
+.c05 .runline b{position:absolute;left:18%;width:22%;top:0;bottom:0;background:var(--accent);border-radius:2px}
+@keyframes c05-run{0%{left:-22%}100%{left:100%}}
+body.live.c05 .runline b{animation:c05-run 2.2s cubic-bezier(.45,0,.55,1) infinite}
+.c05 .kinds-wrap{margin-top:18px;padding-top:18px;border-top:1px solid var(--border)}
+.c05 .kinds{margin-top:10px}
+.c05 .kinds li{display:grid;grid-template-columns:32px 1fr;column-gap:14px;align-items:center;padding:12px 0}
+.c05 .kinds li+li{border-top:1px solid var(--border)}
+.c05 .kinds .fi{grid-row:1 / span 2}
+.c05 .kinds b{display:block;font-size:16px;line-height:24px;font-weight:500}
+.c05 .kinds p{font-size:12px;line-height:18px;color:var(--muted)}
+.c05 .prep-foot{margin-top:6px;padding-top:14px;border-top:1px solid var(--border)}
+
+.c05 .iconbtn{width:36px;height:36px;border:1px solid var(--border);background:#fff;border-radius:10px;display:grid;place-items:center;color:var(--ink);padding:0}
+.c05 .lead{font-size:20px;line-height:28px;font-weight:600;margin-top:14px;max-width:600px}
+.c05 .sec{margin-top:18px;padding-top:16px;border-top:1px solid var(--border)}
+.c05 .sec-k{display:block;font-size:12px;line-height:18px;color:var(--muted);margin-bottom:6px}
+.c05 .checks li{display:flex;align-items:center;gap:12px;min-height:44px}
+.c05 .checks li+li{border-top:1px solid var(--border)}
+.c05 .box{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--line);flex-shrink:0;background:#fff}
+.c05 .acts{display:flex;gap:12px;margin-top:14px}
+.c05 .basis{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:18px;padding-top:14px;border-top:1px solid var(--border)}
+.c05 .basis .cap{margin-right:4px}
+.c05 .basis .chip{color:var(--muted);font-weight:400}
+
+/* mobile */
+.c05.m .sheet-a{padding:18px 16px}
+.c05.m .lead{font-size:18px;line-height:26px}
+.c05.m .acts{flex-direction:column}
+.c05.m .kinds b{font-size:14px;line-height:20px;font-weight:600}
+.c05.m .checks li{padding:10px 0}
+.c05.m .et-messages{gap:16px}
+.c05.m .sheet-a .row.between{flex-wrap:wrap;row-gap:8px}

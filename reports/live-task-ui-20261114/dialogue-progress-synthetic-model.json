@@ -1,0 +1,67 @@
+{
+  "scenario": "Synthetic shop-meter follow-up; no real session data",
+  "endpoint": "http://127.0.0.1:11434/v1",
+  "elapsed_seconds": 43.26,
+  "previous_answer": "Чтобы понять следующий шаг по учёту электроэнергии в магазине, уточните: есть ли на объекте счётчики и снимаете ли вы показания вручную или автоматически?",
+  "latest_user": "Да, счётчики уже стоят.",
+  "status": "clarification",
+  "answer": "Для учёта электроэнергии в магазине с уже установленными счётчиками подойдёт облачная платформа учёта электроэнергии. Она собирает данные с приборов, обрабатывает их и предоставляет в удобном виде: отчёты, веб-кабинет и мобильное приложение. Это поможет контролировать потребление, выявлять аномалии и сравнивать однотипные точки. Уточните, как вы сейчас собираете показания: вручную или автоматически, и есть ли задача учёта по арендаторам или цехам.",
+  "summary": {
+    "task": [
+      {
+        "value": "Тестовый сценарий: есть магазин, хотим наладить учёт электроэнергии.",
+        "message_index": 0
+      }
+    ],
+    "object": [],
+    "parameters": [
+      {
+        "value": "Да, счётчики уже стоят.",
+        "message_index": 2
+      }
+    ],
+    "constraints": [],
+    "products": [
+      {
+        "name": "Облачная платформа учёта электроэнергии",
+        "source_id": "20-products/22-askue.md#s001"
+      }
+    ],
+    "manager_questions": [
+      "Как вы сейчас собираете показания с счётчиков: вручную или автоматически?",
+      "Есть ли задача учёта по арендаторам, цехам или другим подразделениям?"
+    ],
+    "contacts": {},
+    "missing_fields": [
+      "contact"
+    ],
+    "delivery_status": "draft",
+    "sent": false
+  },
+  "debug": {
+    "retrieved_sources": [
+      "20-products/22-askue.md#s001",
+      "20-products/22-askue.md#s003",
+      "20-products/20-portfolio.md#s009",
+      "20-products/22-askue.md#s019",
+      "10-energy/10-market.md#s005",
+      "10-energy/12-power-thresholds.md#s007",
+      "10-energy/11-price-categories.md#s011",
+      "20-products/22-askue.md#s002",
+      "10-energy/15-microgeneration.md#s006",
+      "10-energy/14-tariffs.md#s004",
+      "10-energy/17-faq.md#s009",
+      "10-energy/17-faq.md#s008",
+      "20-products/22-askue.md#s004",
+      "20-products/22-askue.md#s022",
+      "20-products/20-portfolio.md#s019",
+      "00-reference/02-product-scope-and-limits.md#s003",
+      "00-reference/03-calculation-and-requests.md#s006"
+    ],
+    "context_chars": 9447,
+    "repairs": 0,
+    "error_code": null
+  },
+  "source_count": 3,
+  "repeated_previous": false
+}

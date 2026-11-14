@@ -1,0 +1,17 @@
+[
+  {
+    "file": "PROMPT_FOR_NEW_CODEX.md",
+    "same_bytes": true,
+    "sha256": "355ebdac126ddb79859cf0d789522295c136a784800858ebaa09e855b69fb7e0"
+  },
+  {
+    "file": "01_CODEX_TASK_75_PLUS.md",
+    "same_bytes": true,
+    "sha256": "fc00567d7e3fb91cdf33dc6dd99609876c1c48a714899aa04e2c2251960cd765"
+  },
+  {
+    "file": "02_FULL_EXPERIMENT_HISTORY.md",
+    "same_bytes": true,
+    "sha256": "f7b38279661029e4efcae9d95de9b4130577aadfe5cab2c9b7fba0c3869fc026"
+  }
+]

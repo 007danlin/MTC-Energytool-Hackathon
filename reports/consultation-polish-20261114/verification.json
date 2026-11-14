@@ -1,0 +1,41 @@
+{
+  "url": "http://127.0.0.1:8768/consultation.html",
+  "scope": "Consultation UI polish only; web container rebuilt with --no-deps",
+  "assets": {
+    "chat.js": {
+      "match": true,
+      "sha256": "eac1ef0889d61228a78b1251e8939c1393aa9ba9040f20b41970ebbc22f3673b"
+    },
+    "chat.css": {
+      "match": true,
+      "sha256": "213173d55dd0de916b70a5b66c3dd804c4825f439bbb4c26019426080aa77533"
+    },
+    "consultation.html": {
+      "match": true,
+      "sha256": "70c595afdc1478e01a2376662429467c2b41abb5dcb14ff11ca2ca62d845b278"
+    }
+  },
+  "health": {
+    "status": "ready"
+  },
+  "browser_suites_passed": [
+    "test_consultation_polish.cjs",
+    "test_live_task_ui.cjs",
+    "test_consultation_design.cjs",
+    "test_task_field_mapping.cjs",
+    "test_consultation_email.cjs",
+    "test_callback_preference.cjs",
+    "test_consultation_states.cjs"
+  ],
+  "viewports": [
+    320,
+    390,
+    768,
+    1024,
+    1280,
+    1440,
+    1920
+  ],
+  "test_data": "Isolated mocked API, not a live-model evaluation",
+  "plan_limitations": "Recognizes explicit action phrases in saved answers; completion state is per-session localStorage, no backend sync"
+}

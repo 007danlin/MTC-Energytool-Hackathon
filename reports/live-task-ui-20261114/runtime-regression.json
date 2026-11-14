@@ -1,0 +1,46 @@
+[
+  {
+    "test": "test_consultation_ui.cjs",
+    "exit_code": 0,
+    "seconds": 2.0,
+    "output": "PASS: live API form review/edit/save, download, reload, isolated new session, archive overlay preserves active chat, return to site.\n"
+  },
+  {
+    "test": "test_consultation_email.cjs",
+    "exit_code": 0,
+    "seconds": 1.5,
+    "output": "MOCK API PASS: email-only seed/save/reload/export, invalid addresses, phone↔email replacement, separately retained contact disclosure, mobile input/layout.\n"
+  },
+  {
+    "test": "test_consultation_debug.cjs",
+    "exit_code": 0,
+    "seconds": 1.7,
+    "output": "PASS: actual per-answer metadata, error timing, retrieved versus cited sources, archived and legacy responses, safe text, mobile debug layout.\n"
+  },
+  {
+    "test": "test_callback_preference.cjs",
+    "exit_code": 0,
+    "seconds": 0.9,
+    "output": "Browser checks passed: past time validation, desktop/mobile layout, scheduled save, reload, switch to ASAP. API mocked.\n"
+  },
+  {
+    "test": "test_application_queue.cjs",
+    "exit_code": 0,
+    "seconds": 4.7,
+    "output": "PASS: queue, filter, evidence, edits via proxy, transitions, replay, conflicts, exports, metrics, mobile and reload.\n"
+  },
+  {
+    "test": "test_consultation_entry.cjs",
+    "exit_code": 0,
+    "seconds": 1.5,
+    "output": "PASS: buttons enabled; original layout preserved; consultation CTA opens the new section.\n"
+  },
+  {
+    "test": "test_live_task_ui.cjs",
+    "exit_code": 0,
+    "target": "http://127.0.0.1:8775",
+    "api": "Playwright isolated fixtures; real frontend browser execution",
+    "source_sha256": "9acb10ef9ef0de545c62ba139c99514c4e939c196aa6b60c73c9f0628bb4bb9e",
+    "output": "PASS: live summary and escaping; pending drafts; next-message edits; reload draft; long wait, abort, reduced motion; scrollable desktop/mobile task card; source/contact/review/save/history; persisted uncertain request reload with recorded vs unrecorded original and newer draft (4 cases); no automatic duplicate POST."
+  }
+]

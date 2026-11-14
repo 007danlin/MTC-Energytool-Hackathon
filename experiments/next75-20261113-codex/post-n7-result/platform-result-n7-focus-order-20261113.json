@@ -1,0 +1,20 @@
+{
+  "version": "n7-focus-order",
+  "filename_reported": "mts-energytool-n7-focus-order-20261113.zip",
+  "dashboard_score": "63.333",
+  "upload_time_moscow_reported": "19:31",
+  "upload_date_inferred_from_chat": "2026-11-13",
+  "ui_duration_seconds": 342.5,
+  "status_reported": "Успешно",
+  "source": "User-provided platform table in this chat; not independently fetched",
+  "local_artifact": "artifacts/mts-energytool-n7-focus-order-20261113.zip",
+  "local_artifact_sha256": "ed04950717ce270d8fb41ef5e60b99ddd130b427488beb6812d89596fe868cc1",
+  "local_artifact_bytes": 42695,
+  "uploaded_bytes_independently_verified": false,
+  "delta_vs_n2_points": "-6.579",
+  "score_is_accuracy_percent": false,
+  "duration_semantics": "UI displayed duration; pipeline components unknown; not generation latency",
+  "repeatability": "One reported N7 attempt and one reported N2 attempt; causal effect and run-to-run variance unknown",
+  "source_report": "reports/platform-result-n7-focus-order-20261113.json",
+  "conclusion": "No observed improvement over N2; N2 remains best observed 69.912"
+}

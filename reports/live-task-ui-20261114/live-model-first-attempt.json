@@ -1,0 +1,24 @@
+{
+  "base": "http://127.0.0.1:8775",
+  "started_at": "2026-11-14T14:48:27.496Z",
+  "elapsed_ms": 58455,
+  "session_id": "8de55aba-4063-4cb3-a714-851a55ffecdf",
+  "model_status": "technical_error",
+  "model_elapsed_ms": 58273,
+  "source_count": 0,
+  "summary_fields": [
+    "constraints",
+    "contacts",
+    "delivery_status",
+    "manager_questions",
+    "missing_fields",
+    "object",
+    "parameters",
+    "products",
+    "sent",
+    "task"
+  ],
+  "card_text": "Объект\nПока не уточнили\nЗадача\nУ нас склад. Показания счётчика снимаем вручную раз в месяц. Как начать раздельный учёт электроэнергии по зонам?\nВаш вопрос дословно\nЧто известно\nПока только вопрос\nЧто уточнить\nОткрытых вопросов пока нет",
+  "result": "failed",
+  "error": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert(['answered','clarification','knowledge_gap','out_of_scope'].includes(result.model_status))\n"
+}

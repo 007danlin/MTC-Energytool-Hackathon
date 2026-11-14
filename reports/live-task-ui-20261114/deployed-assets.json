@@ -1,0 +1,17 @@
+{
+  "chat.js": {
+    "match": true,
+    "sha256": "9acb10ef9ef0de545c62ba139c99514c4e939c196aa6b60c73c9f0628bb4bb9e"
+  },
+  "chat.css": {
+    "match": true,
+    "sha256": "6c6e02a33fd58309e2128a342eb19aeb42675a416edb235d413b769c538519a0"
+  },
+  "consultation.html": {
+    "match": true,
+    "sha256": "b90f2d3f02978f3b78b557fe4942637e2d78c4016a7a379eb0de084af02417d6"
+  },
+  "health": {
+    "status": "ready"
+  }
+}

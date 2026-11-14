@@ -1,0 +1,74 @@
+{
+  "date": "2026-11-14",
+  "url": "http://127.0.0.1:8768/consultation.html",
+  "scope": "Production consultation UI integration of selected live-task concept; existing backend and model preserved",
+  "browser_suites_passed": [
+    "test_live_task_ui.cjs",
+    "test_consultation_design.cjs",
+    "test_consultation_states.cjs",
+    "test_consultation_ui.cjs",
+    "test_consultation_email.cjs",
+    "test_consultation_debug.cjs",
+    "test_callback_preference.cjs",
+    "test_application_queue.cjs",
+    "test_consultation_entry.cjs"
+  ],
+  "full_stack_mock_test": "tools.host_tests.test_web_stack passed",
+  "additional_cases": [
+    "Four request-marker recovery cases on reload: recorded/unrecorded with original/newer draft",
+    "Long sidebar and mobile sheet all sections reachable",
+    "Reduced motion and long-wait abort without duplicate POST"
+  ],
+  "visual_checks": "Desktop1280/1440/1920, mobile320/360/390/768/1024 depending on suite; no tested horizontal overflow",
+  "fixtures_note": "visual-fixtures and behavior-fixtures use controlled API data, not model-quality results",
+  "live_model": {
+    "base": "http://127.0.0.1:8768",
+    "started_at": "2026-11-14T14:50:16.245Z",
+    "elapsed_ms": 33997,
+    "session_id": "bb17cc8e-4ea6-427d-bfe1-fdef861fc4de",
+    "model_status": "answered",
+    "model_elapsed_ms": 33894,
+    "source_count": 4,
+    "summary_fields": [
+      "constraints",
+      "contacts",
+      "delivery_status",
+      "manager_questions",
+      "missing_fields",
+      "object",
+      "parameters",
+      "products",
+      "sent",
+      "task"
+    ],
+    "card_text": "Объект\nПока не уточнили\nЗадача\nХотим раздельно учитывать их потребление электроэнергии.\nИз резюме консультации\nЧто известно\nПока только вопрос\nЧто уточнить\nЕсть ли у вас существующая схема сбора данных?\nСколько приборов учёта на объекте?\nВопросы консультанта\nОбсуждаемые решения\nОблачная платформа учёта электроэнергии\nВыбор нужно подтвердить",
+    "mobile_card_rows": 5,
+    "draft_survives_reload": true,
+    "errors": [],
+    "result": "passed",
+    "all_returned_summary_values_visible": true,
+    "exact_live_source_quote": true,
+    "source_modal_mobile_no_overflow": true
+  },
+  "known_limitations": [
+    "First live model request returned ungrounded_citation; retained in live-model-first-attempt.json. UI safely shows technical error.",
+    "Task fields absent from server summary stay visibly unknown; task corrections enter the next message draft."
+  ],
+  "deployment": {
+    "chat.js": {
+      "match": true,
+      "sha256": "9acb10ef9ef0de545c62ba139c99514c4e939c196aa6b60c73c9f0628bb4bb9e"
+    },
+    "chat.css": {
+      "match": true,
+      "sha256": "6c6e02a33fd58309e2128a342eb19aeb42675a416edb235d413b769c538519a0"
+    },
+    "consultation.html": {
+      "match": true,
+      "sha256": "b90f2d3f02978f3b78b557fe4942637e2d78c4016a7a379eb0de084af02417d6"
+    },
+    "health": {
+      "status": "ready"
+    }
+  }
+}

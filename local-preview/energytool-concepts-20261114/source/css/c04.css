@@ -1,0 +1,86 @@
+/* 04 «Карта консультации» */
+.c04 .f-map{margin-top:16px;padding-top:14px;border-top:1px solid var(--border)}
+.c04 .f-map p{margin-top:6px;color:var(--ink);font-weight:500}
+.c04 .mdots{display:inline-flex;gap:4px}
+.c04 .mdots i{width:8px;height:8px;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--line)}
+.c04 .mdots i.on{background:var(--ink);box-shadow:none}
+
+.c04 .et-composer.up{margin-top:24px}
+.c04 .under{margin-top:12px}
+
+.c04 .map{background:#fff;border:1px solid var(--border);border-radius:20px;padding:20px 24px 22px}
+.c04 .et-scroll>.map{margin-top:32px}
+.c04 .map .cap{margin-top:2px}
+.c04 .stations{display:grid;grid-template-columns:repeat(4,1fr);margin-top:16px}
+.c04 .st{position:relative;padding-right:20px;min-width:0}
+.c04 .st-k{display:block;font-size:12px;line-height:18px;color:var(--muted)}
+.c04 .st-m{display:grid;place-items:center;width:14px;height:14px;border-radius:50%;margin:8px 0 10px;position:relative;z-index:1;background:var(--ink)}
+.c04 .st::after{content:"";position:absolute;left:14px;right:0;top:32px;border-top:1.5px solid var(--ink)}
+.c04 .st:last-child::after{display:none}
+.c04 .st.dash::after{border-top:1.5px dashed var(--line)}
+.c04 .st-v{display:block;font-size:14px;line-height:20px;font-weight:500}
+.c04 .st-s{display:block;font-size:12px;line-height:18px;color:var(--faint);margin-top:2px}
+.c04 .st-a{border:0;background:transparent;padding:0;margin-top:4px;font-size:12px;line-height:18px;font-weight:500;color:var(--ink);text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+.c04 .st.empty .st-m{background:#fff;border:1.5px dashed var(--line)}
+.c04 .st.empty .st-v{color:var(--faint);font-weight:400}
+.c04 .st.new .st-m{background:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+.c04 .st.await .st-m{background:#fff;border:1.5px solid var(--accent)}
+.c04 .st.await .st-m i{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.c04 .st.await .st-v{color:var(--muted);font-weight:400}
+.c04 .st.prop .st-m{background:#fff;border:1.5px solid var(--ink)}
+.c04 .st.prop .st-m i{width:6px;height:6px;border-radius:50%;background:var(--ink)}
+
+.c04 .et-message .pl{gap:12px}
+.c04 .et-message .et-hint{margin-top:8px}
+
+/* свёрнутая карта над лентой — уступает место чтению ответа */
+.c04 .map.compact{display:flex;align-items:center;gap:8px;padding:12px 8px 12px 20px;border-radius:16px;flex-shrink:0;margin-bottom:8px}
+.c04 .map.compact .stations{flex:1;margin-top:0}
+.c04 .map.compact .st{padding-right:16px;display:grid;grid-template-columns:auto 1fr;column-gap:10px;align-items:center}
+.c04 .map.compact .st-k{grid-column:2;grid-row:1;font-size:11px;line-height:16px}
+.c04 .map.compact .st-m{grid-column:1;grid-row:1 / span 2;margin:0;width:10px;height:10px}
+.c04 .map.compact .st-m i{width:4px;height:4px}
+.c04 .map.compact .st-v{grid-column:2;grid-row:2;font-size:13px;line-height:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c04 .map.compact .st::after{display:none}
+.c04 .map.compact .st.new .st-m{box-shadow:0 0 0 3px var(--accent-soft)}
+.c04 .map-toggle{width:36px;height:36px;border:0;background:transparent;border-radius:10px;display:grid;place-items:center;color:var(--muted)}
+
+.c04 .upd{display:flex;align-items:center;gap:8px;font-size:12px;line-height:18px;color:var(--muted);margin-top:-8px}
+.c04 .upd svg{color:var(--accent)}
+.c04 .next h3{margin-bottom:16px}
+.c04 .next-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.c04 .next-grid p{margin-top:8px}
+
+/* mobile: карта становится вертикальной, в ответе — полоса с прокруткой */
+.c04.m .map{padding:16px}
+.c04.m .stations{grid-template-columns:1fr;margin-top:12px}
+.c04.m .st{display:grid;grid-template-columns:14px 1fr auto;column-gap:12px;padding:0 0 14px;align-items:start}
+.c04.m .st:last-child{padding-bottom:0}
+.c04.m .st-m{grid-column:1;grid-row:1 / span 3;margin:3px 0 0}
+.c04.m .st-k{grid-column:2}
+.c04.m .st-v{grid-column:2}
+.c04.m .st-s{grid-column:2}
+.c04.m .st-a{grid-column:3;grid-row:1 / span 2;align-self:center;margin:0}
+.c04.m .st::after{left:6px;right:auto;top:20px;bottom:0;border-top:0;border-left:1.5px solid var(--ink)}
+.c04.m .st.dash::after{border-top:0;border-left:1.5px dashed var(--line)}
+.c04.m .mstrip{flex-shrink:0;margin:0 -16px 12px;padding:0 16px;overflow:hidden}
+.c04.m .mstrip .stations{display:flex;gap:8px;margin:0;width:max-content}
+.c04.m .mstrip .st{display:block;width:150px;background:#fff;border:1px solid var(--border);border-radius:14px;padding:10px 12px}
+.c04.m .mstrip .st::after{display:none}
+.c04.m .mstrip .st-m{display:none}
+.c04.m .mstrip .st-k{font-size:11px;line-height:16px}
+.c04.m .mstrip .st-v{font-size:13px;line-height:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c04.m .mstrip .st.new{border-color:var(--accent-line)}
+.c04.m .mstrip .st.new .st-k{color:var(--accent-ink)}
+.c04.m .next-grid{grid-template-columns:1fr}
+.c04.m .next h3{margin-bottom:12px}
+.c04.m .et-messages{gap:16px}
+.c04.m .et-flow{margin-top:16px}
+
+.c04 .plh{align-items:flex-start}
+.c04 .plh .timer{line-height:20px}
+.c04 .gap{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+.c04 .gap .cap{margin-top:2px}
+.c04 .gap-opts{display:flex;gap:8px;flex-shrink:0}
+.c04.m .gap{flex-direction:column;align-items:stretch}
+.c04.m .gap-opts{flex-wrap:wrap}

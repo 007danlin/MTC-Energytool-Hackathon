@@ -1,0 +1,32 @@
+// Индекс канвы (project/canvas.json): страницы, раскладка артбордов, заметки.
+import fs from 'node:fs';
+import path from 'node:path';
+import { CONCEPTS, STATES, total } from './meta.mjs';
+const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+const P = path.join(root, 'canvas', 'project');
+const boards = {}, order = [], notes = {};
+const file = id => (id === 'c01-a-start' ? 'Main' : id) + '.dc.html';
+const add = (id, x, y, w, h, title, page) => { const f = file(id); if (id === 'c01-a-start' && fs.existsSync(path.join(P, 'c01-a-start.dc.html'))) fs.renameSync(path.join(P, 'c01-a-start.dc.html'), path.join(P, f)); if (!fs.existsSync(path.join(P, f))) throw new Error('missing ' + f); boards[f] = { x, y, w, h, title, page }; order.push(f); };
+const ROW = 1560;
+const LAB = ['Старт', 'Ожидание', 'Ответ'];
+CONCEPTS.forEach((c, i) => {
+  const y = i * ROW;
+  c.shots.forEach((s, k) => add(s, k * 1520, y, 1440, 960, `${c.n} ${LAB[k]}`, 'concepts'));
+  c.ms.forEach((m, k) => add(m, 4560 + k * 470, y, 390, 844, `${c.n} Mobile: ${c.m[k].split(':')[0].toLowerCase()}`, 'concepts'));
+  notes['t' + c.n] = { x: 0, y: y - 300, text: `${c.n} · ${c.name}`, kind: 'title1', maxW: 5400, page: 'concepts' };
+  notes['n' + c.n] = { x: 5560, y, w: 620, size: 'm', page: 'concepts', fill: 'gray', text: `Гипотеза. ${c.hyp}\n\nЧем отличается. ${c.diff}\n\nРиск. ${c.risk}\n\nНа текущем API. ${c.apiNow}\n\nНовый контракт. ${c.apiNew}\n\nОценка ${total(c.s).toFixed(2).replace('.', ',')} из 5 — экспертное мнение, не исследование.` };
+});
+const stA = ['sA-1-clarify', 'sA-2-longwait', 'sA-3-error', 'sA-4-gap', 'sA-5-long', 'sA-6-contact', 'sA-7-review', 'sA-8-saved', 'sA-9-context'];
+const stB = ['sB-1-clarify', 'sB-2-longwait', 'sB-3-error', 'sB-4-gap', 'sB-5-long', 'sB-6-contact', 'sB-7-review', 'sB-8-saved'];
+const names = [...STATES.map(s => s[1]), 'Длинный контекст'];
+stA.forEach((id, k) => add(id, (k % 5) * 1520, Math.floor(k / 5) * 1080, 1440, 960, `A · ${names[k]}`, 'selected'));
+const yB = 2 * 1080 + 420;
+stB.forEach((id, k) => add(id, (k % 4) * 1520, yB + Math.floor(k / 4) * 1080, 1440, 960, `B · ${names[k]}`, 'selected'));
+notes.tA = { x: 0, y: -300, text: 'A · Живая задача — основное направление', kind: 'title1', maxW: 7500, page: 'selected' };
+notes.tB = { x: 0, y: yB - 300, text: 'B · Ожидание с пользой — альтернативное направление', kind: 'title1', maxW: 6000, page: 'selected' };
+notes.nA = { x: 7680, y: 0, w: 640, size: 'm', fill: 'gray', page: 'selected', text: 'Почему основное. Карточка задачи работает на всём пути: показывает, что вопрос понят, собирает факты, из неё же складывается заявка специалисту. В ожидании у неё есть своё дело — «дополнить задачу».\n\nКомпромисс. Нужны правки карточки на сервере и аккуратный summary; ошибка в карточке заметнее ошибки в тексте.\n\nДвижение. Рабочий прототип и раскадровка лежат в архиве: selected/prototype.html и selected/A-zhivaya-zadacha/storyboard.png.' };
+notes.nB = { x: 6160, y: yB, w: 640, size: 'm', fill: 'gray', page: 'selected', text: 'Почему альтернатива. Лучше всех решает ожидание и целиком делается на текущем API: чек-лист, отметки и черновик живут на клиенте.\n\nКомпромисс. Контекст и ответы остаются плоскими; чек-листы нужно писать под темы.\n\nСовместимость. Блок ожидания встраивается в направление A, поэтому B можно выпустить первым шагом.' };
+const idx = { v: 3, createdOnFiles: { v: 1, at: new Date().toISOString().replace(/\.\d+Z$/, 'Z') }, title: 'EnergyTool · ИИ-консультант — 8 концепций развития интерфейса', launch: { view: 'canvas', page: 'concepts' }, pages: [{ id: 'concepts', name: '8 концепций' }, { id: 'selected', name: 'Два направления: все состояния' }], boards, order, notes, designSystems: [] };
+fs.writeFileSync(path.join(P, 'canvas.json'), JSON.stringify(idx, null, 1));
+console.log('boards', order.length, 'notes', Object.keys(notes).length);
+console.log(order.join(' '));

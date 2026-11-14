@@ -1,0 +1,278 @@
+{
+  "runs": [
+    {
+      "id": "bundle-integrity",
+      "kind": "static",
+      "status": "pass",
+      "files": 3522,
+      "evidence": "handoff/verify_bundle.py",
+      "quality_claim": false
+    },
+    {
+      "id": "source-coverage",
+      "kind": "static",
+      "status": "complete",
+      "evidence": "static-context-audit.json",
+      "quality_claim": false
+    },
+    {
+      "id": "early-raise-v1",
+      "kind": "mock",
+      "status": "rejected",
+      "reason": "low reasoning still poisoned global cap",
+      "evidence": "runtime-probe/rejected-v1/"
+    },
+    {
+      "id": "early-raise",
+      "kind": "mock",
+      "status": "not_selected",
+      "reason": "changes/reduces document context",
+      "evidence": "runtime-probe/patched-results.json"
+    },
+    {
+      "id": "local-cap-v2",
+      "kind": "mock",
+      "status": "superseded",
+      "reason": "review narrowed HTTP413 and ordinary window parsing",
+      "evidence": "runtime-probe/local-v2/"
+    },
+    {
+      "id": "final-targeted-v3",
+      "kind": "mock",
+      "status": "pass",
+      "scenarios": 17,
+      "evidence": "final-targeted/summary.json",
+      "quality_claim": false
+    },
+    {
+      "id": "final-healthy209",
+      "kind": "mock",
+      "status": "pass",
+      "rows": 209,
+      "evidence": "runtime-probe/final-healthy209-proof.json",
+      "quality_claim": false
+    },
+    {
+      "id": "repeated-overflow209",
+      "kind": "mock",
+      "status": "complete_risk_found",
+      "extra_refusals": 206,
+      "evidence": "runtime-probe/batch209/",
+      "quality_claim": false
+    },
+    {
+      "id": "fixed-latency-stress",
+      "kind": "mock",
+      "status": "pass_with_cost",
+      "shared_budget_seconds": 12,
+      "per_http_delay_seconds": 0.15,
+      "n2_seconds": 5.508,
+      "local_cap_seconds": 9.249,
+      "evidence": "runtime-probe/latency-stress-plan.json",
+      "quality_claim": false
+    },
+    {
+      "id": "final-zip-acceptance",
+      "kind": "mock_and_static",
+      "status": "pass",
+      "checks": 47,
+      "evidence": "final-acceptance/acceptance.json",
+      "quality_claim": false,
+      "fallback_caveat": "76 deadline_fallback in budget stress; 209 fallback in always-truncated test"
+    },
+    {
+      "id": "reproducible-build",
+      "kind": "static",
+      "status": "pass",
+      "evidence": "release/reproducibility.json"
+    },
+    {
+      "id": "proxy-and-runner-smoke",
+      "kind": "mock",
+      "status": "pass",
+      "evidence": [
+        "diagnostic-harness-smoke/summary.json",
+        "trace-proxy-review-tests/summary.json"
+      ],
+      "quality_claim": false
+    },
+    {
+      "id": "model-install-download",
+      "kind": "setup",
+      "status": "pass",
+      "evidence": [
+        "model-runtime/setup-summary.json",
+        "model-runtime/weights-manifest.json"
+      ],
+      "quality_claim": false
+    },
+    {
+      "id": "model-token-preflight",
+      "kind": "tokenizer_only",
+      "status": "pass",
+      "rows": 123,
+      "over_32k_with_4096_output": 0,
+      "evidence": "model-runtime/n2-token-audit.json",
+      "quality_claim": false
+    },
+    {
+      "id": "model-smoke",
+      "kind": "real_local_generation",
+      "status": "pass",
+      "cases": 2,
+      "evidence": "model-runtime/smoke-results.json",
+      "quality_claim": false
+    },
+    {
+      "id": "paired-diagnostics-v1",
+      "kind": "real_local_generation_after_synthetic_refusal",
+      "status": "interrupted_system_memory_pressure",
+      "planned_pairs": 4,
+      "max_wall_seconds": 3600,
+      "evidence": [
+        "live-diagnostics-v1/final-summary.json",
+        "live-diagnostics-v1/coordinated-stop.json",
+        "blind-review-v1/review-np01.json",
+        "blind-review-v1/review-np03.json"
+      ],
+      "platform_claim": false,
+      "completed_pairs": 2,
+      "complete_answers": 4,
+      "interrupted_real_http_attempts": 1,
+      "outcomes": {
+        "ties": 2,
+        "candidate_wins": 0,
+        "baseline_wins": 0
+      }
+    },
+    {
+      "id": "n7-source-preservation",
+      "kind": "static",
+      "status": "pass",
+      "cases": 202,
+      "evidence": "rerank-order-v1/source-preservation.json",
+      "quality_claim": false
+    },
+    {
+      "id": "n7-real-pairs",
+      "kind": "real_local_generation",
+      "status": "interrupted_thermal_critical",
+      "planned_pairs": 4,
+      "evidence": [
+        "rerank-order-v1/summary.json",
+        "rerank-order-v1/blind/review-hold01.json",
+        "rerank-order-v1/model-session/thermal-interrupted-resource-summary.json"
+      ],
+      "platform_claim": false,
+      "completed_pairs": 1,
+      "complete_answers": 2,
+      "interrupted_real_http_attempts": 1,
+      "outcomes": {
+        "weak_candidate_preference": 1,
+        "decisive_condition_correct_in_both": 1
+      }
+    },
+    {
+      "id": "web-debug",
+      "kind": "unit_browser_http_mock",
+      "status": "pass",
+      "evidence": [
+        "web-debug-audit/validation.json",
+        "web-debug-audit/patch-reproduction.json",
+        "web-debug-audit/ORGANIZER_COMPLIANCE.md"
+      ],
+      "quality_claim": false,
+      "scope": "debug_plus_one_contact_phone_or_email",
+      "source_files": 31,
+      "source_patch_reproduced_files": 36,
+      "checks": "30 targeted Python; Go/race; real Go browser; HTTP/restart; design/callback/queue",
+      "deployment": "running demo not restarted"
+    },
+    {
+      "id": "n7-final-zip-technical",
+      "kind": "static_and_mock",
+      "status": "pass",
+      "checks": 47,
+      "source_preservation": 202,
+      "context_shrink": 64,
+      "evidence": "rerank-order-v1/technical/TECHNICAL_SUMMARY.json",
+      "quality_claim": false
+    },
+    {
+      "id": "n7-platform-user-report",
+      "kind": "platform_result_user_reported",
+      "status": "successful_execution_below_baseline",
+      "dashboard_score": "63.333",
+      "delta_vs_n2_points": "-6.579",
+      "ui_duration_seconds": 342.5,
+      "evidence": "post-n7-result/platform-result-n7-focus-order-20261113.json",
+      "quality_improvement_observed": false
+    }
+  ],
+  "historical_answer_cache_reused": false,
+  "platform_uploads": 0,
+  "recommendation": {
+    "n6": "not_recommended_no_quality_gain_confirmed",
+    "n7": "not_promoted_user_reported_platform_63.333_below_N2_69.912",
+    "baseline": "N2 69.912 remains best observed",
+    "platform_uploads": 0
+  },
+  "latest_exploratory_selection": {
+    "purpose": "one exploratory platform trial explicitly requested by user; not a claim of proven quality improvement",
+    "archive": "/Users/daniellineckij/Хакатон \"МТС\"/artifacts/mts-energytool-n7-focus-order-20261113.zip",
+    "bytes": 42695,
+    "sha256": "ed04950717ce270d8fb41ef5e60b99ddd130b427488beb6812d89596fe868cc1",
+    "same_bytes_as_technically_tested_archive": true,
+    "root_entries": 13,
+    "platform_upload_performed": true,
+    "available_attempts": "unknown shared team counter",
+    "candidate": "N7",
+    "reason": "User explicitly requested an exploratory trial after N2; prior conservative evidence assessment unchanged",
+    "quality_advantage_proven": false,
+    "evidence": "NEXT_PLATFORM_TRIAL.md",
+    "status": "completed_user_reported_below_baseline",
+    "platform_upload_actor": "user",
+    "platform_upload_performed_by_agent": false,
+    "result": {
+      "version": "n7-focus-order",
+      "filename_reported": "mts-energytool-n7-focus-order-20261113.zip",
+      "dashboard_score": "63.333",
+      "upload_time_moscow_reported": "19:31",
+      "upload_date_inferred_from_chat": "2026-11-13",
+      "ui_duration_seconds": 342.5,
+      "status_reported": "Успешно",
+      "source": "User-provided platform table in this chat; not independently fetched",
+      "local_artifact": "artifacts/mts-energytool-n7-focus-order-20261113.zip",
+      "local_artifact_sha256": "ed04950717ce270d8fb41ef5e60b99ddd130b427488beb6812d89596fe868cc1",
+      "local_artifact_bytes": 42695,
+      "uploaded_bytes_independently_verified": false,
+      "delta_vs_n2_points": "-6.579",
+      "score_is_accuracy_percent": false,
+      "duration_semantics": "UI displayed duration; pipeline components unknown; not generation latency",
+      "repeatability": "One reported N7 attempt and one reported N2 attempt; causal effect and run-to-run variance unknown",
+      "source_report": "reports/platform-result-n7-focus-order-20261113.json",
+      "conclusion": "No observed improvement over N2; N2 remains best observed 69.912"
+    }
+  },
+  "platform_uploads_semantics": "Uploads performed by agent; user-reported platform results are tracked separately",
+  "user_reported_n7_result": {
+    "version": "n7-focus-order",
+    "filename_reported": "mts-energytool-n7-focus-order-20261113.zip",
+    "dashboard_score": "63.333",
+    "upload_time_moscow_reported": "19:31",
+    "upload_date_inferred_from_chat": "2026-11-13",
+    "ui_duration_seconds": 342.5,
+    "status_reported": "Успешно",
+    "source": "User-provided platform table in this chat; not independently fetched",
+    "local_artifact": "artifacts/mts-energytool-n7-focus-order-20261113.zip",
+    "local_artifact_sha256": "ed04950717ce270d8fb41ef5e60b99ddd130b427488beb6812d89596fe868cc1",
+    "local_artifact_bytes": 42695,
+    "uploaded_bytes_independently_verified": false,
+    "delta_vs_n2_points": "-6.579",
+    "score_is_accuracy_percent": false,
+    "duration_semantics": "UI displayed duration; pipeline components unknown; not generation latency",
+    "repeatability": "One reported N7 attempt and one reported N2 attempt; causal effect and run-to-run variance unknown",
+    "source_report": "reports/platform-result-n7-focus-order-20261113.json",
+    "conclusion": "No observed improvement over N2; N2 remains best observed 69.912"
+  }
+}

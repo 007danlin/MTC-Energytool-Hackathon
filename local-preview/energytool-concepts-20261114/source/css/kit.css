@@ -1,0 +1,125 @@
+/* Общие новые элементы концепций. Опираются на токены base.css. */
+.ic{color:inherit}
+.row{display:flex;align-items:center;gap:8px}
+.row.top{align-items:flex-start}
+.row.between{justify-content:space-between}
+.grow{flex:1;min-width:0}
+.hr{height:1px;background:var(--border);border:0;margin:0}
+
+/* Поле ввода v2: подсказка слева, действие справа */
+.et-composer.v2 .et-compose-actions{justify-content:space-between;align-items:center}
+.et-composer.v2 .et-compose-actions>span{width:auto}
+.caret{display:inline-block;width:1.5px;height:20px;background:var(--ink);vertical-align:-4px;margin-left:1px}
+.caret.lead{margin:0 1px 0 0}
+
+/* Лента прижата к низу, верх уходит под мягкую маску — так выглядит прокрученный диалог */
+.et-scroll.bottom{display:flex;flex-direction:column;justify-content:flex-end}
+.et-scroll.fade::before{content:"";position:absolute;left:0;right:0;top:0;height:36px;background:linear-gradient(var(--bg),rgba(246,247,249,0));z-index:2;pointer-events:none}
+
+/* Метки */
+.chip{display:inline-flex;align-items:center;gap:6px;min-height:28px;padding:4px 10px;border-radius:8px;border:1px solid var(--border);background:#fff;font-size:12px;line-height:18px;font-weight:500;color:var(--ink);white-space:nowrap}
+.chip.soft{background:var(--wash);border-color:transparent}
+.chip.dash{border-style:dashed;border-color:var(--line);color:var(--muted);background:transparent}
+.chip.new{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent-ink)}
+.chip.ok{color:var(--success);border-color:#cfe8da;background:#f2faf5}
+.chip.lg{min-height:36px;padding:8px 12px;font-size:14px;line-height:20px;border-radius:10px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0}
+.dot.ink{background:var(--ink)}
+.dot.off{background:transparent;box-shadow:inset 0 0 0 1.5px var(--line)}
+.dot.ok{background:var(--success)}
+
+/* Индикатор ожидания «три деления» — статичный кадр; движение включается классом body.live */
+.bars{display:inline-flex;align-items:center;gap:3px;height:20px;flex-shrink:0}
+.bars i{display:block;width:3px;border-radius:2px;background:var(--ink)}
+.bars i:nth-child(1){height:8px;opacity:.32}
+.bars i:nth-child(2){height:16px;background:var(--accent)}
+.bars i:nth-child(3){height:11px;opacity:.6}
+.bars.inv i{background:#fff}
+.bars.inv i:nth-child(2){background:#ff5a78}
+@keyframes et-bars{0%,100%{transform:scaleY(.5);opacity:.32}50%{transform:scaleY(1);opacity:1}}
+body.live .bars i{height:16px;opacity:1;background:var(--ink);animation:et-bars 1.8s cubic-bezier(.4,0,.2,1) infinite}
+body.live .bars i:nth-child(2){animation-delay:.2s}
+body.live .bars i:nth-child(3){animation-delay:.4s}
+@media (prefers-reduced-motion:reduce){body.live .bars i{animation:none}}
+
+.timer{font-size:12px;line-height:18px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* Мобильное поле ввода в одну строку */
+.m-dock{flex-shrink:0;padding:12px 0 20px}
+.m-composer{display:flex;align-items:flex-end;gap:8px;border:1px solid var(--border);border-radius:20px;background:#fff;padding:7px 7px 7px 16px;min-height:60px}
+.m-composer .ta{flex:1;padding:10px 0;line-height:24px;min-width:0}
+.m-composer .ta.ph{color:var(--muted)}
+.m-send{width:44px;height:44px;border-radius:13px;border:0;background:var(--accent);color:#fff;display:grid;place-items:center;flex-shrink:0}
+.m-send.is-disabled{background:#e3e5ea;color:#5f636c;opacity:.7}
+.m-note{font-size:12px;line-height:18px;color:var(--muted);margin-top:8px;text-align:center}
+body.m .et-scroll{padding-bottom:0}
+body.m .btn{white-space:normal}
+
+/* Нижний лист на мобильном */
+.sheet-scrim{position:absolute;inset:0;background:#17181c40;z-index:8}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:20px 20px 0 0;padding:12px 20px 28px;z-index:9;box-shadow:0 -12px 60px #17181c1f}
+.sheet .grab{width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 16px}
+
+/* ——— Состояния выбранных направлений ——— */
+.qr{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:16px}
+.qr .cap{margin-left:4px}
+.lw-p{font-size:14px;line-height:20px;margin-top:8px;color:var(--ink)}
+.lw-acts{display:flex;gap:8px;margin-top:14px}
+.lw-n{margin-top:10px}
+.errc h3{font-size:20px;line-height:28px}
+.errh{gap:10px;color:var(--accent-ink)}
+.errh h3{color:var(--ink)}
+.facts{margin-top:14px;display:grid;gap:8px;font-size:14px;line-height:20px}
+.facts li{display:flex;gap:10px;align-items:flex-start}
+.facts li svg{margin-top:2px}
+.facts li.ok svg{color:var(--success)}
+.facts li.unk{color:var(--muted)}
+.errc>p{margin-top:16px}
+.erra{gap:12px;margin-top:16px}
+.errc>.cap{margin-top:12px}
+.gaph{gap:10px;margin-bottom:8px}
+.gaph .et-message-label{margin-bottom:0}
+.gaph .chip{color:var(--muted)}
+.et-message.long .et-message-body p+ol,.et-message.long .et-message-body ol+p{margin-top:12px}
+.la{counter-reset:la;display:grid;gap:12px}
+.la li{counter-increment:la;position:relative;padding-left:32px}
+.la li::before{content:counter(la);position:absolute;left:0;top:2px;width:20px;height:20px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;font-size:11px;line-height:1;font-weight:600}
+.la b{font-weight:600}
+.jump{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px 0 14px;border-radius:20px;border:1px solid var(--border);background:#fff;font-size:14px;line-height:20px;font-weight:500;box-shadow:0 8px 24px -8px #17181c33;z-index:4}
+.et-scroll.fadeb::after{content:"";position:absolute;left:0;right:0;bottom:0;height:112px;background:linear-gradient(rgba(246,247,249,0),var(--bg) 78%);z-index:3;pointer-events:none}
+.form h2,.review h2,.saved h2{font-size:24px;line-height:32px}
+.form>.small,.review>.small{margin-top:4px}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+.fgrid .full{grid-column:1 / -1}
+.fgrid.tight{margin-top:0}
+.cb{margin-top:18px}
+.cb-opts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}
+.cb-opt{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--border);border-radius:14px;padding:14px 14px;background:#fff}
+.cb-opt.on{border-color:var(--ink);box-shadow:inset 0 0 0 .5px var(--ink)}
+.cb-opt b{display:block;font-size:14px;line-height:20px;font-weight:500}
+.cb-opt p{font-size:12px;line-height:18px;color:var(--muted);margin-top:2px}
+.radio{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--line);flex-shrink:0;margin-top:1px;display:grid;place-items:center}
+.radio.on{border-color:var(--ink)}
+.radio.on::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--ink)}
+.attach{display:flex;align-items:center;gap:10px;margin-top:16px;padding:12px 14px;border-radius:12px;background:var(--bg);font-size:14px;line-height:20px}
+.attach svg{color:var(--muted)}
+.fa{gap:12px;margin-top:18px}
+.rv{margin-top:16px;border-top:1px solid var(--border)}
+.rv-row{display:grid;grid-template-columns:104px 1fr auto;gap:16px;padding:14px 0;border-bottom:1px solid var(--border);align-items:start}
+.rv-k{font-size:12px;line-height:18px;color:var(--muted);padding-top:3px}
+.rv-v{display:grid;gap:2px;font-size:16px;line-height:24px;min-width:0}
+.rv-v b{font-weight:500}
+.rv-v ul{font-size:14px;line-height:20px;display:grid;gap:4px;margin-top:2px}
+.rv-v ul li{position:relative;padding-left:14px;color:var(--ink)}
+.rv-v ul li::before{content:"";position:absolute;left:0;top:8px;width:5px;height:5px;border-radius:50%;background:var(--ink)}
+.rv-v ul.q li::before{background:transparent;box-shadow:inset 0 0 0 1.5px var(--muted);width:7px;height:7px;top:7px;left:-1px}
+.rv-v .rk{font-size:12px;line-height:18px;color:var(--muted);margin-top:6px}
+.rv-row.editing .rv-v{gap:12px}
+.sh{gap:12px}
+.okm{width:32px;height:32px;border-radius:50%;background:#e9f6ef;color:var(--success);display:grid;place-items:center;flex-shrink:0}
+.prevb{align-self:flex-start;gap:8px;padding-left:16px}
+.et-composer.slim{display:flex;align-items:center;justify-content:space-between;min-height:72px;padding:12px 12px 12px 16px;margin-top:16px}
+.et-composer.slim .ta{width:auto}
+
+.et-scroll>.et-flow:first-child{margin-top:0}
+.review .rv-row{padding:12px 0}

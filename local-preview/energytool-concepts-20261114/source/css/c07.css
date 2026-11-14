@@ -1,0 +1,51 @@
+/* 07 «Диалог и план» — двухпанельная структура: слева беседа, справа задача и план */
+.c07.d .et-workspace{margin-left:120px}
+.c07 .plan{position:absolute;left:904px;right:40px;top:112px;bottom:24px;background:#fff;border:1px solid var(--border);border-radius:20px;padding:28px 28px 24px;display:flex;flex-direction:column;z-index:2}
+.c07 .plan h2{margin-top:12px}
+.c07 .plan-sub{font-size:14px;line-height:20px;color:var(--muted);font-weight:500;margin-top:12px}
+.c07 .plan-sub.ink{color:var(--ink);font-size:16px;line-height:24px}
+.c07 .plan-q{margin-top:12px}
+.c07 .plan-q p{font-size:14px;line-height:20px;font-weight:500;margin-top:2px}
+.c07 .plan-sec{margin-top:24px;padding-top:22px;border-top:1px solid var(--border)}
+.c07 .psteps{margin-top:14px}
+.c07 .ps{display:flex;gap:14px;align-items:flex-start;padding:12px 0;position:relative}
+.c07 .ps+.ps::before{content:"";position:absolute;left:13.250px;top:-10px;height:20px;border-left:1.5px solid var(--border)}
+.c07 .pn{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;font-size:13px;line-height:18px;font-weight:600;flex-shrink:0;background:#fff;position:relative;z-index:1}
+.c07 .ps b{display:block;font-size:16px;line-height:24px;font-weight:500;margin-top:2px}
+.c07 .ps p{font-size:12px;line-height:18px;color:var(--muted);margin-top:2px}
+.c07 .ps.done .pn{background:var(--ink);border-color:var(--ink);color:#fff}
+.c07 .ps.done b{color:var(--muted);font-weight:400;font-size:14px;line-height:20px;margin-top:4px}
+.c07 .ps.now .pn{border-color:var(--accent);color:var(--accent-ink);box-shadow:0 0 0 4px var(--accent-soft)}
+.c07 .ps.now b{font-weight:600}
+.c07 .ps.wait .pn{border-style:dashed}
+.c07 .ps.wait .bars{transform:scale(.72)}
+.c07 .ps.wait b{font-size:14px;line-height:20px;margin-top:4px}
+.c07 .ps.ghost .pn{border-style:dashed;color:var(--faint);font-weight:500}
+.c07 .ps.ghost i{display:block;height:0;border-top:1.5px dashed var(--line);margin-top:13px;width:78%}
+.c07 .ps.ghost i.s{width:46%;margin-top:14px;display:none}
+.c07 .box{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--line);flex-shrink:0;background:#fff;margin-top:4px}
+.c07 .plan-note{margin-top:12px}
+.c07 .plan-foot{margin-top:auto;padding-top:20px}
+.c07 .plan-acts{margin-top:auto;padding-top:20px;display:flex;flex-direction:column;gap:10px}
+.c07 .plan-acts .row{gap:10px}
+.c07 .plan-acts .cap{margin-top:2px}
+
+.c07 .et-scroll.hug{flex:0 0 auto;padding-bottom:0;overflow:visible}
+.c07 .et-composer.hug{margin-top:20px}
+.c07 .et-composer.hug.up{margin-top:24px}
+.c07 .below{flex:1;min-height:0}
+.c07 .under{margin-top:12px}
+.c07 .pend{background:#fff;border:1px solid var(--border);border-radius:16px;padding:16px 24px}
+.c07 .pend-main{display:flex;align-items:center;gap:12px;margin-top:8px}
+.c07 .pend .et-hint{margin-top:8px}
+.c07 .upd{display:flex;align-items:center;gap:8px;font-size:12px;line-height:18px;color:var(--muted);margin-top:-8px}
+.c07 .upd svg{color:var(--accent)}
+
+/* mobile: план — лист над полем ввода */
+.c07.m .m-plan{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:10px 14px;border:1px solid var(--border);background:#fff;border-radius:14px;font-size:14px;line-height:20px;font-weight:500;text-align:left;margin-bottom:8px}
+.c07.m .m-plan>svg:last-child{color:var(--muted)}
+.c07.m .et-messages{gap:16px}
+.c07 .plan-sheet h3{font-size:20px;line-height:28px}
+.c07 .plan-sheet .psteps{margin-top:10px}
+.c07 .plan-sheet .ps b{font-size:14px;line-height:20px;margin-top:4px}
+.c07 .plan-sheet .plan-acts{margin-top:8px;padding-top:12px}

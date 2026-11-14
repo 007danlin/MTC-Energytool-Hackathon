@@ -1,0 +1,107 @@
+{
+  "checked_at": "2026-11-14T15:03:38.171794+03:00",
+  "url": "http://127.0.0.1:8768",
+  "result": "passed",
+  "rebuild": {
+    "command": "docker compose -f compose.web.yaml up --build -d",
+    "services": [
+      "web",
+      "backend",
+      "consultation"
+    ],
+    "persistent_volume_retained": true,
+    "served_assets_match_working_tree": [
+      "chat.js",
+      "chat.css",
+      "applications.js",
+      "consultation.html",
+      "index.html"
+    ]
+  },
+  "python_tests": {
+    "unit_count": 81,
+    "host_integration_count": 5,
+    "result": "passed"
+  },
+  "go_checks": {
+    "commands": [
+      "go test -race ./...",
+      "go vet ./..."
+    ],
+    "result": "passed"
+  },
+  "javascript_syntax": {
+    "files": [
+      "chat.js",
+      "applications.js",
+      "local-preview.js"
+    ],
+    "result": "passed"
+  },
+  "browser_tests": [
+    {
+      "test": "test_application_queue.cjs",
+      "exit_code": 0,
+      "seconds": 4.6,
+      "output": "PASS: queue, filter, evidence, edits via proxy, transitions, replay, conflicts, exports, metrics, mobile and reload.\n"
+    },
+    {
+      "test": "test_callback_preference.cjs",
+      "exit_code": 0,
+      "seconds": 0.9,
+      "output": "Browser checks passed: past time validation, desktop/mobile layout, scheduled save, reload, switch to ASAP. API mocked.\n"
+    },
+    {
+      "test": "test_consultation_debug.cjs",
+      "exit_code": 0,
+      "seconds": 1.7,
+      "output": "PASS: actual per-answer metadata, error timing, retrieved versus cited sources, archived and legacy responses, safe text, mobile debug layout.\n"
+    },
+    {
+      "test": "test_consultation_design.cjs",
+      "exit_code": 0,
+      "seconds": 2.3,
+      "output": "PASS: design states, correct cards and order, per-answer sources, editable modal, no-phone branch, archive, fresh entry, five viewports.\n"
+    },
+    {
+      "test": "test_consultation_email.cjs",
+      "exit_code": 0,
+      "seconds": 1.5,
+      "output": "MOCK API PASS: email-only seed/save/reload/export, invalid addresses, phone↔email replacement, separately retained contact disclosure, mobile input/layout.\n"
+    },
+    {
+      "test": "test_consultation_entry.cjs",
+      "exit_code": 0,
+      "seconds": 1.6,
+      "output": "PASS: buttons enabled; original layout preserved; consultation CTA opens the new section.\n"
+    },
+    {
+      "test": "test_consultation_states.cjs",
+      "exit_code": 0,
+      "seconds": 0.9,
+      "output": "PASS: ambiguous network failure, no automatic duplicate POST, refresh recovery, model/source text escaping, technical retry, five viewport sizes.\n"
+    },
+    {
+      "test": "test_consultation_ui.cjs",
+      "exit_code": 0,
+      "seconds": 30.9,
+      "output": "PASS on rerun: live API form review/edit/save, download, reload, isolated new session, archive overlay preserves active chat, return to site.",
+      "initial_exit_code": 1,
+      "initial_output": "locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('link', { name: 'Онлайн-консультация', exact: true }).first()\u001b[22m\n\n    at /Users/daniellineckij/Хакатон \"МТС\"/tools/host_tests/test_consultation_ui.cjs:7:95 {\n  log: [\n    \"  - waiting for getByRole('link', { name: 'Онлайн-консультация', exact: true }).first()\"\n  ],\n  name: 'TimeoutError'\n}\n",
+      "repair": "Updated two stale test selectors from removed Online consultation link to current Request consultation button."
+    }
+  ],
+  "live_model": {
+    "session_id": "d2b65b0a-2aa4-4ee2-8949-d937b0e15aea",
+    "status": "answered",
+    "elapsed_ms": 52590,
+    "verified_fragments": 4,
+    "retrieved_fragments": 14,
+    "metadata_persisted": true,
+    "browser_without_mocks": "passed",
+    "exact_quote_and_time": "passed",
+    "mobile_layout": "passed"
+  },
+  "screenshots_directory": "/tmp/mts-rebuild-check-20261114",
+  "scope_note": "Technical rebuild and regression verification plus one real-model smoke question; not a full model-quality evaluation or new organizer requirements review."
+}

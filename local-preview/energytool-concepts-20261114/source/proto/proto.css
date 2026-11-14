@@ -1,0 +1,46 @@
+/* Прототип: переходы «отправка → ожидание → ответ». Длительности — в CSS-переменных. */
+:root{--t-micro:160ms;--t-state:280ms;--e-out:cubic-bezier(.2,.8,.2,1);--e-in:cubic-bezier(.4,0,1,1)}
+html,body{height:100%}
+body.et-app{overflow:hidden;display:flex;flex-direction:column;min-width:1280px}
+.pbar{flex:0 0 44px;display:flex;align-items:center;gap:16px;padding:0 16px;background:#17181c;color:#fff;font-size:12px;line-height:18px;z-index:20}
+.pbar b{font-weight:600}
+.pbar .sp{flex:1}
+.pbar label{display:inline-flex;align-items:center;gap:6px;color:#c9ccd4;cursor:pointer}
+.pbar select,.pbar button{font:inherit;color:#fff;background:#2b2d34;border:1px solid #3b3e47;border-radius:8px;height:28px;padding:0 10px;cursor:pointer}
+.pbar .muted{color:#9a9eaa}
+.stage{position:relative;flex:1;min-height:0;display:flex;flex-direction:column}
+.stage .et-workspace{height:auto;flex:1;min-height:0;overflow-y:auto;scrollbar-width:thin;padding-top:0;padding-bottom:0}
+.stage .et-workspace>.pad{height:44px;flex-shrink:0}
+.stage #thread{display:flex;flex-direction:column;gap:24px}
+.stage #welcome{padding-top:92px}
+.stage .dockwrap{position:sticky;bottom:0;background:linear-gradient(rgba(246,247,249,0),var(--bg) 20px);padding-top:20px;z-index:3;flex-shrink:0}
+.stage .et-composer{margin-top:0}
+.stage .et-composer textarea{display:block;width:100%;min-height:24px;max-height:120px;resize:none;border:0;background:transparent;padding:0;outline:none;line-height:24px;font:inherit;color:inherit}
+.stage .et-composer textarea::placeholder{color:var(--muted);opacity:1}
+.stage .et-composer:focus-within{border-color:var(--ink)}
+.stage #below{flex:1 0 auto;min-height:24px}
+.stage .btn{transition:background var(--t-micro) ease,transform 120ms ease}
+.stage .btn:not(:disabled):hover{background:var(--wash)}
+.stage .btn.primary:not(:disabled):hover{background:#e8103b}
+.stage .btn:not(:disabled):active{transform:scale(.98)}
+.stage :focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.stage .et-composer textarea:focus-visible{outline:none}
+
+@keyframes p-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes p-fade{from{opacity:0}to{opacity:1}}
+@keyframes p-out{from{opacity:1}to{opacity:0}}
+@keyframes p-flash{0%{background:var(--accent-soft)}60%{background:var(--accent-soft)}100%{background:transparent}}
+.enter{animation:p-in var(--t-state) var(--e-out) both}
+.fadein{animation:p-fade var(--t-state) ease-out both}
+.leave{animation:p-out 140ms var(--e-in) both}
+.c02 .trow.flash{animation:p-flash 1600ms ease-out both}
+.stage .supp{margin-top:28px}
+.stage .pend{transition:none}
+.stage .lw-extra{overflow:hidden}
+.stage .toast{position:absolute;left:50%;bottom:88px;transform:translateX(-50%);background:#17181c;color:#fff;font-size:14px;line-height:20px;padding:12px 16px;border-radius:12px;z-index:30;max-width:560px;box-shadow:0 12px 40px #17181c40}
+body.rm .enter,body.rm .fadein{animation:p-fade 100ms linear both}
+body.rm .leave{animation:none;opacity:0}
+body.rm .trow.flash{animation:none;box-shadow:inset 3px 0 0 var(--accent)}
+body.rm .bars i{animation:none!important;height:auto}
+body.rm .bars i:nth-child(1){height:8px;opacity:.32}body.rm .bars i:nth-child(2){height:16px;background:var(--accent)}body.rm .bars i:nth-child(3){height:11px;opacity:.6}
+@media (prefers-reduced-motion:reduce){.enter,.fadein{animation:p-fade 100ms linear both}.c02 .trow.flash{animation:none;box-shadow:inset 3px 0 0 var(--accent)}}

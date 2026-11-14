@@ -1,0 +1,20 @@
+# Исходники и выводы храним в Git; веса, копии пакетов и сырые данные остаются локально.
+*
+!*/
+!.gitignore
+!*.py
+!*.md
+!*.cjs
+!*.mjs
+!requirements.txt
+!RUN_LEDGER.json
+!NEXT_PLATFORM_TRIAL.json
+!platform*.json
+!final-preservation.json
+!knowledge-source-proof.json
+!provided-documents-equivalence.json
+model-runtime/
+handoff/
+release/
+**/__pycache__/
+**/data/

@@ -1,0 +1,78 @@
+/* 03 «Ожидание с пользой» */
+.c03 .f-block{margin-top:16px}
+.c03 .f-block .cap{display:block}
+.c03 .f-quote{font-size:14px;line-height:20px;font-weight:500;margin-top:4px;color:var(--ink)}
+.c03 .f-data{margin-top:16px;padding-top:14px;border-top:1px solid var(--border)}
+.c03 .f-meter{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:8px}
+.c03 .f-meter i{height:4px;border-radius:2px;background:var(--border)}
+.c03 .f-meter i.on{background:var(--ink)}
+.c03 .f-cks{margin-top:10px;font-size:12px;line-height:18px;color:var(--muted)}
+.c03 .f-cks li{display:flex;gap:8px;align-items:center}
+.c03 .f-cks li+li{margin-top:8px}
+.c03 .f-cks li.on{color:var(--ink);font-weight:500}
+.c03 .f-cks .box{width:16px;height:16px;border-radius:5px}
+.c03 .f-cks .box svg{width:11px;height:11px}
+
+.c03 .box{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--line);display:grid;place-items:center;flex-shrink:0;background:#fff;color:#fff}
+.c03 .box.on{background:var(--ink);border-color:var(--ink)}
+
+/* старт: выбор темы показывает, что будет в разговоре */
+.c03 .topics{display:grid;grid-template-columns:236px 1fr;background:#fff;border:1px solid var(--border);border-radius:20px;margin-top:28px;overflow:hidden}
+.c03 .topics-list{padding:8px;display:flex;flex-direction:column;gap:4px;border-right:1px solid var(--border)}
+.c03 .topic{display:flex;align-items:center;gap:12px;height:56px;padding:0 12px 0 16px;border:0;background:transparent;border-radius:12px;font-size:14px;line-height:20px;font-weight:500;text-align:left;color:var(--muted)}
+.c03 .topic span{flex:1}
+.c03 .topic.on{background:var(--wash);color:var(--ink)}
+.c03 .topics-pane{padding:20px 24px}
+.c03 .topics-pane .cap{display:block}
+.c03 .tq{margin-top:4px;font-weight:500}
+.c03 .tp{margin-top:16px}
+.c03 .tlist{margin-top:6px;font-size:14px;line-height:20px}
+.c03 .tlist li{display:flex;gap:8px;align-items:center;padding:3px 0}
+.c03 .tlist svg{color:var(--faint)}
+.c03 .tbtn{margin-top:14px}
+.c03 .et-composer.up{margin-top:16px}
+.c03 .under{margin-top:12px}
+
+/* блок ожидания */
+.c03 .wait{background:#fff;border:1px solid var(--border);border-radius:20px}
+.c03 .wait-head{padding:20px 24px 18px;border-bottom:1px solid var(--border)}
+.c03 .wait-head .row{gap:12px}
+.c03 .wait-head b{font-weight:500}
+.c03 .wait-head .et-hint{margin-top:6px}
+.c03 .wait-body{padding:20px 24px 20px}
+.c03 .wait-body>.cap{margin-top:4px}
+.c03 .cks{margin-top:14px}
+.c03 .cks li{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--border)}
+.c03 .cks li:last-child{border-bottom:1px solid var(--border)}
+.c03 .cks .box{margin-top:2px}
+.c03 .cks b{display:block;font-weight:500;font-size:16px;line-height:24px}
+.c03 .cks p{font-size:12px;line-height:18px;color:var(--muted)}
+.c03 .wait-foot{margin-top:16px}
+
+.c03 .draft{gap:10px;font-size:12px;line-height:18px;color:var(--muted)}
+.c03 .next h3{margin-bottom:16px}
+.c03 .next-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.c03 .next-grid p{margin-top:8px}
+
+/* mobile */
+.c03.m .wait-head{padding:16px}
+.c03.m .wait-body{padding:16px}
+.c03.m .cks b{font-size:14px;line-height:20px}
+.c03.m .wait-foot{flex-direction:column;align-items:stretch;gap:8px}
+.c03.m .wait-foot .cap{text-align:center}
+.c03.m .next-grid{grid-template-columns:1fr}
+.c03.m .next h3{margin-bottom:12px}
+.c03.m .et-messages{gap:16px}
+.c03.m .et-flow{margin-top:16px}
+.c03.m .m-draft{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+
+/* развитие направления: поле ввода следует за короткой лентой */
+.c03 .et-scroll.hug{flex:0 0 auto;padding-bottom:0;overflow:visible}
+.c03 .et-composer.hug{margin-top:20px}
+.c03 .below{flex:1;min-height:0}
+.c03 .recap{display:flex;align-items:center;gap:8px;font-size:12px;line-height:18px;color:var(--muted);margin:-8px 0}
+.c03 .recap svg{color:var(--success)}
+.c03 .recap .link{font-size:12px;line-height:18px;margin-left:4px}
+.c03 .wait-head.lwh .pend-main{display:flex;align-items:center;gap:12px;margin-top:8px}
+.c03 .wait .cks li>div b{font-size:14px;line-height:20px}
+.c03 .wait-head.lwh+.wait-body .cks li{padding:10px 0}

@@ -68,3 +68,12 @@ knowledge-base/
 /reports/release-validation/**/case-*.json
 /reports/release-validation/demo-response.json
 /reports/release-validation/video/
+
+# Передачи с закрытыми входными данными и копиями проекта
+/handoffs/next75-codex-20261113/
+/handoffs/mts-codex-75plus-handoff-20261113.zip*
+
+# Полные локальные прогоны и снимки пользовательских диалогов
+/reports/consultation-fixed-live-20261114/
+/reports/consultation-live-20261114/
+/reports/task-field-fix-20261114/existing-conversation-*.png

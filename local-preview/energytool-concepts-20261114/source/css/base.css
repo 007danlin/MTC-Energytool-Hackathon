@@ -1,0 +1,103 @@
+/* EnergyTool · базовые токены и компоненты.
+   Значения перенесены из source/chat.css (шрифт, цвета, радиусы, геометрия каркаса).
+   Новые элементы концепций лежат в kit.css и cNN.css. */
+@font-face{font-family:ETInter;src:url('../fonts/Inter.ttf') format('truetype');font-weight:100 900;font-display:block}
+:root{
+  --bg:#f6f7f9;--surface:#fff;--ink:#17181c;--muted:#5f636c;--border:#e3e5ea;--accent:#d9002b;
+  --soft:#eaecf0;--success:#16834c;--accent-soft:#fff3f6;--accent-line:#ffd6df;--accent-ink:#b90025;
+  /* дополнения к исходной палитре: только нейтральные ступени */
+  --faint:#8b8f99;--line:#d3d6dd;--wash:#f1f2f5;--ink-2:#2b2d34;--ink-3:#3b3e47;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body.et-app{background:var(--bg);color:var(--ink);overflow:hidden;font:400 16px/24px ETInter,Inter,Arial,sans-serif;font-optical-sizing:none;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+h1,h2,h3,h4,p,ul,ol,figure{margin:0;padding:0}
+ul,ol{list-style:none}
+button,input,textarea{font:inherit;color:inherit}
+svg{display:block;flex-shrink:0}
+.num{font-variant-numeric:tabular-nums}
+
+/* Кнопки — как в chat.css */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--border);background:var(--surface);border-radius:12px;min-height:48px;padding:13px 20px;font-size:14px;font-weight:500;line-height:20px;cursor:pointer;text-align:center;white-space:nowrap;color:var(--ink)}
+.btn.is-hover{background:var(--wash)}
+.btn.is-pressed{background:#e9ebef}
+.btn.is-focus{outline:2px solid var(--ink);outline-offset:2px}
+.btn:disabled,.btn.is-disabled{background:#e3e5ea;border-color:#e3e5ea;color:#5f636c;cursor:default;opacity:.65}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary.is-hover{background:#e8103b}
+.btn.primary:disabled,.btn.primary.is-disabled{background:#e3e5ea;color:#5f636c;border-color:#e3e5ea}
+.btn.sm{min-height:36px;padding:7px 14px;border-radius:10px;font-size:13px;line-height:20px}
+.btn.ghost{background:transparent;border-color:transparent;padding-inline:12px}
+.btn.wide{width:100%}
+.link{display:inline-flex;align-items:center;gap:6px;border:0;background:transparent;padding:0;font-size:14px;line-height:20px;font-weight:500;color:var(--ink);cursor:pointer;text-decoration:none}
+.link.muted{color:var(--muted)}
+.link.u{text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:4px}
+
+h2{font-size:24px;line-height:32px;font-weight:600}
+h3{font-size:20px;line-height:28px;font-weight:600}
+.et-eyebrow,.et-hint{font-size:12px;line-height:18px;color:var(--muted)}
+.label{font-size:14px;line-height:20px;font-weight:500}
+.small{font-size:14px;line-height:20px}
+.cap{font-size:12px;line-height:18px}
+.muted{color:var(--muted)}
+.faint{color:var(--faint)}
+
+/* Шапка */
+.et-header{height:88px;padding:20px 24px;display:flex;gap:24px;align-items:center;background:#fff;position:relative;z-index:3}
+.et-brand{display:flex;gap:12px;min-width:285px;align-items:center;color:inherit;text-decoration:none;flex-shrink:0;font-size:14px;font-weight:500;line-height:20px}
+.et-brand strong{font-size:24px;line-height:32px;font-weight:600;color:#d9002b}
+.et-brand-divider{white-space:pre}
+
+/* Левая панель */
+.et-sidebar{position:absolute;left:24px;top:120px;width:260px;padding:16px}
+.et-card{background:#fff;border:1px solid var(--border);border-radius:20px;padding:24px}
+.et-focus{margin:16px 0;padding:24px}
+.et-focus>p{font-size:14px;line-height:20px;color:var(--muted);margin-top:16px;font-weight:500}
+.et-side-link{display:block;border:none;padding:12px 0;min-height:44px;background:transparent;margin-bottom:16px;text-align:left;font-size:14px;font-weight:500;line-height:20px}
+.et-side-note{font-size:12px;line-height:18px;color:var(--muted)}
+.et-side-note p+p{margin-top:8px}
+
+/* Центральная область */
+.et-workspace{width:min(720px,calc(100vw - 360px));margin-left:calc(50% - 280px);height:calc(100vh - 88px);display:flex;flex-direction:column;min-height:0;padding-top:44px;position:relative}
+.et-scroll{flex:1;min-height:0;overflow:hidden;padding-bottom:16px;position:relative}
+.et-welcome h1{font-size:44px;line-height:50px;font-weight:600;margin-top:20px;letter-spacing:0}
+.et-intro{color:var(--muted);margin-top:20px}
+.et-suggestions{display:flex;gap:12px;margin-top:24px}
+.et-welcome .et-hint{margin-top:24px}
+
+.et-composer{flex-shrink:0;border:1px solid var(--border);border-radius:20px;background:#fff;padding:16px;margin-top:34px;min-height:118px;position:relative}
+.et-composer.is-focus{border-color:#17181c}
+.et-composer .ta{display:block;width:100%;min-height:24px;line-height:24px;white-space:pre-wrap}
+.et-composer .ta.ph{color:var(--muted)}
+.et-compose-actions{display:flex;gap:12px;align-items:flex-start;margin-top:12px}
+.et-compose-actions>span{font-size:12px;line-height:18px;color:var(--muted);width:360px;flex-shrink:0}
+.et-footer{font-size:12px;line-height:18px;color:var(--muted);padding-top:28px;padding-bottom:10px;flex-shrink:0}
+
+.et-messages{display:flex;flex-direction:column;gap:24px}
+.et-message{overflow-wrap:anywhere}
+.et-user{background:#eaecf0;border-radius:16px;padding:16px 20px;border:1px solid #e3e5ea}
+.et-message-label{font-size:14px;line-height:20px;font-weight:500;margin-bottom:8px}
+.et-flow{margin-top:24px;display:flex;flex-direction:column;align-items:stretch;gap:24px}
+.et-stack{display:flex;flex-direction:column;align-items:flex-start;gap:16px;margin-top:16px}
+.et-error{background:#fff3f5;border:1px solid #ffd5df;padding:24px;border-radius:20px}
+.et-success{color:#16834c;font-size:14px;line-height:20px}
+
+.et-fields{display:grid;gap:16px;margin-top:16px}
+.et-field{border:1px solid var(--border);border-radius:12px;padding:12px;display:block;background:#fff}
+.et-field.is-focus{border-color:#17181c}
+.et-field.is-invalid{border-color:#ff0032}
+.et-field>span{display:block;font-size:14px;line-height:20px;color:var(--muted);margin-bottom:4px}
+.et-field>b{display:block;font-weight:400;line-height:24px}
+.et-field>b.ph{color:var(--faint)}
+.et-field-error{color:#b90025;font-size:12px;line-height:18px;margin-top:8px}
+
+/* Мобильная версия (breakpoint 760 в коде; макеты 390×844) */
+body.m .et-header{height:80px;padding:16px;gap:12px;justify-content:space-between}
+body.m .et-brand{gap:8px;min-width:0}
+body.m .et-brand>span{width:180px}
+body.m .et-brand-divider{display:none}
+body.m .et-brand-subtitle{display:block}
+body.m .et-workspace{width:auto;margin:0 16px;height:calc(100vh - 80px);padding-top:24px}
+body.m .et-welcome h1{font-size:30px;line-height:36px}
+body.m .et-composer{padding:12px;margin-top:20px;margin-bottom:24px;min-height:110px}
+body.m .et-card{padding:20px}
