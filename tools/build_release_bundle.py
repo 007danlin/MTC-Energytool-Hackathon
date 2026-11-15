@@ -1,5 +1,5 @@
 """Build the final project bundle, excluding live state, credentials and research exports."""
-import argparse,hashlib,json,shutil,zipfile
+import argparse,hashlib,json,shutil,zipfile,subprocess
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 def build(destination):
@@ -27,6 +27,7 @@ def build(destination):
  if (ROOT/'deliverables/2026-11-14/demo.mp4').exists():
   (stage/'demo').mkdir();shutil.copy2(ROOT/'deliverables/2026-11-14/demo.mp4',stage/'demo/demo.mp4')
   shutil.copy2(ROOT/'deliverables/2026-11-14/demo-README.txt',stage/'demo/README.txt')
+ (stage/'SOURCE_REVISION.txt').write_text(subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()+'\n')
  (stage/'НАЧНИТЕ-ЗДЕСЬ.txt').write_text('''Финальная сдача EnergyTool: код, документы, PDF и запись демонстрации.
 
 1. Прочитайте презентацию EnergyTool-презентация.pdf.
@@ -39,7 +40,25 @@ def build(destination):
 ml-submit/N2-победивший-сабмит.zip — неизменённый архив автоматического этапа. Не загружайте весь этот комплект вместо ML-сабмита: это разные этапы.
 
 Фактические проверки и ограничения: project/docs/release-readiness.md.
-Ключей и реальной пользовательской истории в комплекте нет. Доступ к приватному GitHub жюри не открывался: выбран разрешённый регламентом формат ZIP.
+Ключей и реальной пользовательской истории в комплекте нет. По решению владельца сдаётся самодостаточный ZIP; доступ к приватному GitHub не открывался. Формулировка формы о доступе жюри отмечена в project/docs/final-submission-audit.md.
+''',encoding='utf-8')
+ (stage/'README.md').write_text('''# МТС EnergyTool — финальный проект для экспертной оценки
+
+Секция: Трек AI от МТС. Первый тур. Формат: ZIP с исходниками, документацией и PDF.
+Это не сабмит для автоматической проверки на private-выборке.
+
+1. Презентация: `EnergyTool-презентация.pdf` — исходный вариант Артёма без изменений.
+2. Код и полная инструкция: `project/README.md`. Перейдите в `project`.
+3. Скопируйте `.env.web.example` в `.env.web` и задайте адрес, ключ и имя доступной модели. При финальном ручном запуске они не появляются автоматически. База уже приложена в `project/data/knowledge-base.zip`.
+4. Запуск: `docker compose up --build -d` из папки `project`.
+5. Чат: http://127.0.0.1:8768/consultation.html . Без API: запись `demo/demo.mp4`.
+
+Docker Desktop / Docker Engine с Compose и доступ к реестру образов необходимы для сборки. Node.js и PDF-библиотеки для запуска продукта не нужны. Все рабочие данные будут созданы в новых Docker-томах.
+
+Проверка комплекта и ограничения: `project/docs/final-submission-audit.md`.
+`ml-submit/N2-победивший-сабмит.zip` — только архив отдельного автоматического этапа, сохранён для воспроизводимости. Для этой кнопки загружайте весь финальный ZIP.
+
+Комплект включает закрытую базу организаторов: предназначен для закрытой сдачи на платформе, не для публичной публикации. Репозиторий для запуска не нужен.
 ''',encoding='utf-8')
  inventory={p.relative_to(stage).as_posix():hashlib.sha256(p.read_bytes()).hexdigest()for p in sorted(stage.rglob('*')) if p.is_file()}
  (stage/'SHA256.json').write_text(json.dumps(inventory,ensure_ascii=False,indent=2))
@@ -50,7 +69,8 @@ ml-submit/N2-победивший-сабмит.zip — неизменённый 
  with zipfile.ZipFile(archive)as z:
   assert z.testzip() is None
   assert not any(Path(n).name in ('.env','.env.web','sessions.json','expert-kb.json') for n in z.namelist())
- report={'archive':str(archive),'files':len(inventory)+1,'bytes':archive.stat().st_size,'sha256':hashlib.sha256(archive.read_bytes()).hexdigest(),'crc_check':'passed','contains_live_credentials':False}
+ from validate_release_bundle import validate
+ report={'archive':str(archive),**validate(archive)}
  (destination/'bundle-validation.json').write_text(json.dumps(report,ensure_ascii=False,indent=2));print(json.dumps(report,ensure_ascii=False))
 if __name__=='__main__':
  p=argparse.ArgumentParser();p.add_argument('--out',type=Path,default=ROOT/'output/release');a=p.parse_args();a.out.mkdir(parents=True,exist_ok=True);build(a.out)

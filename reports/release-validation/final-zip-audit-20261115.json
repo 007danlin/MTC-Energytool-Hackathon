@@ -1,0 +1,27 @@
+{
+  "date_moscow": "2026-11-15",
+  "source_commit_tested": "03d528b",
+  "tested_from_extracted_zip": true,
+  "compose_project": "energytool-release-audit",
+  "python_unit_tests": 132,
+  "python_unit_status": "passed",
+  "http_stack": "passed (fixture model)",
+  "go_vet": "passed",
+  "go_race": "passed",
+  "live_journey": {
+    "passed": true,
+    "application_number": "721909",
+    "answer_ms": [
+      60799,
+      50868
+    ],
+    "js_errors": []
+  },
+  "presentation": "unchanged Artem original",
+  "jury_repository_access": "not granted, explicitly declined by owner",
+  "limits": [
+    "5–7 second target not reached",
+    "literal close-chat reset differs from temporary site exit",
+    "jury access language differs between case and upload form"
+  ]
+}
