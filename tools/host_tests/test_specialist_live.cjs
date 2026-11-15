@@ -5,7 +5,7 @@ const base=process.env.WEB_TEST_URL||'http://127.0.0.1:8782';
 if(!/^http:\/\/(127\.0\.0\.1|localhost):/.test(base))throw Error('Local demo stack required');
 (async()=>{const browser=await chromium.launch({headless:true});try{
  const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
- const out='reports/release-validation/screens';fs.mkdirSync(out,{recursive:true});
+ const out=process.env.WEB_TEST_SHOTS||'reports/release-validation/screens';fs.mkdirSync(out,{recursive:true});
  await page.goto(base+'/specialist.html');
  async function login(actor,role){await page.locator('#access').evaluate(e=>e.open=true);await page.locator('[name=actor]').fill(actor);await page.locator('[name=role]').selectOption(role);await page.locator('[name=token]').fill(process.env.OPERATOR_TOKEN||'local-demo-operator');await page.getByRole('button',{name:'Подключиться',exact:true}).click();await page.waitForFunction(()=>!document.querySelector('#access').open);}
  await login('demo-author','specialist');await page.locator('#new-draft').click();
@@ -21,5 +21,5 @@ if(!/^http:\/\/(127\.0\.0\.1|localhost):/.test(base))throw Error('Local demo sta
  await page.waitForFunction(()=>document.querySelector('#detail').innerText.includes('В поиске'));await page.screenshot({path:out+'/specialist-desktop.png'});
  await page.setViewportSize({width:390,height:844});await page.screenshot({path:out+'/specialist-mobile.png',fullPage:true});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
  await page.locator('#revoke [name=reason]').fill('Проверка завершена; тестовая запись удалена из поиска.');pending=page.waitForResponse(r=>r.url().endsWith('/revoke'));await page.getByRole('button',{name:'Отозвать из поиска',exact:true}).click();const revoked=await pending;assert.equal(revoked.status(),200);record=await revoked.json();assert.equal(record.revisions.at(-1).runtime_status,'inactive');
- assert.deepEqual(errors,[]);fs.writeFileSync('reports/release-validation/specialist-ui.json',JSON.stringify({passed:true,record_id:record.id,publication:record.revisions.at(-1).publication_status,runtime:record.revisions.at(-1).runtime_status},null,2));console.log('Specialist UI: create, review, publish, revoke, mobile OK');
+ assert.deepEqual(errors,[]);fs.writeFileSync(out+'/../specialist-ui.json',JSON.stringify({passed:true,record_id:record.id,publication:record.revisions.at(-1).publication_status,runtime:record.revisions.at(-1).runtime_status},null,2));console.log('Specialist UI: create, review, publish, revoke, mobile OK');
 }finally{await browser.close()}})().catch(e=>{console.error(e);process.exitCode=1});

@@ -34,6 +34,8 @@ type Session struct {
 
 type RequestRecord struct {
 	Fingerprint string             `json:"fingerprint"`
+	Pending     bool               `json:"pending,omitempty"`
+	MessageID   string             `json:"message_id,omitempty"`
 	Result      ConsultationResult `json:"result"`
 }
 

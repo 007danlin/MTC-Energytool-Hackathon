@@ -171,6 +171,9 @@ func ApplyEdits(card NeedCard, expectedVersion int, actor Actor, edits []Edit, n
 		return card, Change{}, fmt.Errorf("%w: at least one valid contact is required", ErrInvalidEdit)
 	}
 	next.Contact.PreferredChannel = preferredChannel(next.Contact)
+	if card.Contact.Phone.Value != "" && next.Contact.Phone.Value == "" && card.ContactTime.Origin == OriginForm {
+		next.ContactTime = Field{Status: Unknown, Origin: origin}
+	}
 
 	next.Power = removeIndexes(next.Power, removals["power"])
 	resolvePower(next.Power)

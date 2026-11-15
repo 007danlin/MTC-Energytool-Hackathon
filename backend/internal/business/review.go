@@ -200,6 +200,14 @@ func SaveApplication(existing *ApplicationRecord, session domain.Session, newID 
 		return *existing, nil, fmt.Errorf("application %s belongs to another session", existing.ID)
 	}
 	if sameForm(existing.Form, form) {
+		if strings.TrimSpace(existing.Card.Contact.Phone.Value) == "" && existing.Card.ContactTime.Origin == OriginForm &&
+			existing.Card.ContactTime.Value != "" && existing.Card.ContactTime.Value == existing.Form.ContactPreference() {
+			// Display-only normalization for cards saved before email-only
+			// requests stopped inheriting a default telephone callback time.
+			rec := *existing
+			rec.Card.ContactTime = formField("")
+			return rec, nil, nil
+		}
 		return *existing, nil, nil
 	}
 	if existing.Status == StatusAccepted || existing.Status == StatusRejected {
@@ -237,6 +245,9 @@ func EditCard(rec ApplicationRecord, expectedVersion int, actor Actor, edits []E
 	out.PrevCards = append(out.PrevCards, rec.Card)
 	out.Card, out.Version, out.UpdatedAt = card, card.Version, now.UTC()
 	out.Form.Phone, out.Form.Email, out.Form.FullName, out.Form.Company, out.Form.Summary = card.Contact.Phone.Value, card.Contact.Email.Value, card.Contact.FullName.Value, card.Contact.Company.Value, card.Task.Value
+	if out.Form.Phone == "" {
+		out.Form.CallbackMode, out.Form.CallbackAt = "", ""
+	}
 	if !sameForm(rec.Form, out.Form) {
 		out.Form.SavedAt = now.UTC()
 	}

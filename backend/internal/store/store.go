@@ -8,6 +8,7 @@ import (
 	"math/big"
 	"os"
 	"path/filepath"
+	"sort"
 	"sync"
 	"time"
 
@@ -93,6 +94,35 @@ func NewFileStore(path string) (*FileStore, error) {
 		}
 	}
 	changed := len(contents) > 0
+	// Older versions marked replies to closed sessions as delivered without
+	// adding them to the history. Restore only those durable replies, preserving
+	// the original delivery metadata and the session's closed/active status.
+	legacyReplies := []expert.Request{}
+	for _, request := range s.expertRequests {
+		if request.Reply != nil && request.Reply.Delivery == expert.DeliveryDelivered && request.Reply.ToClosedSession {
+			legacyReplies = append(legacyReplies, request)
+		}
+	}
+	sort.Slice(legacyReplies, func(i, j int) bool {
+		if legacyReplies[i].Reply.CreatedAt.Equal(legacyReplies[j].Reply.CreatedAt) {
+			return legacyReplies[i].ID < legacyReplies[j].ID
+		}
+		return legacyReplies[i].Reply.CreatedAt.Before(legacyReplies[j].Reply.CreatedAt)
+	})
+	for _, request := range legacyReplies {
+		session, exists := s.data[request.SessionID]
+		if !exists {
+			continue
+		}
+		at := request.Reply.CreatedAt
+		if request.Reply.DeliveredAt != nil {
+			at = *request.Reply.DeliveredAt
+		}
+		if appendExpertReply(&session, request, at) {
+			s.data[session.ID] = session
+			changed = true
+		}
+	}
 	for id, session := range s.data {
 		if session.Application != nil && session.Application.ID == "" {
 			session.Application.ID = domain.ApplicationID(session.ID)
@@ -343,9 +373,10 @@ func (s *FileStore) ListKnowledge() ([]expert.KnowledgeEntry, error) {
 	return out, nil
 }
 
-// DeliverExpertReply atomically appends the specialist answer to an active
+// DeliverExpertReply atomically appends the specialist answer to the original
 // session and records delivery in the same durable JSON commit. Replays of the
-// same reply ID are no-ops, including after a process restart.
+// same reply ID are no-ops, including after a process restart. Closed sessions
+// remain closed, but their saved history includes the answer as the contract requires.
 func (s *FileStore) DeliverExpertReply(r expert.Request, replyID, sessionID string) (expert.Request, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -368,19 +399,7 @@ func (s *FileStore) DeliverExpertReply(r expert.Request, replyID, sessionID stri
 	if stored.Reply.Delivery == expert.DeliveryDelivered {
 		return stored, nil
 	}
-	if session.Status == "active" {
-		alreadyInHistory := false
-		for _, message := range session.Messages {
-			if message.Response != nil && message.Response.Origin == "specialist" && message.Response.ReplyID == replyID {
-				alreadyInHistory = true
-				break
-			}
-		}
-		if !alreadyInHistory {
-			session.Messages = append(session.Messages, domain.Message{ID: "expert-" + replyID, Role: "assistant", Content: stored.Reply.Body, Sequence: len(session.Messages) + 1, CreatedAt: stored.Reply.CreatedAt, Response: &domain.ResponseMeta{Origin: "specialist", ReplyID: replyID, RequestID: stored.ID, Status: "expert_answer"}})
-			session.UpdatedAt = time.Now().UTC()
-		}
-	}
+	appendExpertReply(&session, stored, time.Now().UTC())
 	updated, err := expert.MarkDelivered(stored, expert.Actor{ID: "web-backend", Role: expert.RoleSystem}, expert.Command{ExpectedVersion: stored.Version, ID: "deliver-" + replyID}, replyID, session.Status != "active", time.Now())
 	if err != nil {
 		return stored, err
@@ -393,6 +412,23 @@ func (s *FileStore) DeliverExpertReply(r expert.Request, replyID, sessionID stri
 		return stored, err
 	}
 	return updated, nil
+}
+
+func appendExpertReply(session *domain.Session, request expert.Request, updatedAt time.Time) bool {
+	reply := request.Reply
+	if reply == nil || reply.ID == "" || request.SessionID != session.ID {
+		return false
+	}
+	for _, message := range session.Messages {
+		if message.Response != nil && message.Response.Origin == "specialist" && message.Response.ReplyID == reply.ID {
+			return false
+		}
+	}
+	session.Messages = append(session.Messages, domain.Message{ID: "expert-" + reply.ID, Role: "assistant", Content: reply.Body, Sequence: len(session.Messages) + 1, CreatedAt: reply.CreatedAt, Response: &domain.ResponseMeta{Origin: "specialist", ReplyID: reply.ID, RequestID: request.ID, Status: "expert_answer"}})
+	if updatedAt.After(session.UpdatedAt) {
+		session.UpdatedAt = updatedAt
+	}
+	return true
 }
 
 func clone(session domain.Session) (domain.Session, error) {

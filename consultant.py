@@ -8,7 +8,7 @@ from contracts import ConsultationRequest, ConsultationResult, LeadState
 from dialogue import retrieval_query
 from llm_client import ModelError
 from prompts import ANSWER_PROMPT, SYSTEM_PROMPT
-from consultation_state import build_facts, answered_topics, extract_actions, asks_for_plan, without_answered_questions
+from consultation_state import OBJECT, build_facts, answered_topics, extract_actions, asks_for_plan, without_answered_questions
 
 TECHNICAL_ANSWER = ("Сейчас не удалось получить ответ модели из-за технического сбоя. "
                     "Это не означает, что информации нет в базе знаний. "
@@ -29,6 +29,90 @@ def sanitize_delivery(answer):
 
 def normalized(text):
     return " ".join(text.casefold().replace("ё", "е").split())
+
+
+def initial_cost_discovery(request, facts):
+    """Only a first, generic savings request with no object or product in view."""
+    users = [m.content for m in request.messages if m.role == 'user']
+    if len(users) != 1 or facts.get('object'):
+        return False
+    text = normalized(users[0])
+    if re.search(OBJECT,text) or re.search(r'\d|тариф|ценов\w*\s+категор|оптов|орэм|солнеч|сэс\b|платформ|подключ|совместим|сравн|стоимост|цен[аыу]',text):
+        return False
+    return bool(re.search(r'снизить|сократить|уменьшить|сэкономить|выросли\s+счет',text) and
+                re.search(r'расход|счет|электроэнерг|платеж',text) and
+                re.search(r'с\s+чего\s+начать|не\s+(?:знаю|понимаю)|что\s+делать',text))
+
+
+def bill_diagnosis_focus(request, facts):
+    """First investigative steps for a known object, not a loss-analysis project.
+
+    Only the customer's words may establish interest in the specialised product;
+    an earlier assistant suggestion must not turn it into a client requirement.
+    """
+    if not facts.get('object') or not asks_for_plan(request.messages[-1].content):
+        return False
+    customer_text=normalized(' '.join(m.content for m in request.messages if m.role=='user'))
+    if re.search(r'потер|хищен|воров|неучтен|аномал',customer_text):
+        return False
+    return bool(re.search(r'(?:рост|вырос|увелич|скач|подорож).{0,65}(?:счет|платеж|расход|потребл)|'
+                          r'(?:счет|платеж|расход|потребл).{0,65}(?:рост|вырос|увелич|скач|подорож)',customer_text))
+
+
+def loss_product_fragment(fragment):
+    """Use explicit document/section ownership, never isolated body keywords."""
+    heading=normalized(fragment.text.split('\n',1)[0])
+    return (fragment.document_id.endswith('24-losses.md') or
+            bool(re.search(r'коммерческ\w*\s+потер|поиск\w*\s+(?:коммерческ\w*\s+)?потер',heading)))
+
+
+def meter_reuse_question(request, fragments):
+    """Route only questions about reusing the client's existing electricity meters.
+
+    A named model passes this boundary only with explicit affirmative support in
+    a retrieved sentence. Generic support for many meters is insufficient.
+    """
+    latest = normalized(request.messages[-1].content)
+    if not (re.search(r'счетчик|прибор\w*\s+учета',latest) and
+            re.search(r'существующ|имеющ|уже|эт(?:и|их|ими)\b|стар\w*|без\s+замен',latest) and
+            re.search(r'можно|подключ|совместим|автоматизац|использ',latest) and
+            ('?' in latest or re.search(r'можно\s+ли|подойдут\s+ли',latest))):
+        return None
+    model_unknown=bool(re.search(r'(?:тип|модел)\w*[^.!?]{0,65}(?:неизвест|не\s+зна)|'
+                                 r'(?:не\s+знаю|не\s+знаем|не\s+помню)[^.!?]{0,65}(?:тип|модел)',latest))
+    models = []
+    pattern = r'\b(?:[А-ЯЁ][а-яё-]{2,30}\s+\d[\w.-]*|[A-Za-zА-ЯЁ][A-Za-zА-Яа-яЁё0-9_.-]*\d[A-Za-zА-Яа-яЁё0-9_.-]*)\b'
+    for message in request.messages:
+        if message.role != 'user': continue
+        for match in re.finditer(pattern,message.content):
+            nearby = normalized(message.content[max(0,match.start()-65):match.end()+35])
+            if re.search(r'счетчик|прибор|модел|тип',nearby) and match.group() not in models:
+                models.append(match.group())
+    supported_models=set()
+    for model in models:
+        for fragment in fragments:
+            for sentence in re.split(r'(?<=[.!?])\s+|\n+',fragment.text):
+                text=normalized(sentence)
+                if (normalized(model) in text and re.search(r'поддержива|совместим|можно\s+подключ|подключается',text)
+                        and not re.search(r'\bне\b|нет\s+подтвержден|неизвест',text)):
+                    supported_models.add(model)
+    if models and not model_unknown and len(supported_models)==len(models): return None
+    return {'models':models,'model_unknown':model_unknown}
+
+
+def confused_wholesale_threshold(answer, fragments):
+    """Detect only the observed transfer of the tariff-category 670 kW rule."""
+    tariff_evidence = any('11-price-categories' in f.document_id and
+                          re.search(r'670\s*квт',normalized(f.text)) for f in fragments)
+    if not tariff_evidence: return False
+    for sentence in re.split(r'(?<=[.!?])\s+|\n+',answer):
+        text=normalized(sentence)
+        if not (re.search(r'670\s*квт',text) and re.search(r'оптов|орэм',text)): continue
+        if re.search(r'750\s*квт|недостаточ|нельзя|невозмож|не\s+(?:является|служит|означает|позволяет|дает|достаточно)|не\s+порог|не\s+для\s+оптов',text): continue
+        if (re.search(r'(?:если|от|при|выше|превышает|не\s+менее).{0,70}670\s*квт.{0,120}(?:оптов|орэм)',text) or
+                re.search(r'(?:оптов|орэм).{0,100}(?:порог|от|выше|достаточ).{0,30}670\s*квт',text)):
+            return True
+    return False
 
 
 def repeats_previous_answer(answer, messages):
@@ -266,11 +350,17 @@ class Consultant:
         # Request is revalidated in case a caller mutated it after construction.
         request.__post_init__()
         lead = seed_lead(request)
+        confirmed_facts = build_facts(request.messages, request.summary_so_far) if not answer_only else {}
+        bill_diagnosis = not answer_only and bill_diagnosis_focus(request,confirmed_facts)
+        excluded_sources=[]
         fragments, used_chars, seen = [], 0, set()
         try:
             candidates = self.retriever.search(retrieval_query(request.messages), self.settings.top_k)
             for fragment in candidates:
                 if fragment.source_id in seen or not fragment.text.strip():
+                    continue
+                if bill_diagnosis and loss_product_fragment(fragment):
+                    excluded_sources.append(fragment.source_id)
                     continue
                 if used_chars + len(fragment.text) > self.settings.context_chars:
                     continue  # Never cut a qualifier away from its section.
@@ -317,11 +407,36 @@ class Consultant:
         # in a long transcript. The global message index/evidence contract is unchanged.
         context["latest_user_message"] = {
             "index": len(request.messages) - 1, "content": request.messages[-1].content}
-        confirmed_facts = build_facts(request.messages, request.summary_so_far)
         context["confirmed_facts"] = confirmed_facts
         context["requested_output"] = "action_plan" if asks_for_plan(request.messages[-1].content) else "continue_consultation"
+        discovery = initial_cost_discovery(request,confirmed_facts)
+        meter_check = meter_reuse_question(request,fragments)
+        guidance=[]
+        if discovery:
+            guidance.append("Это первый общий вопрос о снижении расходов, тип объекта ещё неизвестен. "
+                            "Сначала задай один простой вопрос о типе объекта. Не подбирай продукты, "
+                            "не перечисляй оптовый рынок/солнечные станции и не вводи числовые пороги.")
+        if confirmed_facts.get('object'):
+            guidance.append("Тип объекта уже указан в confirmed_facts.object. Не спрашивай тип объекта повторно.")
+        if context['requested_output']=='action_plan':
+            guidance.append("Последняя реплика просит конкретные действия: ответь коротким списком по sources "
+                            "для указанной проблемы. Не возвращайся к общему подбору продуктов и не переноси "
+                            "числовые условия ценовых категорий на выход на оптовый рынок.")
+        if bill_diagnosis:
+            guidance.append("Текущая задача — первые действия для разбора роста счёта известного объекта. "
+                            "Клиент не заказывал проект поиска коммерческих потерь. Требования такого проекта "
+                            "к годовой выгрузке и данным день/ночь не являются условиями начала этой диагностики. "
+                            "Дай доступные первые действия по подходящим источникам; не добавляй обязательный "
+                            "сбор данных из другого продукта.")
+        if meter_check is not None:
+            guidance.append("Совместимость именно существующих счётчиков клиента не подтверждена найденными "
+                            "источниками. Не обещай подключение или обязательную замену. Неизвестный тип/модель "
+                            "уточни для специалиста; уже названную модель повторно не спрашивай.")
+        context['turn_guidance']=' '.join(guidance)
         model_messages = [{"role": "system", "content": SYSTEM_PROMPT},
                           {"role": "user", "content": json.dumps(context, ensure_ascii=False)}]
+        if guidance:
+            model_messages.append({"role":"system","content":"Фокус текущего хода. "+context['turn_guidance']})
         target = unconfirmed_integration_target(request.messages[-1].content, fragments)
         if target:
             # Never let generic protocol support establish a named integration.
@@ -337,12 +452,42 @@ class Consultant:
                                        "routing":"unconfirmed_named_integration"})
         repairs = 0
         suppressed_questions = 0
+        routing = None
         try:
             while True:
                 try:
                     raw = self.client.complete(model_messages, deadline=deadline)
                     payload = parse_payload(raw)
+                    if discovery and (re.search(r'оптов|орэм|солнеч|\d\s*(?:квт|мвт)',normalized(payload['answer'])) or
+                                      not re.search(r'(?:како[йм]|что\s+за|тип).{0,35}объект|объект.{0,35}речь',normalized(payload['answer']))):
+                        question='О каком объекте идёт речь: дом, кафе, офис, производство или другое?'
+                        payload.update(answer='Сначала уточним объект — это поможет выбрать подходящие следующие шаги. '+question,
+                                       status='clarification',citations=[])
+                        payload['summary']={**payload.get('summary',{}),'manager_questions':[question],'products':[]}
+                        routing='initial_object_clarification'
+                    if meter_check is not None:
+                        if meter_check['model_unknown']:
+                            answer=('Совместимость существующих счётчиков пока не подтверждена. Это не означает, '
+                                    'что их обязательно нужно менять. Тип или модель можно указать позже в сообщении '
+                                    'или заявке; сейчас можно передать задачу специалисту.')
+                            questions=[]; state='knowledge_gap'
+                        elif meter_check['models']:
+                            answer=('Указанная модель счётчика учтена. В найденных материалах нет подтверждения её '
+                                    'совместимости для вашего подключения. Это не означает, что нужна замена: '
+                                    'совместимость и схему подключения проверит специалист. Можно подготовить заявку.')
+                            questions=[]; state='knowledge_gap'
+                        else:
+                            question='Какой у счётчиков тип или модель?'
+                            answer=('Подключение именно ваших существующих счётчиков нужно проверить; пока нельзя '
+                                    'подтвердить ни возможность работы без замены, ни необходимость замены. '+question+
+                                    ' Если сейчас не знаете, укажите эти сведения позже в сообщении или заявке специалисту.')
+                            questions=[question]; state='clarification'
+                        payload.update(answer=answer,status=state,citations=[])
+                        payload['summary']={**payload.get('summary',{}),'manager_questions':questions,'products':[]}
+                        routing='unconfirmed_existing_meter'
                     sources = validate_sources(payload, fragments)
+                    if confused_wholesale_threshold(payload['answer'],fragments):
+                        raise ModelError('misapplied_wholesale_threshold',retryable=True)
                     if repeats_previous_answer(payload["answer"], request.messages):
                         raise ModelError("repeated_answer", retryable=True)
                     questions = re.findall(r'[^.!?\n]*\?', payload['answer'])
@@ -361,7 +506,7 @@ class Consultant:
                                 payload['status'] = 'answered'
                         else:
                             raise ModelError('answered_question', retryable=True)
-                    if (context['requested_output'] == 'action_plan' and payload['status'] in ('answered', 'clarification')
+                    if (context['requested_output'] == 'action_plan' and not routing and payload['status'] in ('answered', 'clarification')
                             and not extract_actions(payload['answer'])):
                         raise ModelError('missing_action_plan', retryable=True)
                     break
@@ -393,6 +538,12 @@ class Consultant:
                                   ". Повтори ответ в заданном JSON. Следуй формату citations из системных правил; "
                                   "выбирай идентификаторы только из sources, не придумывай их. "
                                   "Если подтверждения нет, status=knowledge_gap. Не добавляй рассуждения.")
+                    if exc.code == 'misapplied_wholesale_threshold':
+                        repair=("Предыдущий ответ ошибочно перенёс 670 кВт из требования о ценовых категориях "
+                                "на выход на оптовый рынок. Это разные условия. Убери этот вывод; не подставляй "
+                                "иной порог без профильного подтверждения в sources. Ответь на текущую реплику "
+                                "полезными действиями из подходящих источников, сохрани известный тип объекта. "
+                                "Верни JSON прежней схемы с проверяемыми citations.")
                     model_messages.append({"role": "user", "content": repair})
             lead = extract_lead(payload, request)
             summary = make_summary(payload, request, lead, fragments)
@@ -414,7 +565,8 @@ class Consultant:
                                       {"retrieved_sources": [f.source_id for f in fragments],
                                        "context_chars": used_chars, "repairs": repairs,
                                        "suppressed_known_questions": suppressed_questions,
-                                       "error_code": None})
+                                       "error_code": None, **({"routing":routing} if routing else {}),
+                                       **({"source_scope":"bill_diagnosis","excluded_sources":excluded_sources} if bill_diagnosis else {})})
         except ModelError as exc:
             return self._failure(request, lead, started, exc.code, fragments, repairs, http_status=exc.status)
 

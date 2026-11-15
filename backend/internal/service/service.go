@@ -29,7 +29,9 @@ var (
 	ErrEmptyMessage       = errors.New("message must not be empty")
 	ErrRequestConflict    = errors.New("client request id was already used with different data")
 	ErrRequestNotFound    = errors.New("client request id not found")
+	ErrRequestPending     = errors.New("request is still being processed")
 	ErrSessionConflict    = errors.New("session changed while processing")
+	errRequestInterrupted = errors.New("request was interrupted before its result was saved")
 )
 
 type Service struct {
@@ -40,6 +42,8 @@ type Service struct {
 	snapshotMu   sync.Mutex
 	demo         bool
 	locks        sync.Map
+	messageLocks sync.Map
+	inflight     sync.Map
 }
 
 func New(s store.Store, ml consultation.Client) *Service {
@@ -62,8 +66,36 @@ func (s *Service) CreateSession() (domain.Session, error) {
 	return session, nil
 }
 
-func (s *Service) GetSession(id string) (domain.Session, error) { return s.store.Get(id) }
-func (s *Service) ListSessions() ([]domain.Session, error)      { return s.store.List() }
+func (s *Service) GetSession(id string) (domain.Session, error) {
+	unlock := s.lock(id)
+	defer unlock()
+	session, err := s.store.Get(id)
+	if err != nil {
+		return domain.Session{}, err
+	}
+	return s.recoverInterrupted(session)
+}
+func (s *Service) ListSessions() ([]domain.Session, error) { return s.store.List() }
+
+func (s *Service) ResumeSession(id string) (domain.Session, error) {
+	unlock := s.lock(id)
+	defer unlock()
+	session, err := s.store.Get(id)
+	if err != nil {
+		return domain.Session{}, err
+	}
+	session, err = s.recoverInterrupted(session)
+	if err != nil {
+		return domain.Session{}, err
+	}
+	if session.Status != "active" {
+		session.Status, session.ClosedAt, session.UpdatedAt = "active", nil, time.Now().UTC()
+		if err := s.store.Save(session); err != nil {
+			return domain.Session{}, err
+		}
+	}
+	return session, nil
+}
 
 func (s *Service) CloseSession(id string) (domain.Session, error) {
 	unlock := s.lock(id)
@@ -99,14 +131,23 @@ func (s *Service) SendMessageWithID(ctx context.Context, id, requestID, content 
 	if len([]rune(content)) > 10000 {
 		return domain.ConsultationResult{}, ErrMessageTooLong
 	}
+	finishMessage, err := s.lockMessage(ctx, id)
+	if err != nil {
+		return domain.ConsultationResult{}, err
+	}
+	defer finishMessage()
 	unlock := s.lock(id)
-	defer unlock()
+	defer func() { unlock() }()
 	session, err := s.store.Get(id)
 	if err != nil {
 		return domain.ConsultationResult{}, err
 	}
 	if session.Status != "active" {
 		return domain.ConsultationResult{}, ErrClosed
+	}
+	session, err = s.recoverInterrupted(session)
+	if err != nil {
+		return domain.ConsultationResult{}, err
 	}
 	if session.Requests == nil {
 		session.Requests = map[string]domain.RequestRecord{}
@@ -136,6 +177,9 @@ func (s *Service) SendMessageWithID(ctx context.Context, id, requestID, content 
 		Sequence: len(session.Messages) + 1, CreatedAt: time.Now().UTC()}
 	session.Messages = append(session.Messages, userMessage)
 	session.UpdatedAt = userMessage.CreatedAt
+	if requestID != "" {
+		session.Requests[requestID] = domain.RequestRecord{Fingerprint: fingerprint, Pending: true, MessageID: userMessage.ID}
+	}
 	if err := s.store.Save(session); err != nil {
 		return domain.ConsultationResult{}, err
 	}
@@ -151,8 +195,22 @@ func (s *Service) SendMessageWithID(ctx context.Context, id, requestID, content 
 	for _, message := range session.Messages {
 		mlRequest.Messages = append(mlRequest.Messages, domain.MessageInput{Role: message.Role, Content: message.Content})
 	}
+	// Only messages serialize behind generation. Contacts, navigation and expert
+	// replies must remain available while the model is slow or disconnected.
+	s.inflight.Store(id, true)
+	defer s.inflight.Delete(id)
+	unlock()
+	unlock = func() {}
 	mlStarted := time.Now()
 	result, err := s.ml.Respond(ctx, mlRequest)
+	unlock = s.lock(id)
+	// A form or specialist reply may have been saved while the model ran.
+	// Merge into that latest state instead of overwriting it with our snapshot.
+	current, getErr := s.store.Get(id)
+	if getErr != nil {
+		return domain.ConsultationResult{}, getErr
+	}
+	session = current
 	if err != nil {
 		return s.recordTechnicalFailureWithID(session, requestID, fingerprint, err, time.Since(mlStarted))
 	}
@@ -175,7 +233,7 @@ func (s *Service) SendMessageWithID(ctx context.Context, id, requestID, content 
 	if result.Lead.SessionID != session.ID {
 		return s.recordTechnicalFailureWithID(session, requestID, fingerprint, errors.New("ML returned mismatched session id"), time.Since(mlStarted))
 	}
-	assistant := domain.Message{ID: newID(), Role: "assistant", Content: result.Answer, Response: &domain.ResponseMeta{Status: result.Status, Sources: result.Sources, ElapsedMS: result.ElapsedMS, Debug: result.Debug, Summary: result.Summary},
+	assistant := domain.Message{ID: newID(), Role: "assistant", Content: result.Answer, Response: &domain.ResponseMeta{RequestID: requestID, Status: result.Status, Sources: result.Sources, ElapsedMS: result.ElapsedMS, Debug: result.Debug, Summary: result.Summary},
 		Sequence: len(session.Messages) + 1, CreatedAt: time.Now().UTC()}
 	session.Messages = append(session.Messages, assistant)
 	session.UpdatedAt = assistant.CreatedAt
@@ -443,12 +501,17 @@ func (s *Service) recordTechnicalFailureWithID(session domain.Session, requestID
 		ElapsedMS: elapsed.Milliseconds(), Lead: session.Lead, LeadReady: false, Summary: map[string]interface{}{},
 		Debug: map[string]interface{}{"error_code": "consultation_unavailable"}, SchemaVersion: "1.0"}
 	result.RequestID = requestID
+	if errors.Is(cause, errRequestInterrupted) {
+		answer = "Подготовка ответа была прервана. Ваш вопрос и история сохранены; можно повторить запрос или обратиться к оператору."
+		result.Answer = answer
+		result.Debug["error_code"] = "request_interrupted"
+	}
 	if session.LastResult != nil {
 		result.Summary = session.LastResult.Summary
 		result.LeadReady = session.LastResult.LeadReady
 	}
 	result.Debug["backend_elapsed_ms"] = result.ElapsedMS
-	assistant := domain.Message{ID: newID(), Role: "assistant", Content: answer, Response: &domain.ResponseMeta{Status: result.Status, Sources: result.Sources, ElapsedMS: result.ElapsedMS, Debug: result.Debug, Summary: result.Summary}, Sequence: len(session.Messages) + 1, CreatedAt: time.Now().UTC()}
+	assistant := domain.Message{ID: newID(), Role: "assistant", Content: answer, Response: &domain.ResponseMeta{RequestID: requestID, Status: result.Status, Sources: result.Sources, ElapsedMS: result.ElapsedMS, Debug: result.Debug, Summary: result.Summary}, Sequence: len(session.Messages) + 1, CreatedAt: time.Now().UTC()}
 	session.Messages = append(session.Messages, assistant)
 	session.UpdatedAt = assistant.CreatedAt
 	session.LastResult = &result
@@ -471,6 +534,50 @@ func (s *Service) lock(id string) func() {
 	mutex := value.(*sync.Mutex)
 	mutex.Lock()
 	return mutex.Unlock
+}
+
+func (s *Service) lockMessage(ctx context.Context, id string) (func(), error) {
+	value, _ := s.messageLocks.LoadOrStore(id, make(chan struct{}, 1))
+	gate := value.(chan struct{})
+	select {
+	case gate <- struct{}{}:
+		if err := ctx.Err(); err != nil {
+			<-gate
+			return nil, err
+		}
+		return func() { <-gate }, nil
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
+}
+
+// Called with the session lock held. A durable user turn without a live
+// generator can occur after a process restart; settle it once so the client
+// can retry instead of polling forever. Also recover pre-request-ID sessions.
+func (s *Service) recoverInterrupted(session domain.Session) (domain.Session, error) {
+	if _, running := s.inflight.Load(session.ID); running {
+		return session, nil
+	}
+	for id, record := range session.Requests {
+		if !record.Pending {
+			continue
+		}
+		if _, err := s.recordTechnicalFailureWithID(session, id, record.Fingerprint, errRequestInterrupted, 0); err != nil {
+			return domain.Session{}, err
+		}
+		var err error
+		session, err = s.store.Get(session.ID)
+		if err != nil {
+			return domain.Session{}, err
+		}
+	}
+	if len(session.Messages) > 0 && session.Messages[len(session.Messages)-1].Role == "user" {
+		if _, err := s.recordTechnicalFailureWithID(session, "", "", errRequestInterrupted, 0); err != nil {
+			return domain.Session{}, err
+		}
+		return s.store.Get(session.ID)
+	}
+	return session, nil
 }
 
 func newID() string {
@@ -558,13 +665,16 @@ func (s *Service) SaveApplicationWithID(id, requestID string, input domain.Appli
 }
 
 func (s *Service) FindRequest(id, requestID string) (domain.ConsultationResult, error) {
-	session, err := s.store.Get(id)
+	session, err := s.GetSession(id)
 	if err != nil {
 		return domain.ConsultationResult{}, err
 	}
 	record, ok := session.Requests[requestID]
 	if !ok {
 		return domain.ConsultationResult{}, ErrRequestNotFound
+	}
+	if record.Pending {
+		return domain.ConsultationResult{}, ErrRequestPending
 	}
 	return record.Result, nil
 }

@@ -25,6 +25,7 @@ type SessionService interface {
 	GetSession(string) (domain.Session, error)
 	ListSessions() ([]domain.Session, error)
 	CloseSession(string) (domain.Session, error)
+	ResumeSession(string) (domain.Session, error)
 	Lead(string) (domain.LeadState, error)
 	SendMessage(context.Context, string, string) (domain.ConsultationResult, error)
 	ListExpertRequests(expert.RequestFilter) ([]expert.Request, error)
@@ -80,6 +81,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/v1/sessions", s.listSessions)
 	mux.HandleFunc("GET /api/v1/sessions/{sessionID}", s.getSession)
 	mux.HandleFunc("POST /api/v1/sessions/{sessionID}/close", s.closeSession)
+	mux.HandleFunc("POST /api/v1/sessions/{sessionID}/resume", s.resumeSession)
 	mux.HandleFunc("GET /api/v1/sessions/{sessionID}/messages", s.getMessages)
 	mux.HandleFunc("POST /api/v1/sessions/{sessionID}/messages", s.postMessage)
 	mux.HandleFunc("GET /api/v1/sessions/{sessionID}/requests/{requestID}", s.getRequest)
@@ -164,6 +166,18 @@ func (s *Server) closeSession(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, session)
 }
 
+func (s *Server) resumeSession(w http.ResponseWriter, r *http.Request) {
+	if !emptyBody(w, r) {
+		return
+	}
+	session, err := s.service.ResumeSession(r.PathValue("sessionID"))
+	if err != nil {
+		s.mapError(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, session)
+}
+
 func (s *Server) getMessages(w http.ResponseWriter, r *http.Request) {
 	if !emptyBody(w, r) {
 		return
@@ -241,6 +255,10 @@ func (s *Server) mapError(w http.ResponseWriter, r *http.Request, err error) {
 		writeError(w, r, http.StatusConflict, "request_id_conflict", "client_request_id was already used with different data")
 	case errors.Is(err, service.ErrRequestNotFound):
 		writeError(w, r, http.StatusNotFound, "request_not_found", "Request result was not found")
+	case errors.Is(err, service.ErrRequestPending):
+		writeError(w, r, http.StatusConflict, "request_pending", "Request is still being processed")
+	case errors.Is(err, context.DeadlineExceeded), errors.Is(err, context.Canceled):
+		writeError(w, r, http.StatusRequestTimeout, "request_interrupted", "Request was interrupted; refresh the session before retrying")
 	case errors.Is(err, expert.ErrForbidden):
 		writeError(w, r, http.StatusForbidden, "forbidden", "Operator access required")
 	case errors.Is(err, expert.ErrVersionConflict):
@@ -319,7 +337,7 @@ func (s *Server) saveApplication(w http.ResponseWriter, r *http.Request) {
 	}
 	session, err := s.service.SaveApplicationWithID(r.PathValue("sessionID"), requestID, domain.Application{CallbackMode: payload.CallbackMode, CallbackAt: payload.CallbackAt, FullName: payload.FullName, Phone: payload.Phone, Email: payload.Email, Company: payload.Company, Summary: payload.Summary})
 	if err != nil {
-		s.mapError(w, r, err)
+		s.applicationError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, session)

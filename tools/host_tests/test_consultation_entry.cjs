@@ -14,7 +14,7 @@ const base=process.env.WEB_TEST_URL||'http://127.0.0.1:8768';
  await p.screenshot({path:shots+'/site-desktop.png'});await p.setViewportSize({width:390,height:844});await p.waitForFunction(()=>document.documentElement.scrollWidth===innerWidth);await p.screenshot({path:shots+'/site-mobile.png'});
  const navigation = p.waitForRequest(r => r.isNavigationRequest() && new URL(r.url()).pathname === '/consultation.html');
  await p.getByRole('button',{name:'Заказать консультацию',exact:true}).last().click();
- assert.equal(new URL((await navigation).url()).searchParams.get('start'),'new');
+ assert.equal(new URL((await navigation).url()).searchParams.get('start'),null,'site entry resumes the saved consultation');
  await p.waitForURL('**/consultation.html?**');
  assert.equal(new URL(p.url()).searchParams.get('return'),'/');
  console.log('PASS: buttons enabled; original layout preserved; consultation CTA opens the new section.');

@@ -4,9 +4,9 @@ This is a standalone Go HTTP backend for the final web prototype. It does not re
 
 ## Implemented
 
-- Session create/list/get/close and message history endpoints.
+- Session create/list/get/close/resume and message history endpoints.
 - New sessions have isolated context; all session history is retained locally.
-- Per-session request serialization and the Python contract's 200-message / 100,000-character input limits.
+- Per-session message serialization and the Python contract's 200-message / 100,000-character input limits. Saving contacts, reading history and resuming a session remain available during generation.
 - Typed HTTP client for an internal Python consultation service using `POST /respond` and the existing contract.
 - Lead state, sources, response timing and summary pass through to the chat/debug UI.
 - Technical fallback preserves prior lead and summary; no claim is made that a lead was delivered.
@@ -52,9 +52,12 @@ Routes:
 - `POST /api/v1/sessions/{sessionID}/messages`, `GET /api/v1/sessions/{sessionID}/messages`
 - `GET /api/v1/sessions/{sessionID}/requests/{requestID}`
 - `POST /api/v1/sessions/{sessionID}/close`, `GET /api/v1/sessions/{sessionID}/lead`
+- `POST /api/v1/sessions/{sessionID}/resume` — reopen a closed session without clearing its history or application; accepts an empty body.
 - `POST /api/v1/sessions/{sessionID}/application` — persist the reviewed contact form and summary independently of ML state; see `../docs/consultation-ui.md`.
 
-All user and assistant messages are saved. Close marks a session read-only without deleting it. Each assistant message preserves its own `response` with `elapsed_ms`, `sources`, and `debug`, including after restart. `elapsed_ms` measures the call to the consultation service even when it fails; it excludes browser network time. The original ML processing time is retained in `debug.ml_elapsed_ms` only when available. `sources` contains validated citations selected for the answer; `debug.retrieved_sources` is the supplied context and does not imply every fragment was cited. Empty citations do not by themselves prove that retrieval found nothing.
+All user and assistant messages are saved. Close marks a session read-only without deleting it; resume makes it active again. Each assistant message preserves its own `response` with `request_id`, `elapsed_ms`, `sources`, and `debug`, including after restart. `elapsed_ms` measures the call to the consultation service even when it fails; it excludes browser network time. The original ML processing time is retained in `debug.ml_elapsed_ms` only when available. `sources` contains validated citations selected for the answer; `debug.retrieved_sources` is the supplied context and does not imply every fragment was cited. Empty citations do not by themselves prove that retrieval found nothing.
+
+For message writes, send a stable `client_request_id` until the result is confirmed. A saved request awaiting generation appears as `pending: true` in the session's `requests` map; looking up its result returns `409 request_pending`. A browser disconnect does not promise cancellation of server processing. After a backend restart, reading a session or request settles an interrupted turn once as `technical_error` with `debug.error_code: request_interrupted`, keeping the original question and history. Replaying that ID returns the same result; a deliberate new attempt after a technical failure needs a new ID. Requests whose context expires while queued do not append a message later.
 
 For application retries, send `client_request_id` in JSON, `Idempotency-Key` as a header, or `client_request_id` as a query parameter. Reusing an ID with an identical payload replays the stored result; reusing it with different data returns `409 request_id_conflict`.
 

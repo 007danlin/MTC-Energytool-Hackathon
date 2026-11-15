@@ -51,7 +51,7 @@ const shots = process.env.WEB_TEST_SHOTS;
     });
     const ready=()=>page.waitForFunction(()=>{
       const h=document.querySelector('#energytool-chat'),q=document.querySelector('#et-question');
-      return h && h.dataset.screen!=='waiting' && q && !q.disabled;
+      return h && h.dataset.screen!=='waiting' && h.dataset.screen!=='sync' && q && !q.disabled;
     });
     const field=key=>page.locator(`.et-sidebar .et-task-row[data-task-key="${key}"]`);
     const send=async text=>{
@@ -206,7 +206,7 @@ const shots = process.env.WEB_TEST_SHOTS;
           await route.abort('failed');
         } else await route.fulfill({json:session});
       });
-      const recovered=()=>recovery.waitForFunction(()=>document.querySelector('#energytool-chat').dataset.screen!=='waiting'&&!document.querySelector('#et-question').disabled);
+      const recovered=()=>recovery.waitForFunction(()=>document.querySelector('#energytool-chat').dataset.screen!=='waiting'&&document.querySelector('#energytool-chat').dataset.screen!=='sync'&&!document.querySelector('#et-question').disabled);
       await recovery.goto(base+'/consultation.html');await recovered();
       await recovery.locator('#et-question').fill(original);
       await recovery.locator('.et-send').click();

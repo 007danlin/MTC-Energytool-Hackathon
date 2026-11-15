@@ -4,7 +4,7 @@ import re
 FIELDS = ('object', 'task', 'parameters', 'constraints', 'notes')
 LABELS = {'объект': 'object', 'задача': 'task', 'известные сведения': 'parameters', 'условия': 'constraints'}
 TYPED = re.compile(r'^(?:(Уточнение|Дополнение)\s*[—–-]\s*(объект|задача|известные сведения|условия)|Дополнение к задаче):[ \t]*', re.I | re.M)
-OBJECT = r'(?:склад\w*|офис\w*|частн\w*\s+дом\w*|таунхаус\w*|магазин\w*|завод\w*|предприяти\w*|снт|производств\w*|торгов\w*\s+центр\w*|гостиниц\w*|жил\w*\s+дом\w*)'
+OBJECT = r'(?:склад\w*|офис\w*|частн\w*\s+дом\w*|таунхаус\w*|магазин\w*|кафе\b|кофейн\w*|ресторан\w*|пекарн\w*|завод\w*|предприяти\w*|снт|производств\w*|торгов\w*\s+центр\w*|гостиниц\w*|жил\w*\s+дом\w*)'
 META_REQUEST = re.compile(r'^(?:составь\w*|сформулируй\w*|дай\w*|дайте|покажи\w*|объясни\w*|расскажи\w*|повтори\w*|какие\s+шаги|что\s+дальше)', re.I)
 NON_ASSERTION = re.compile(r'^(?:если|например|представим|допустим|модель сказала|консультант сказал)\b', re.I)
 
@@ -131,6 +131,8 @@ def known_topics(facts):
     if 'readings' in topics and re.search(r'вручную|автомат|удаленно|по\s+gsm|через', text): topics.add('reading_method')
     if re.search(r'раз\s+в|ежемесяч|ежеднев|еженедель', text): topics.add('reading_frequency')
     if 'meter_layout' in topics or 'meters' in topics: topics.add('meter_presence')
+    if any(re.search(OBJECT,norm(entry.get('value',''))) for entry in facts.get('object',[]) if isinstance(entry,dict)):
+        topics.add('object_type')
     return topics
 
 
@@ -145,7 +147,10 @@ def answered_topics(question, facts):
         'meter_layout': r'(?:есть\s+ли|имеются\s+ли).*(?:отдельн|общий).*счетчик|(?:только\s+общая|по\s+отдельным\s+зонам).*\?',
         'schedule': r'(?:менялся\s+ли|изменялся\s+ли|меняли\s+ли).*(?:режим|график)',
         'equipment': r'(?:менялся\s+ли|изменялся\s+ли|добавляли\s+ли|устанавливал\w*\s+ли|меняли\s+ли).*(?:оборудован)',
+        'object_type': r'(?:какой|каков|уточн\w*|сообщ\w*).*(?:тип|вид)\s+(?:ваш\w*\s+)?(?:объект|организац|предприят)|(?:что\s+за|о\s+каком)\s+объект',
     }
+    # Knowing the physical object does not establish the client's ownership role.
+    if re.search(r'собственник|управляющ|арендатор|владел|\bроль',q): known.discard('object_type')
     return [key for key, pattern in patterns.items() if key in known and re.search(pattern, q)]
 
 
@@ -177,4 +182,4 @@ def extract_actions(answer):
 
 
 def asks_for_plan(text):
-    return bool(re.search(r'(?:план|конкретн\w*\s+шаг|следующ\w*\s+действ|какие\s+(?:конкретные\s+)?шаг)', norm(text)))
+    return bool(re.search(r'(?:план|конкретн\w*\s+шаг|(?:следующ|перв)\w*\s+действ|какие\s+(?:конкретные\s+)?шаг)', norm(text)))

@@ -7,7 +7,7 @@
       if (!button || button.textContent.trim() !== 'Заказать консультацию') return;
       event.preventDefault();
       event.stopImmediatePropagation();
-      location.href = '/consultation.html?start=new&return=' +
+      location.href = '/consultation.html?return=' +
         encodeURIComponent(location.pathname + location.search + location.hash);
     }, true);
     return;
@@ -45,6 +45,9 @@
   const isClosed = () => current?.status === 'closed';
   // UI state is kept separate from the server's confirmed consultation summary.
   let waitStarted = 0, waitInterval = null, messageController = null;
+  let recoveryTimer = null, recovering = false, afterWait = null, recoveryExpanded = false;
+  let retryRequest = null;
+  let sessionRevision = 0;
   let taskSnapshot = {}, taskSession = null, taskExpanded = new Set(), taskOrder = {};
   let planSession = null, planDone = {}, currentPlan = null, continuedAnswer = '';
   const scenarioPrompts = {cost:'У нас выросли счета за электроэнергию. С чего начать?',meter:'Хочу наладить учёт электроэнергии. С чего начать?',loss:'Хочу понять, где возникают потери электроэнергии. С чего начать?'};
@@ -73,6 +76,16 @@
   }
   const draftKey = id => 'energytool-composer-' + id;
   const requestKey = id => 'energytool-pending-' + id;
+  const formKey = id => 'energytool-application-draft-' + id;
+  const retryKey = id => 'energytool-retry-' + id;
+  function persistRetry() {
+    if (!current) return;
+    try { retryRequest ? sessionStorage.setItem(retryKey(current.id),JSON.stringify(retryRequest)) : sessionStorage.removeItem(retryKey(current.id)); } catch (_) {}
+  }
+  function persistForm() {
+    if (!current) return;
+    try { sessionStorage.setItem(formKey(current.id),JSON.stringify({draft,stage,noPhone})); } catch (_) {}
+  }
   function persistRequest() {
     if (!current) return;
     try { unconfirmedMessage ? sessionStorage.setItem(requestKey(current.id),JSON.stringify(unconfirmedMessage)) : sessionStorage.removeItem(requestKey(current.id)); } catch (_) {}
@@ -192,7 +205,7 @@
       const old=taskOrder[row.key] || [];
       taskOrder[row.key]=[...row.values.filter(v=>!old.includes(v)),...old.filter(v=>row.values.includes(v))];
     });
-    const text = pending ? 'Жду ответ. Можно подготовить дополнения' : needsSync ? 'Нужно обновить историю диалога' : current?.messages.length ? 'Собрано по ходу консультации' : 'Заполняется по ходу разговора';
+    const text = pending ? 'Жду ответ. Можно подготовить дополнения' : needsSync ? 'Проверяю готовность ответа' : current?.messages.length ? 'Собрано по ходу консультации' : 'Заполняется по ходу разговора';
     host.querySelectorAll('.et-task-status').forEach(n => { n.textContent = text; });
     host.querySelectorAll('.et-task-rows').forEach(n => { n.innerHTML = taskRowsHTML(rows, !pending && !needsSync,Boolean(n.closest('dialog'))); });
     taskSnapshot = Object.fromEntries(rows.map(row => [row.key,JSON.stringify(row.values)]));
@@ -262,7 +275,46 @@
     $('.et-composer').scrollIntoView({block:'nearest',behavior:'auto'});
   }
   function waitingHTML() {
-    return `<section class="et-pending" role="status"><div class="et-pending-head"><span>EnergyTool · ИИ-консультант</span><span class="et-wait-timer" aria-live="off">Жду ответ 0:00</span></div><div class="et-wait-title"><span class="et-energy-bars" aria-hidden="true"><i></i><i></i><i></i></span><span class="et-wait-caption">Готовлю ответ…</span></div><p class="et-hint">Первый ответ может занять больше времени, пока запускается модель.</p><div class="et-wait-long" hidden><p class="et-hint">Ответ занимает больше времени. Можно писать черновик или прервать ожидание и проверить историю.</p>${button('Прервать ожидание','stop-wait')}<p class="et-hint">Запрос может продолжить выполняться на сервере. Перед повторной отправкой нужно обновить историю.</p></div></section>`;
+    return `<section class="et-pending" role="status"><div class="et-pending-head"><span>EnergyTool · ИИ-консультант</span><span class="et-wait-timer" aria-live="off">Жду ответ 0:00</span></div><div class="et-wait-title"><span class="et-energy-bars" aria-hidden="true"><i></i><i></i><i></i></span><span class="et-wait-caption">Готовлю ответ…</span></div><p class="et-hint">Можно подготовить следующий вопрос или вернуться к диалогу позже.</p><div class="et-wait-long" hidden><p class="et-hint">Ответ занимает больше времени. Можно оставить заявку оператору — задача и переписка сохранятся.</p>${button('Позвать оператора','operator',true)}</div><div class="et-stack">${button('Прервать ожидание','stop-wait')}</div></section>`;
+  }
+  function recoveryHTML() {
+    return card(recoveryExpanded ? 'Проверяю готовность ответа' : 'Ожидание прервано',
+      '<p>Вопрос сохранён в этом браузере. Проверяю историю автоматически: готовый ответ появится здесь. Можно подготовить черновик, оставить заявку оператору или вернуться позже через историю диалогов.</p><p class="et-hint">Повторно вопрос не отправляется. Обращение оператору сохранится в очереди заявок; мгновенный ответ не гарантируется.</p>',
+      button('Обновить историю','refresh') + button('Позвать оператора','operator',true) + (recoveryExpanded ? '' : button('Продолжить ожидание','resume-wait')),
+      'et-recovery');
+  }
+  function pauseWait(action) {
+    if (pending) { afterWait = action; messageController?.abort(); }
+    else action();
+  }
+  // Only read while reconciling an interrupted request. Never silently repeat a POST.
+  function scheduleRecovery() {
+    clearTimeout(recoveryTimer);
+    if (!needsSync || !current || pending) return;
+    recoveryTimer = setTimeout(checkRecovery,3000);
+  }
+  async function checkRecovery() {
+    if (!needsSync || !current || pending) return;
+    if (busy || recovering) { scheduleRecovery(); return; }
+    const id = current.id;
+    const revision = sessionRevision;
+    recovering = true;
+    try {
+      const session = await api('/sessions/'+id);
+      if (current?.id !== id || pending || busy || revision !== sessionRevision) return;
+      const changed = JSON.stringify(current) !== JSON.stringify(session);
+      adopt(session);
+      if (!needsSync) {
+        recoveryExpanded = false;
+        status(stage === 'chat' ? '' : 'Ответ получен. Можно вернуться к консультации.');
+      }
+      // A poll must not replace a form while the user is filling it in.
+      if (changed || !needsSync) {
+        if (stage === 'chat') render(); else { renderTask(); controls(); }
+      }
+    } catch (_) {
+      if (current?.id === id && needsSync && !busy && revision === sessionRevision) status('Не удалось обновить историю. Проверю ещё раз автоматически. Можно оставить заявку или вернуться позже.');
+    } finally { recovering = false; scheduleRecovery(); }
   }
   function updateWaiting() {
     const help = $('.et-wait-help');
@@ -282,26 +334,27 @@
     $('.et-status').innerHTML = escape(text) + (retry ? button('Обновить историю', 'refresh') : '');
   }
   function controls() {
-    const safeActions = ['dismiss','task','task-all','task-add','plan','stop-wait'];
+    const safeActions = ['dismiss','task','task-all','task-add','plan','stop-wait',...(pending ? ['operator','contacts','menu','history','new','close','site'] : [])];
     host.querySelectorAll('[data-action], [data-prompt], [data-session], [data-reply], [data-source-message], [data-fragment], .et-flow input, .et-flow textarea, .et-contact-form button, .et-edit-form input, .et-edit-form textarea, .et-edit-form button').forEach(el => {
       el.disabled = busy && !safeActions.includes(el.dataset.action) && !el.hasAttribute('data-source-message') && !el.hasAttribute('data-fragment');
     });
-    input.disabled = (busy && !pending) || !current || isClosed() || needsSync;
-    $('.et-send').disabled = busy || input.disabled || !input.value.trim();
+    input.disabled = (busy && !pending) || !current || isClosed();
+    $('.et-send').disabled = busy || needsSync || input.disabled || !input.value.trim();
     $('.et-send').textContent = 'Отправить';
-    input.placeholder = pending ? 'Можно писать следующее сообщение' : 'Опишите вашу задачу';
-    $('.et-compose-actions>span').textContent = pending ? 'Отправка откроется, когда придёт ответ. Черновик сохранится.' : 'Enter — отправить · Shift+Enter — новая строка';
-    host.querySelectorAll('[data-task-field], [data-task-suggest], [data-action="task-add"]').forEach(el => { el.disabled = !current || isClosed() || needsSync || (busy && !pending); });
+    input.placeholder = pending || needsSync ? 'Можно писать следующее сообщение' : 'Опишите вашу задачу';
+    $('.et-compose-actions>span').textContent = pending || needsSync ? 'Отправка откроется после проверки ответа. Черновик сохранится.' : 'Enter — отправить · Shift+Enter — новая строка';
+    host.querySelectorAll('[data-task-field], [data-task-suggest], [data-action="task-add"]').forEach(el => { el.disabled = !current || isClosed() || (busy && !pending); });
+    host.querySelectorAll('[data-reply]').forEach(el => { el.disabled = busy || needsSync || isClosed(); });
     $('.et-composer').hidden = stage !== 'chat';
     updateScenarioSelection();
   }
   async function api(path, body, signal) {
     const response = await fetch('/api/v1' + path, {method:body === undefined ? 'GET':'POST',
       headers:body == null ? {} : {'Content-Type':'application/json'},
-      body:body == null ? undefined:JSON.stringify(body), signal:signal ? AbortSignal.any([AbortSignal.timeout(275000),signal]) : AbortSignal.timeout(275000)});
+      body:body == null ? undefined:JSON.stringify(body), signal:signal ? AbortSignal.any([AbortSignal.timeout(275000),signal]) : AbortSignal.timeout(20000)});
     let data; try { data = await response.json(); } catch (_) { throw new Error('Сервис вернул некорректный ответ.'); }
     if (!response.ok) {
-      const labels = {not_found:'Диалог не найден.',session_closed:'Диалог завершён. Начните новый.', history_limit:'Достигнут лимит диалога. Начните новый — история сохранена.', invalid_application:'Проверьте телефон или email и описание задачи.', message_too_long:'Сообщение слишком длинное.',empty_message:'Введите вопрос.'};
+      const labels = {not_found:'Диалог не найден.',session_closed:'Диалог завершён. Начните новый.', history_limit:'Достигнут лимит диалога. Начните новый — история сохранена.', invalid_application:'Проверьте телефон или email и описание задачи.', application_closed:'Менеджер уже обработал заявку: редактирование закрыто. Дополнения можно написать в консультации — они сохранятся в истории.', message_too_long:'Сообщение слишком длинное.',empty_message:'Введите вопрос.'};
       const error = new Error(labels[data.code] || data.message || 'Сервис временно недоступен.'); error.code = data.code; throw error;
     }
     return data;
@@ -309,13 +362,26 @@
   async function run(fn) {
     if (busy) return;
     busy = true; controls();
-    try { await fn(); } catch (error) { status(error.name === 'TimeoutError' ? 'Ответ занимает больше времени. Обновите историю перед повторной отправкой.' : error.message || 'Не удалось подключиться к сервису.', true); if (modal.open) { let alert = modalBody.querySelector('.et-modal-error'); if (!alert) { alert = document.createElement('p'); alert.className = 'et-error et-modal-error'; alert.setAttribute('role','alert'); modalBody.append(alert); } alert.textContent = notice; } }
-    finally { busy = false; controls(); }
+    try { await fn(); } catch (error) { status(error.name === 'TimeoutError' ? 'Ответ занимает больше времени. Обновите историю перед повторной отправкой.' : error.message || 'Не удалось подключиться к сервису.', true); if (modal.open) { let alert = modalBody.querySelector('.et-modal-error'); if (!alert) { alert = document.createElement('p'); alert.className = 'et-error et-modal-error'; alert.setAttribute('role','alert'); modalBody.append(alert); } alert.textContent = notice; alert.scrollIntoView({block:'nearest'}); } }
+    finally { busy = false; controls(); scheduleRecovery(); }
   }
   function adopt(session) {
     const previousID = current?.id;
+    sessionRevision++;
     current = session; remember(session.id);
     if (previousID !== session.id) {
+      unconfirmedMessage = null; retryRequest = null; recoveryExpanded = false;
+      draft = null; stage = 'chat'; noPhone = false; collapsedAt = 0;
+      try {
+        const savedForm = JSON.parse(sessionStorage.getItem(formKey(session.id)) || 'null');
+        if (savedForm?.draft && typeof savedForm.draft === 'object') draft = savedForm.draft;
+        if (savedForm && ['chat','contacts','review','declined','saved'].includes(savedForm.stage) &&
+            (savedForm.stage !== 'saved' || session.application) && (!['contacts','review'].includes(savedForm.stage) || draft)) stage = savedForm.stage;
+        noPhone = Boolean(savedForm?.noPhone);
+        const savedRetry = JSON.parse(sessionStorage.getItem(retryKey(session.id)) || 'null');
+        if (savedRetry?.sessionID === session.id && typeof savedRetry.text === 'string') retryRequest = savedRetry;
+      } catch (_) {}
+      if (session.status === 'closed') stage = 'chat';
       let savedDraft = ''; try { savedDraft = sessionStorage.getItem(draftKey(session.id)) || ''; } catch (_) {}
       setInput(savedDraft);
       if (!unconfirmedMessage) {
@@ -326,16 +392,25 @@
       }
     }
     if (unconfirmedMessage?.sessionID === session.id) {
-      const { offset, text, restored, retry } = unconfirmedMessage;
-      const recorded = session.messages.slice(offset).some(message => message.role === 'user' && message.content === text);
+      const { offset, text, restored, retry, requestID } = unconfirmedMessage;
+      const record = requestID && session.requests?.[requestID];
+      const recorded = Boolean(record || session.messages.some(message=>requestID && message.response?.request_id===requestID) ||
+        session.messages.slice(offset).some(message => message.role === 'user' && message.content === text));
       if (recorded && restored && input.value.trim() === text) setInput('');
       if (!recorded && !retry && input.value.trim() !== text) {
         setInput([text,input.value.trim()].filter(Boolean).join('\n\n'));
       }
+      if (!recorded) retryRequest = {...unconfirmedMessage};
+      else retryRequest = null;
+      persistRetry();
       unconfirmedMessage = null;persistRequest();
     }
-    needsSync = session.status === 'active' && session.messages.at(-1)?.role === 'user';
-    if (needsSync) status('Ответ ещё не сохранён. Обновите историю через некоторое время.', true);
+    needsSync = session.status === 'active' && (session.messages.at(-1)?.role === 'user' || Object.values(session.requests || {}).some(request=>request.pending));
+    if (needsSync) {
+      if (previousID !== session.id) recoveryExpanded = true;
+      status('');
+    }
+    scheduleRecovery();
   }
   function metadata(message, index, session = current) {
     const stored = message.response;
@@ -396,6 +471,8 @@
     return choices.some(text=>evidenceText(text)===evidenceText(latestUser)) ? [] : choices;
   }
   function render() {
+    persistForm();
+    host.dataset.screen = stage === 'chat' ? 'conversation' : stage;
     const empty = !current?.messages.length;
     $('.et-welcome').hidden = !empty || stage !== 'chat' || pending || needsSync;
     messages.hidden = stage !== 'chat';
@@ -406,17 +483,19 @@
     else if (stage === 'review') renderReview(draft,false);
     else if (stage === 'saved') renderReview(current.application,true);
     else if (stage === 'declined') {
-      flow.innerHTML = previous() + messageHTML({role:'user',content:'Продолжить без контакта'}) + assistant('Хорошо, можем продолжить без контакта. Хотите разобраться, какие данные собрать по вашей задаче?') + `<div class="et-stack"><button data-reply="Какие данные нужно собрать по моей задаче?">Какие данные собрать?</button>${button('Вернуться к заявке','contacts')}</div>`;
+      flow.innerHTML = previous() + messageHTML({role:'user',content:'Продолжить без контакта'}) + assistant('Хорошо, можем продолжить без контакта. Хотите разобраться, какие данные собрать по вашей задаче?') + `<div class="et-stack">${button('Продолжить консультацию','continue',true)}<button data-reply="Какие данные нужно собрать по моей задаче?">Какие данные собрать?</button>${button('Вернуться к заявке','contacts')}</div>`;
     } else if (pending) {
       flow.innerHTML = waitingHTML();
     } else if (isClosed()) {
-      flow.innerHTML = card('Диалог сохранён','<p>Эта переписка доступна для чтения в истории.</p>',button('Начать новый диалог','new',true));
+      flow.innerHTML = card('Диалог сохранён','<p>Можно продолжить эту переписку или начать новую.</p>',button('Продолжить этот диалог','resume',true)+button('Начать новый диалог','new'));
+    } else if (needsSync) {
+      flow.innerHTML = recoveryHTML();
     } else if (!needsSync) {
       const result = current?.last_result;
       const state = result?.status;
       host.dataset.screen = empty ? 'welcome' : state || 'conversation';
       if (state === 'technical_error') {
-        flow.innerHTML = card('Не удалось получить ответ','<p>Ваш вопрос сохранён. Попробуйте ещё раз.</p>',button('Повторить','retry',true),'et-error');
+        flow.innerHTML = card('Не удалось получить ответ','<p>Ваш вопрос сохранён. Можно повторить попытку, задать другой вопрос или оставить заявку оператору.</p>',button('Повторить','retry',true)+button('Позвать оператора','operator')+button('Задать другой вопрос','continue'),'et-error');
       } else if (state === 'out_of_scope') {
         flow.innerHTML = `<div class="et-stack">${button('Задать другой вопрос','continue')}</div>`;
       } else if (noPhone && !current?.application) {
@@ -446,11 +525,23 @@
     const labels = {task:'Задача клиента',object:'Объект',parameters:'Известные параметры',constraints:'Условия и ограничения',notes:'Дополнения клиента',products:'Обсуждавшиеся решения (выбор нужно подтвердить)',questions:'Уточнить с менеджером'};
     const rows = taskData();
     // No phantom summary for the untouched welcome screen.
-    if (!current?.messages.length) return '';
+    if (!current?.messages.length && !unconfirmedMessage) return '';
     const structured = rows.some(r=>['task','object','parameters','constraints','notes'].includes(r.key) && r.values.length && r.meta !== 'Ваш вопрос дословно');
     const fallback = !structured ? current.messages.filter(m=>m.role==='user' && m.content.trim()) : [];
+    if (!structured && unconfirmedMessage && !fallback.some(m=>m.content===unconfirmedMessage.text)) fallback.push({content:unconfirmedMessage.text});
     const selected = fallback.length > 4 ? [fallback[0],...fallback.slice(-3)] : fallback;
     const parts = selected.length ? [`Из сообщений клиента${fallback.length>4?' (начало и последние уточнения)':''}:\n${selected.map(m=>'• '+m.content.trim()).join('\n')}`] : [];
+    // While the next answer is pending, the previous model summary cannot yet
+    // contain new free-form facts. Keep them as the client's words in the handoff.
+    if (structured) {
+      const history = current.messages;
+      const coveredThrough = history.findLastIndex(message => message.role === 'assistant' &&
+        message.response?.origin !== 'specialist' && message.response?.status !== 'technical_error');
+      const uncovered = history.slice(coveredThrough+1).filter(message=>message.role==='user').map(message=>message.content);
+      if (unconfirmedMessage && !unconfirmedMessage.retry) uncovered.push(unconfirmedMessage.text);
+      const details = [...new Set(uncovered.map(text=>parseTaskMessage(text).remainder).filter(Boolean))];
+      if (details.length) parts.push(`Последние уточнения клиента:\n${details.map(text=>'• '+text).join('\n')}`);
+    }
     const text = [...parts,...(structured ? ['task','object','parameters','constraints','notes','products','questions'] : ['products','questions']).map(key=>{
       const row = rows.find(r=>r.key===key);
       return row?.values.length ? `${labels[key]}:\n${row.values.map(v=>'• '+v).join('\n')}` : '';
@@ -462,7 +553,19 @@
   function startContacts() {
     if (!current || isClosed()) return;
     const fields = current.lead?.fields || {};
-    draft = draft || (current.application ? {...current.application} : {full_name:fields.full_name || '',phone:fields.phone || '',email:fields.email || '',company:fields.company || '',summary:summaryText()});
+    const generated = summaryText();
+    if (!draft) {
+      draft = current.application ? {...current.application,summary_source:'manual'} : {
+        full_name:fields.full_name || '',phone:fields.phone || '',email:fields.email || '',company:fields.company || '',
+        summary:generated,summary_source:generated ? 'conversation' : 'manual',
+      };
+    } else {
+      // Legacy drafts have no provenance. Preserve their wording rather than
+      // treating a potentially edited description as generated text.
+      draft.summary_source ||= 'manual';
+      if (draft.summary_source === 'conversation') draft.summary = generated;
+      else if (!draft.summary?.trim() && generated) { draft.summary = generated; draft.summary_source = 'conversation'; }
+    }
     draft.contact = draft.contact ?? (draft.phone || draft.email || '');
     stage = 'contacts'; render(); scroll.scrollTop = 0; flow.querySelector('input')?.focus();
   }
@@ -510,7 +613,7 @@
   function contactFields(value, includeSummary = false) {
     value = {...value, contact:value.contact ?? (value.phone || value.email || '')};
     const field = (name,label,placeholder,extra='') => `<label class="et-field${name==='contact'?' et-field-wide':''}"><span>${label}</span><input aria-label="${label}" name="${name}" value="${escape(value[name])}" placeholder="${placeholder}" ${extra}></label>`;
-    return `<div class="et-fields">${field('contact','Телефон или email','+7 (___) ___-__-__ или name@example.ru','type="text" inputmode="email" autocomplete="off" maxlength="254" autocapitalize="off" spellcheck="false" required')}${field('full_name','Имя и фамилия','Как к вам обращаться','autocomplete="name" maxlength="200"')}${field('company','Название компании','Ваша компания','autocomplete="organization" maxlength="200"')}${includeSummary ? `<label class="et-field et-field-wide"><span>Кратко о вашей задаче</span><textarea name="summary" maxlength="2000" required>${escape(value.summary)}</textarea></label>` : ''}</div>${value.phone && value.email ? `<p class="et-hint et-secondary-contact">Также сохранён email: ${escape(value.email)}. Он сохранится при изменении телефона. Если ввести email, он заменит телефон и прежний email.</p>` : ''}${callbackFields(value)}<p class="et-hint et-email-note" hidden>Сохраним email для ответа специалиста. Отправка письма пока не подключена.</p>`;
+    return `<div class="et-fields">${field('contact','Телефон или email','+7 (___) ___-__-__ или name@example.ru','type="text" inputmode="email" autocomplete="off" maxlength="254" autocapitalize="off" spellcheck="false" required')}${field('full_name','Имя и фамилия','Как к вам обращаться','autocomplete="name" maxlength="200"')}${field('company','Название компании','Ваша компания','autocomplete="organization" maxlength="200"')}${includeSummary ? `<label class="et-field et-field-wide"><span>Кратко о вашей задаче</span><textarea name="summary" aria-label="Кратко о вашей задаче" maxlength="2000" required>${escape(value.summary)}</textarea></label>` : ''}</div>${value.phone && value.email ? `<p class="et-hint et-secondary-contact">Также сохранён email: ${escape(value.email)}. Он сохранится при изменении телефона. Если ввести email, он заменит телефон и прежний email.</p>` : ''}${callbackFields(value)}<p class="et-hint et-email-note" hidden>Сохраним email для ответа специалиста. Отправка письма пока не подключена.</p>`;
   }
   function validForm(form) {
     const contact = form.elements.contact;
@@ -574,16 +677,19 @@
     form.onsubmit = e=>{e.preventDefault();if(busy||!validForm(form))return;save(Object.fromEntries(new FormData(form)));};
   }
   function renderContacts() {
-    flow.innerHTML = previous() + `<section class="et-card et-contact-card"><h2>Как с вами связаться?</h2><p class="et-hint">Достаточно телефона или email. Имя и компания — по желанию.</p><form class="et-contact-form">${contactFields(draft,!summaryText() && !current.application?.summary)}${draft.summary?'<div class="et-attachment"><span>Описание задачи из нашей беседы</span><button type="button" class="et-text-button" data-action="preview-summary">Посмотреть</button></div>':''}<div class="et-stack"><button type="submit" class="et-primary">Проверить заявку</button>${button('Продолжить без контакта','decline')}</div></form></section>`;
+    const manualSummary = draft.summary_source !== 'conversation';
+    flow.innerHTML = (current.messages.length ? previous() : '') + `<section class="et-card et-contact-card"><h2>Как с вами связаться?</h2><p class="et-hint">Достаточно телефона или email. Имя и компания — по желанию. Заявка появится в очереди; мгновенное соединение с оператором не гарантируется.</p><form class="et-contact-form">${contactFields(draft,manualSummary)}${!manualSummary && draft.summary?'<div class="et-attachment"><span>Описание задачи из нашей беседы</span><button type="button" class="et-text-button" data-action="preview-summary">Посмотреть</button></div>':''}<div class="et-stack"><button type="submit" class="et-primary">Проверить заявку</button>${button('Вернуться к консультации','continue')}${button('Продолжить без контакта','decline')}</div></form></section>`;
     const form=$('.et-contact-form');
-    form.addEventListener('input',()=>{draft={...draft,...Object.fromEntries(new FormData(form))};});
+    const saveDraft = event=>{draft={...draft,...Object.fromEntries(new FormData(form))};if(event.target.name==='summary')draft.summary_source='manual';persistForm();};
+    form.addEventListener('input',saveDraft);
+    form.addEventListener('change',saveDraft);
     bindForm(form,fields=>{draft=contactValues(fields,draft);noPhone=false;stage='review';render();scroll.scrollTop=0;});
   }
   function reviewHTML(application) {
     return `${application.id ? `<p class="et-eyebrow">НОМЕР ЗАЯВКИ</p><p class="et-application-number">${escape(application.number || application.id)}</p>` : ''}<p class="et-eyebrow">КОНТАКТЫ</p>${[application.full_name,application.phone,application.email,application.company].filter(Boolean).map(v=>`<p>${escape(v)}</p>`).join('')}<p class="et-eyebrow">ВРЕМЯ СВЯЗИ</p><p>${escape(application.phone ? callbackLabel(application) : 'Ответ по электронной почте')}</p><p class="et-hint">${application.phone ? 'Пожелание сохранено в заявке. Звонок пока не подтверждён.' : 'Email сохранён в заявке. Отправка письма пока не подключена.'}</p><p class="et-eyebrow">РЕЗЮМЕ</p><p class="et-application-summary">${escape(application.summary)}</p>`;
   }
   function renderReview(application,saved) {
-    flow.innerHTML = previous() + assistant(saved ? 'Заявка сохранена. Её можно скачать или открыть в истории диалогов.' : 'Собрал контакты и резюме нашей беседы. Всё верно?') + card(saved ? 'Заявка сформирована' : 'Проверьте заявку',`<p class="${saved?'et-success':'et-muted'}">${saved?'Сохранено в диалоге':'Заявка сохранится в этом диалоге'}</p>${reviewHTML(application)}`,saved ? button('Скачать заявку','download',true)+button('Продолжить консультацию','continue')+button('История диалогов','history') : button('Изменить данные','edit')+button('Сформировать заявку','save',true),'et-review');
+    flow.innerHTML = (current.messages.length ? previous() : '') + assistant(saved ? 'Заявка сохранена. Её можно скачать или открыть в истории диалогов.' : 'Проверьте контакты и описание задачи. Всё верно?') + card(saved ? 'Заявка сформирована' : 'Проверьте заявку',`<p class="${saved?'et-success':'et-muted'}">${saved?'Сохранено в диалоге':'Заявка сохранится в этом диалоге'}</p>${reviewHTML(application)}`,saved ? button('Скачать заявку','download',true)+button('Продолжить консультацию','continue')+button('История диалогов','history') : button('Изменить данные','edit')+button('Сформировать заявку','save',true)+button('Вернуться к консультации','continue'),'et-review');
   }
   async function saveApplication({ full_name = '', phone = '', email = '', company = '', summary, callback_mode = 'asap', callback_date, callback_time, callback_at }) {
     const session = await api('/sessions/' + current.id + '/application', {
@@ -598,11 +704,11 @@
   function editContacts() {
     const saved = stage==='saved';
     const value = saved ? current.application : draft;
-    openModal('Изменить контакты',`<p>Данные сохранятся только после нажатия «Сохранить».</p><form class="et-edit-form">${contactFields(value,false)}<details class="et-summary-edit"><summary>Изменить описание задачи</summary><label class="et-field"><span>Кратко о вашей задаче</span><textarea name="summary" maxlength="2000" required>${escape(value.summary)}</textarea></label></details><div class="et-stack"><button type="submit" class="et-primary">Сохранить</button>${button('Отмена','dismiss')}</div></form>`,'edit');
+    openModal('Изменить контакты',`<p>Данные сохранятся только после нажатия «Сохранить».</p><form class="et-edit-form">${contactFields(value,false)}<details class="et-summary-edit"><summary>Изменить описание задачи</summary><label class="et-field"><span>Кратко о вашей задаче</span><textarea name="summary" aria-label="Кратко о вашей задаче" maxlength="2000" required>${escape(value.summary)}</textarea></label></details><div class="et-stack"><button type="submit" class="et-primary">Сохранить</button>${button('Отмена','dismiss')}</div></form>`,'edit');
     bindForm(modalBody.querySelector('form'),fields=>{
       fields = contactValues(fields,value);
       if(saved)run(async()=>{await saveApplication(fields);dismiss();status('');render();});
-      else {draft={...draft,...fields};dismiss();render();}
+      else {draft={...draft,...fields,summary_source:fields.summary !== value.summary ? 'manual' : value.summary_source || 'manual'};dismiss();render();}
     });
   }
   function openModal(title,html,kind='') {
@@ -626,8 +732,16 @@
   }
   async function history() {
     const {sessions} = await api('/sessions');
-    const entries = sessions.filter(s => knownIDs.has(s.id) && (s.messages.length || s.application)).sort((a,b)=>b.updated_at.localeCompare(a.updated_at));
-    openModal('История диалогов',`<p class="et-hint">Сохранено на время демонстрации</p>${entries.length ? entries.map(s=>`<section class="et-card"><h2>${escape(s.messages.find(m=>m.role==='user')?.content.slice(0,100) || s.application?.summary.slice(0,100) || 'Консультация')}</h2><p class="et-hint">${escape(new Date(s.updated_at).toLocaleString('ru-RU',{timeZone:'Europe/Moscow',dateStyle:'medium',timeStyle:'short'}))}</p><p class="${s.application ? 'et-success':'et-muted'}">${s.application ? `Заявка № ${escape(s.application.number || s.application.id || '—')}`:'Без заявки'}</p><button data-session="${escape(s.id)}">${s.application?'Открыть диалог':'Посмотреть переписку'}</button></section>`).join('') : '<section class="et-empty-history"><h2>Здесь пока нет диалогов</h2><p>Сохранённые разговоры появятся в истории после консультации.</p></section>'}`,'drawer');
+    const entries = sessions.filter(s => knownIDs.has(s.id) && (s.messages.length || s.application || hasLocalDraft(s.id))).sort((a,b)=>b.updated_at.localeCompare(a.updated_at));
+    openModal('История диалогов',`<p class="et-hint">Выберите диалог, чтобы посмотреть переписку или продолжить.</p>${entries.length ? entries.map(s=>`<section class="et-card"><h2>${escape(sessionTitle(s).slice(0,100))}</h2><p class="et-hint">${escape(new Date(s.updated_at).toLocaleString('ru-RU',{timeZone:'Europe/Moscow',dateStyle:'medium',timeStyle:'short'}))}</p><p class="${s.application ? 'et-success':'et-muted'}">${s.application ? `Заявка № ${escape(s.application.number || s.application.id || '—')}`:!s.messages.length?'Черновик · ещё не отправлен':'Без заявки'}</p><button data-session="${escape(s.id)}">${!s.messages.length&&!s.application?'Открыть черновик':s.application?'Открыть диалог':'Посмотреть переписку'}</button></section>`).join('') : '<section class="et-empty-history"><h2>Здесь пока нет диалогов</h2><p>Сохранённые разговоры появятся в истории после консультации.</p></section>'}`,'drawer');
+  }
+  function sessionTitle(session) {
+    const sent = session.messages.find(m=>m.role==='user')?.content || session.application?.summary;
+    if (sent) return sent;
+    try {
+      const form = JSON.parse(sessionStorage.getItem(formKey(session.id)) || 'null');
+      return sessionStorage.getItem(draftKey(session.id)) || form?.draft?.summary || 'Новая консультация';
+    } catch (_) { return 'Новая консультация'; }
   }
   function transcriptHTML(session, context = 'current') {
     return session.messages.map((m,index)=>isRetriedQuestion(m,index,session) ? '' : `<article class="et-transcript-message"><p class="et-hint">${m.role==='user'?'Клиент':'EnergyTool'}</p><p>${escape(m.content)}</p>${debug && m.role === 'assistant' && metadata(m,index,session) ? `<button class="et-debug-link" data-source-message="${index}" data-source-context="${context}">Источники и время этого ответа</button>` : ''}</article>`).join('') || '<p>Переписка пока пуста.</p>';
@@ -638,8 +752,21 @@
   }
   function renderArchive() {
     if (!archived) return;
-    const title=archived.messages.find(m=>m.role==='user')?.content || archived.application?.summary || 'Консультация';
-    openModal('Сохранённый диалог',`${button('Назад к истории','history')}<h2 class="et-archive-title">${escape(title)}</h2><div class="et-transcript">${transcriptHTML(archived,'archive')}</div>${archived.application ? card('Заявка сформирована','<p class="et-success">Сохранено в диалоге</p>'+reviewHTML(archived.application),'','et-review') : '<p class="et-muted">Без заявки · только просмотр</p>'}<div class="et-stack">${button('Начать новый диалог','new',true)}</div>`,'archive');
+    const title=sessionTitle(archived);
+    openModal('Сохранённый диалог',`${button('Назад к истории','history')}<h2 class="et-archive-title">${escape(title)}</h2><div class="et-transcript">${transcriptHTML(archived,'archive')}</div>${archived.application ? card('Заявка сформирована','<p class="et-success">Сохранено в диалоге</p>'+reviewHTML(archived.application),'','et-review') : '<p class="et-muted">Без заявки</p>'}<div class="et-stack">${button('Продолжить этот диалог','resume',true)}${button('Начать новый диалог','new')}</div>`,'archive');
+  }
+  function hasLocalDraft(id) {
+    try {
+      const form = JSON.parse(sessionStorage.getItem(formKey(id)) || 'null');
+      return Boolean(sessionStorage.getItem(draftKey(id)) || sessionStorage.getItem(requestKey(id)) || form?.draft);
+    } catch (_) { return false; }
+  }
+  async function resumeSession() {
+    const target = modal.open && archived ? archived : current;
+    if (!target) return;
+    persistComposer(); persistForm();
+    const session = await api('/sessions/'+target.id+(target.status === 'closed' ? '/resume' : ''),target.status === 'closed' ? null : undefined);
+    adopt(session); stage='chat'; collapsedAt=0; status(''); dismiss(); render(); focusComposer();
   }
   function sources(result = selectedSource || current?.last_result, context = selectedSourceContext) {
     selectedSource=result;
@@ -659,31 +786,25 @@
   }
   function confirm(kind) {
     const isNew = kind === 'new';
-    if (!draft && !input.value.trim() && !current?.messages.length && !current?.application) {
+    if (!draft && !input.value.trim() && !current?.messages.length && !current?.application && !isClosed()) {
       if (!isNew) return run(closeChat);
       if (!current) return run(newSession);
       dismiss(); input.focus(); return;
     }
     const hasDraft = (draft && stage !== 'saved') || input.value.trim();
-    openModal(isNew ? 'Начать новый диалог?' : 'Закрыть чат?',`<p>${isNew ? 'Текущий разговор сохранится в истории. В новом диалоге консультант не будет учитывать его сообщения.' : 'Разговор сохранится в истории. При следующем открытии начнётся новый диалог.'}</p>${hasDraft ? '<p class="et-muted">Набранный вопрос и неподтверждённые данные формы будут сброшены.</p>' : ''}<div class="et-stack">${button(isNew ? 'Начать новый' : 'Закрыть чат',isNew ? 'confirm-new' : 'confirm-close',true)}${button('Вернуться в чат','dismiss')}</div>`);
-  }
-  async function closeSession() {
-    if (current && !isClosed()) {
-      adopt(await api('/sessions/'+current.id+'/close',null));
-      stage = 'chat';
-      render();
-    }
+    openModal(isNew ? 'Начать новый диалог?' : 'Закрыть чат?',`<p>${isNew ? 'Текущий разговор сохранится в истории. Его можно продолжить позже. Новый диалог начнётся с чистого контекста.' : 'Разговор сохранится. При следующем открытии вы сможете продолжить с этого места.'}</p>${hasDraft ? '<p class="et-muted">Набранный вопрос и данные формы останутся в этом браузере.</p>' : ''}<div class="et-stack">${button(isNew ? 'Начать новый' : 'Закрыть чат',isNew ? 'confirm-new' : 'confirm-close',true)}${button('Вернуться в чат','dismiss')}</div>`);
   }
   async function closeChat() {
-    await closeSession();
-    remember(null);
+    persistComposer(); persistForm();
     location.href = returnPath;
   }
   async function newSession() {
+    persistComposer(); persistForm();
     const fresh = await api('/sessions',null);
     unconfirmedMessage=null;adopt(fresh);draft=null;noPhone=false;collapsedAt=0;stage='chat';setInput('');status('');render();scroll.scrollTop=0;
   }
   async function refresh() {
+    persistForm();
     if (current) adopt(await api('/sessions/'+current.id));
     else if (savedID) {
       try { adopt(await api('/sessions/'+savedID)); }
@@ -702,7 +823,9 @@
   async function send(text, { retry = false, fromComposer = false } = {}) {
     if (!text.trim() || !current || isClosed() || needsSync || busy) return;
     await run(async()=> {
-      unconfirmedMessage = { sessionID: current.id, offset: current.messages.length, text, fromComposer, retry, restored:false };
+      const requestID = (!retry && retryRequest?.sessionID === current.id && retryRequest.text === text && retryRequest.requestID) || crypto.randomUUID();
+      retryRequest = null; persistRetry();
+      unconfirmedMessage = { sessionID: current.id, offset: current.messages.length, text, fromComposer, retry, restored:false, requestID };
       persistRequest();
       if (fromComposer) setInput('');
       stage='chat';status('');pending=true;waitStarted=performance.now();
@@ -712,7 +835,7 @@
       $('.et-welcome').hidden=true;scroll.scrollTop=scroll.scrollHeight;
       let posted = false;
       try {
-        await api('/sessions/'+current.id+'/messages',{content:text},messageController.signal);
+        await api('/sessions/'+current.id+'/messages',{content:text,client_request_id:requestID},messageController.signal);
         posted = true;
         const session = await api('/sessions/'+current.id,undefined,messageController.signal);
         const pinned = scroll.scrollHeight-scroll.scrollTop-scroll.clientHeight < 100;
@@ -727,11 +850,13 @@
         if (unconfirmedMessage && fromComposer && !input.value.trim()) { setInput(text); unconfirmedMessage.restored = true; }
         persistRequest();
         pending=false;needsSync=true;render();
-        status((e.name === 'TimeoutError' ? 'Время ожидания истекло.' : e.name === 'AbortError' ? 'Ожидание прервано. Запрос мог продолжить выполняться на сервере.' : 'Не удалось подтвердить состояние диалога.')+' Обновите историю перед повторной отправкой.',true);
+        status(e.name === 'AbortError' ? '' : (e.name === 'TimeoutError' ? 'Время ожидания истекло.' : 'Не удалось подтвердить состояние диалога.')+' История проверяется автоматически.');
       } finally {
         clearInterval(waitInterval);waitInterval=null;messageController=null;
       }
     });
+    const next = afterWait; afterWait = null;
+    if (next) next();
   }
   function download() {
     const a=current?.application;if(!a)return;
@@ -763,19 +888,22 @@
       case 'preview-summary':openModal('Описание задачи',`<p class="et-application-summary">${escape(draft?.summary || '')}</p>`,'archive');break;
       case 'task-add':editTask();break;
       case 'stop-wait':messageController?.abort();break;
+      case 'resume-wait':recoveryExpanded=true;render();checkRecovery();break;
+      case 'operator':pauseWait(()=>{if(modal.open)dismiss();startContacts();});break;
+      case 'resume':run(resumeSession);break;
       case 'dismiss':dismiss();break;
       case 'menu':menu();break;
-      case 'history':run(history);break;
+      case 'history':pauseWait(()=>run(history));break;
       case 'sources':sources();break;
       case 'archive-view':renderArchive();break;
       case 'debug':debug=!debug;dismiss();render();break;
-      case 'new':confirm('new');break;
-      case 'close':confirm('close');break;
-      case 'site':confirm('close');break;
-      case 'confirm-new':run(async()=>{await closeSession();await newSession();dismiss();}).then(()=>{if(!modal.open)input.focus();});break;
+      case 'new':pauseWait(()=>confirm('new'));break;
+      case 'close':pauseWait(()=>confirm('close'));break;
+      case 'site':pauseWait(()=>confirm('close'));break;
+      case 'confirm-new':run(async()=>{await newSession();dismiss();}).then(()=>{if(!modal.open)input.focus();});break;
       case 'confirm-close':run(closeChat);break;
       case 'refresh':run(refresh).then(()=>input.focus());break;
-      case 'contacts':if(modal.open)dismiss();startContacts();break;
+      case 'contacts':pauseWait(()=>{if(modal.open)dismiss();startContacts();});break;
       case 'edit':editContacts();break;
       case 'edit-saved':stage='saved';render();editContacts();break;
       case 'decline':noPhone=true;stage='declined';render();scroll.scrollTop=0;break;
@@ -797,7 +925,7 @@
     renderPlan();
     (inModal?modalBody:$('.et-plan-sidebar')).querySelector(`[data-plan-step="${index}"]`)?.focus({preventScroll:true});
   });
-  $('.et-brand').addEventListener('click',e=>{e.preventDefault();if(!busy)confirm('close');});
+  $('.et-brand').addEventListener('click',e=>{e.preventDefault();if(!busy || pending)pauseWait(()=>confirm('close'));});
   $('.et-composer').onsubmit=e=> {e.preventDefault();send(input.value.trim(),{fromComposer:true});};
   function resizeComposer() {
     if(!input.offsetWidth)return;
@@ -819,6 +947,6 @@
   run(async()=>{
     const params=new URLSearchParams(location.search);
     if(params.get('start')==='new') { await newSession();params.delete('start');window.history.replaceState(null,'',location.pathname+(params.size?'?'+params.toString():'')); }
-    else { await refresh();if(isClosed())await newSession(); }
+    else await refresh();
   });
 })();

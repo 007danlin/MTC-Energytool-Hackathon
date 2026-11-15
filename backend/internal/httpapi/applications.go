@@ -31,7 +31,11 @@ func (s *Server) applicationError(w http.ResponseWriter, r *http.Request, err er
 	}{{business.ErrVersionConflict, 409, "version_conflict"}, {business.ErrApplicationClosed, 409, "application_closed"}, {business.ErrInvalidTransition, 409, "invalid_transition"}, {business.ErrRequestConflict, 409, "request_conflict"}, {business.ErrInvalidEdit, 400, "invalid_edit"}, {business.ErrReasonRequired, 400, "reason_required"}}
 	for _, c := range cases {
 		if errors.Is(err, c.err) {
-			writeError(w, r, c.status, c.code, "Проверьте данные и актуальную версию заявки.")
+			message := "Проверьте данные и актуальную версию заявки."
+			if c.code == "application_closed" {
+				message = "Менеджер уже обработал заявку: редактирование закрыто. Дополнения можно написать в консультации — они сохранятся в истории."
+			}
+			writeError(w, r, c.status, c.code, message)
 			return
 		}
 	}

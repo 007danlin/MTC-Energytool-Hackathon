@@ -148,6 +148,11 @@ func BuildCard(session domain.Session, applicationID string, version int, demo b
 	card.Contact.PreferredChannel = preferredChannel(card.Contact)
 	card.Task = formField(FormTask(app.Summary))
 	card.ContactTime = formField(app.ContactPreference())
+	if strings.TrimSpace(app.Phone) == "" {
+		// Callback preferences belong to a phone contact. The email-only form
+		// does not ask for a response time, even if legacy data carries "asap".
+		card.ContactTime = formField("")
+	}
 
 	summary := decodeSummary(session.LastResult)
 	card.Object = verifiedFields(summary.Object, session.Messages)
