@@ -22,7 +22,7 @@ def build(destination):
   if not p.is_file() or 'video' in p.parts or 'benchmark' in p.relative_to(src).parts:continue
   if p.suffix not in ('.json','.png','.log'):continue
   out=checks/p.relative_to(src);out.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(p,out)
- shutil.copy2(ROOT/'deliverables/2026-11-15/Energytool_presentation_MTS_style_final.pdf',stage/'EnergyTool-презентация.pdf')
+ shutil.copy2(ROOT/'deliverables/2026-11-15/Energytool_presentation_MTS_style.pdf',stage/'EnergyTool-презентация.pdf')
  (stage/'ml-submit').mkdir();shutil.copy2(ROOT/'artifacts/mts-energytool-n2-docs.zip',stage/'ml-submit/N2-победивший-сабмит.zip')
  if (ROOT/'deliverables/2026-11-14/demo.mp4').exists():
   (stage/'demo').mkdir();shutil.copy2(ROOT/'deliverables/2026-11-14/demo.mp4',stage/'demo/demo.mp4')
