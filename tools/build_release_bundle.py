@@ -3,10 +3,10 @@ import argparse,hashlib,json,shutil,zipfile
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 def build(destination):
- stage=destination/'EnergyTool-final-2026-11-14';project=stage/'project'
+ stage=destination/'EnergyTool-final-2026-11-15';project=stage/'project'
  if stage.exists():shutil.rmtree(stage)
  project.mkdir(parents=True)
- roots=['backend','local-preview/energytool-site','tests','tools','eval','docs','experiments/n2-docs-20261112']
+ roots=['backend','local-preview/energytool-site','tests','tools','eval','docs','deliverables','experiments/n2-docs-20261112']
  skip={'__pycache__','node_modules','.venv','.git','var','private','tmp','output'}
  files=[p for p in ROOT.iterdir() if p.is_file() and (p.suffix in ('.py','.yaml') or p.name in ('README.md','Dockerfile','Dockerfile.web','.dockerignore','.gitignore','.env.example','.env.web.example','.env.local.example','requirements.txt'))]
  for root in roots:
@@ -22,11 +22,11 @@ def build(destination):
   if not p.is_file() or 'video' in p.parts or 'benchmark' in p.relative_to(src).parts:continue
   if p.suffix not in ('.json','.png','.log'):continue
   out=checks/p.relative_to(src);out.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(p,out)
- shutil.copy2(ROOT/'output/pdf/EnergyTool-презентация.pdf',stage/'EnergyTool-презентация.pdf')
+ shutil.copy2(ROOT/'deliverables/2026-11-15/Energytool_presentation_MTS_style_final.pdf',stage/'EnergyTool-презентация.pdf')
  (stage/'ml-submit').mkdir();shutil.copy2(ROOT/'artifacts/mts-energytool-n2-docs.zip',stage/'ml-submit/N2-победивший-сабмит.zip')
- if (ROOT/'output/demo/demo.mp4').exists():
-  (stage/'demo').mkdir();shutil.copy2(ROOT/'output/demo/demo.mp4',stage/'demo/demo.mp4')
-  shutil.copy2(ROOT/'output/demo/README.txt',stage/'demo/README.txt')
+ if (ROOT/'deliverables/2026-11-14/demo.mp4').exists():
+  (stage/'demo').mkdir();shutil.copy2(ROOT/'deliverables/2026-11-14/demo.mp4',stage/'demo/demo.mp4')
+  shutil.copy2(ROOT/'deliverables/2026-11-14/demo-README.txt',stage/'demo/README.txt')
  (stage/'НАЧНИТЕ-ЗДЕСЬ.txt').write_text('''Финальная сдача EnergyTool: код, документы, PDF и запись демонстрации.
 
 1. Прочитайте презентацию EnergyTool-презентация.pdf.
@@ -43,7 +43,7 @@ ml-submit/N2-победивший-сабмит.zip — неизменённый 
 ''',encoding='utf-8')
  inventory={p.relative_to(stage).as_posix():hashlib.sha256(p.read_bytes()).hexdigest()for p in sorted(stage.rglob('*')) if p.is_file()}
  (stage/'SHA256.json').write_text(json.dumps(inventory,ensure_ascii=False,indent=2))
- archive=destination/'EnergyTool-final-2026-11-14.zip'
+ archive=destination/'EnergyTool-final-2026-11-15.zip'
  with zipfile.ZipFile(archive,'w',zipfile.ZIP_DEFLATED,compresslevel=6)as z:
   for p in sorted(stage.rglob('*')):
    if p.is_file():z.write(p,p.relative_to(stage))
